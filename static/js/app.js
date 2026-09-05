@@ -148,10 +148,30 @@ function updateUI(data) {
     selectDesktop.value = activeSheet;
   }
 
+  // Gabungkan produk global Rekap Jenis Akun + produk harian aktif (misal Apple Music, Canva, dll)
+  const combinedProducts = Object.assign({}, kpis.rekap_produk || {});
+  if (daily.daily_produk) {
+    for (const [pName, pStats] of Object.entries(daily.daily_produk)) {
+      if (!combinedProducts[pName]) {
+        combinedProducts[pName] = { sold: 0, klaim: 0, ready: 0, omzet: 0 };
+      }
+      // Jika produk belum ada di rekap global (seperti Apple Music), gunakan statistik harian aktif
+      if (combinedProducts[pName].sold === 0 && combinedProducts[pName].ready === 0) {
+        combinedProducts[pName].sold = pStats.sold;
+        combinedProducts[pName].klaim = pStats.klaim;
+        combinedProducts[pName].ready = pStats.ready;
+        combinedProducts[pName].omzet = pStats.omzet;
+      } else {
+        // Update jumlah ready dari sheet hari aktif
+        combinedProducts[pName].ready = pStats.ready;
+      }
+    }
+  }
+
   // Render Visual Charts
   renderTrendChart(kpis.trend_harian || []);
-  renderProductChart(kpis.rekap_produk || {});
-  renderProductTable(kpis.rekap_produk || {});
+  renderProductChart(combinedProducts);
+  renderProductTable(combinedProducts);
 }
 
 function renderTrendChart(trendData) {
@@ -291,13 +311,15 @@ function renderProductChart(rekap) {
     productChartInstance.destroy();
   }
 
+  const frostedPalette = ['#5C7E8F', '#8FA8B5', '#A2A2A2', '#C0CBD2', '#334E5E'];
+  
   productChartInstance = new Chart(ctx, {
     type: 'doughnut',
     data: {
       labels: labels,
       datasets: [{
         data: data,
-        backgroundColor: ['#5C7E8F', '#A2A2A2', '#D4DDE2'], // Frosted Aura palette
+        backgroundColor: frostedPalette.slice(0, labels.length),
         borderColor: '#FFFFFF',
         borderWidth: 3,
         hoverOffset: 6

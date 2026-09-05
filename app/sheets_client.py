@@ -497,6 +497,25 @@ class GoogleSheetsClient:
                 threads_str = find_val_after_label(r_metrics3, "Dari Threads")
                 reseller_str = find_val_after_label(r_metrics3, "Dari Reseller")
 
+                # Agregasi produk dinamis dari baris 16-47 (misal Apple Music, Canva, ChatGPT, dll)
+                daily_produk = {}
+                for row in vals[15:min(47, len(vals))]:
+                    if len(row) > 11 and row[11].strip():
+                        p_name = row[11].strip()
+                        pos = row[5].strip().lower() if len(row) > 5 else ""
+                        hrg = parse_currency(row[6]) if len(row) > 6 else 0.0
+                        
+                        if p_name not in daily_produk:
+                            daily_produk[p_name] = {"sold": 0, "klaim": 0, "ready": 0, "omzet": 0}
+                        
+                        if "sold" in pos:
+                            daily_produk[p_name]["sold"] += 1
+                            daily_produk[p_name]["omzet"] += hrg
+                        elif "stanby" in pos or "ready" in pos:
+                            daily_produk[p_name]["ready"] += 1
+                        elif "klaim" in pos:
+                            daily_produk[p_name]["klaim"] += 1
+
                 return {
                     "sheet_name": target_sheet,
                     "sold_berbayar": parse_int(sold_str),
@@ -507,7 +526,8 @@ class GoogleSheetsClient:
                     "surplus_kas": parse_currency(surplus_str),
                     "margin_kas": margin_str if margin_str else "0%",
                     "dari_threads": parse_int(threads_str),
-                    "dari_reseller": parse_int(reseller_str)
+                    "dari_reseller": parse_int(reseller_str),
+                    "daily_produk": daily_produk
                 }
 
             return {
@@ -520,7 +540,8 @@ class GoogleSheetsClient:
                 "surplus_kas": 0.0,
                 "margin_kas": "0%",
                 "dari_threads": 0,
-                "dari_reseller": 0
+                "dari_reseller": 0,
+                "daily_produk": {}
             }
         except Exception as e:
             logger.error(f"Error get_daily_summary: {e}")

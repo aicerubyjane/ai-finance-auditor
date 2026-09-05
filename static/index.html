@@ -8,76 +8,53 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=frosted1">
+  <link rel="stylesheet" href="/css/style.css?v=frosted2">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="app-layout">
-    <!-- Left Navigation Sidebar -->
-    <aside class="sidebar">
-      <div class="sidebar-top">
-        <div class="brand-badge-logo">
-          <div class="brand-square">FA</div>
-          <div class="brand-titles">
-            <h2>Finance Auditor</h2>
+    <!-- Top Modern Application Header & Navbar -->
+    <header class="app-top-header">
+      <div class="header-main-row">
+        <div class="brand-titles-left">
+          <div class="brand-header-text">
+            <h1 class="brand-title">Finance Auditor</h1>
             <span class="brand-tag"><span class="pulse-dot"></span> Google Sheets Live</span>
           </div>
         </div>
 
-        <div class="nav-section-title">General</div>
-        <nav class="nav-menu" aria-label="Navigasi Utama">
-          <a href="#overview" class="nav-item active">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <nav class="top-nav-menu" aria-label="Navigasi Utama">
+          <a href="#overview" class="top-nav-item active">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>
             </svg>
-            Dashboard
+            <span>Dashboard</span>
           </a>
-          <a href="#operasional" class="nav-item">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <a href="#operasional" class="top-nav-item">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
             </svg>
-            Operasional Harian
+            <span>Operasional Harian</span>
           </a>
-          <a href="#tren" class="nav-item">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <a href="#tren" class="top-nav-item">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>
             </svg>
-            Tren 60 Hari
+            <span>Tren 60 Hari</span>
           </a>
-          <a href="#produk" class="nav-item">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <a href="#produk" class="top-nav-item">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>
             </svg>
-            Kinerja Produk
+            <span>Kinerja Produk</span>
           </a>
         </nav>
-      </div>
 
-      <div class="sidebar-bottom">
-        <div class="user-profile-badge">
-          <div class="profile-avatar">AU</div>
-          <div class="profile-info">
-            <span class="profile-name">Admin Auditor</span>
-            <span class="profile-role">Synchronized</span>
-          </div>
-        </div>
-      </div>
-    </aside>
-
-    <!-- Main Content Work Area -->
-    <main class="main-content" id="overview">
-      <!-- Top Action Bar -->
-      <header class="top-navbar">
-        <div class="navbar-left">
-          <h1 class="page-title">Dashboard</h1>
-          <p class="page-subtitle">Pencatatan real-time performa kas, stok ready, klaim garansi, dan omzet harian.</p>
-        </div>
-
-        <div class="navbar-right">
-          <!-- Filter Hari Dropdown (Menggantikan Pick a Date) -->
+        <div class="header-right-actions">
+          <!-- Filter Hari Dropdown -->
           <div class="day-picker-container">
             <label for="activeDaySelect" class="day-picker-label">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>
               </svg>
               <span>Sheet Hari:</span>
@@ -94,16 +71,24 @@
 
           <!-- Tombol Sinkronkan Data (Primary Action) -->
           <button id="refreshBtn" class="btn-primary-action" title="Ambil data terbaru dari Google Sheets">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
               <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
               <path d="M3 3v5h5"/>
               <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
               <path d="M16 21h5v-5"/>
             </svg>
-            Sinkronkan Data
+            <span>Sinkronkan Data</span>
           </button>
         </div>
-      </header>
+      </div>
+    </header>
+
+    <!-- Main Content Work Area -->
+    <main class="main-content" id="overview">
+      <div class="section-title-wrap">
+        <h2 class="page-title">Ringkasan Eksekutif</h2>
+        <p class="page-subtitle">Pencatatan real-time performa kas, stok ready, klaim garansi, dan omzet 60 hari.</p>
+      </div>
 
       <!-- KPI 4-Card Row (Layout Referensi Baris Atas) -->
       <section class="kpi-banner-grid" aria-label="Statistik Utama">
@@ -171,11 +156,11 @@
       <!-- Middle Grid: Large Chart Left & Operational Summary Right -->
       <section class="dashboard-split-grid">
         <!-- Left: Sales & Finance Activity Chart (Seperti Sale Activity - Monthly pada Referensi) -->
-        <div class="saas-card large-chart-card">
+        <div class="saas-card large-chart-card" id="tren">
           <div class="card-header-bar">
             <div>
               <h2 class="card-heading">Aktivitas Tren Keuangan Harian</h2>
-              <p class="card-subheading">Monitoring fluktuasi Omzet, Modal Terpakai, dan Surplus Kas selama 60 Hari</p>
+              <p class="card-subheading">Komposisi Omzet, Modal Terpakai, dan Surplus Kas harian (Stacked Bar)</p>
             </div>
             <span class="timeframe-tag">Histori 60 Hari</span>
           </div>
@@ -288,6 +273,6 @@
     </main>
   </div>
 
-  <script src="/js/app.js?v=frosted1"></script>
+  <script src="/js/app.js?v=frosted2"></script>
 </body>
 </html>

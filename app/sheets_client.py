@@ -147,12 +147,14 @@ class GoogleSheetsClient:
             return None
 
     def list_sheet_names(self) -> List[str]:
+        default_days = [f"Hari {i:02d}" for i in range(1, 61)]
         if not self.is_connected or not self.spreadsheet:
-            return ["Hari 47", "Hari 38", "Dashboard", "Rekap 60 Hari", "Rekap Jenis Akun"]
+            return default_days + ["Dashboard", "Rekap 60 Hari", "Rekap Jenis Akun"]
         try:
-            return [ws.title for ws in self.spreadsheet.worksheets()]
+            ws_titles = [ws.title for ws in self.spreadsheet.worksheets()]
+            return ws_titles if ws_titles else default_days
         except Exception:
-            return ["Hari 47", "Hari 38", "Dashboard", "Rekap 60 Hari", "Rekap Jenis Akun"]
+            return default_days + ["Dashboard", "Rekap 60 Hari", "Rekap Jenis Akun"]
 
     def sell_standby_account(
         self,

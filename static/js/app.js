@@ -85,64 +85,72 @@ function renderTrendChart(trendData) {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   
-  const labels = trendData.map(d => d.hari);
-  const omzet = trendData.map(d => d.omzet);
-  const modal = trendData.map(d => d.modal);
-  const surplus = trendData.map(d => d.surplus);
+  // Format labels cleaner: "H01", "H02", etc.
+  const labels = trendData.map(d => {
+    const raw = d.hari || "";
+    return raw.replace("Hari ", "H");
+  });
+  
+  const omzet = trendData.map(d => d.omzet || 0);
+  const surplus = trendData.map(d => d.surplus || 0);
+  const modal = trendData.map(d => d.modal || 0);
 
   if (trendChartInstance) {
     trendChartInstance.destroy();
   }
 
+  // Stacked bar chart matching reference image 3 with Frosted Aura color harmony
   trendChartInstance = new Chart(ctx, {
-    type: 'line',
+    type: 'bar',
     data: {
       labels: labels,
       datasets: [
         {
-          label: 'Total Omzet',
+          label: 'Omzet Penjualan',
           data: omzet,
-          borderColor: '#5C7E8F', // Frosted Aura primary
-          backgroundColor: 'rgba(92, 126, 143, 0.08)',
-          fill: true,
-          tension: 0.3,
-          borderWidth: 2.5,
-          pointRadius: 2,
-          pointHoverRadius: 5,
+          backgroundColor: '#5C7E8F', // Deep Frosted Slate Blue
+          borderRadius: 0,
+          borderSkipped: false,
+          maxBarThickness: 16
         },
         {
           label: 'Surplus Kas',
           data: surplus,
-          borderColor: '#10B981', // Emerald Success
-          backgroundColor: 'rgba(16, 185, 129, 0.04)',
-          fill: true,
-          borderWidth: 2,
-          tension: 0.3,
-          pointRadius: 2,
-          pointHoverRadius: 5,
+          backgroundColor: '#A2A2A2', // Frosted Neutral Grey
+          borderRadius: 0,
+          borderSkipped: false,
+          maxBarThickness: 16
         },
         {
           label: 'Modal Terpakai',
           data: modal,
-          borderColor: '#EF4444', // Danger Red
-          backgroundColor: 'transparent',
-          borderWidth: 2,
-          tension: 0.3,
-          pointRadius: 2,
-          pointHoverRadius: 5,
+          backgroundColor: '#D4DDE2', // Frosted Ice Tint
+          borderRadius: {
+            topLeft: 4,
+            topRight: 4,
+            bottomLeft: 0,
+            bottomRight: 0
+          },
+          borderSkipped: false,
+          maxBarThickness: 16
         }
       ]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
       plugins: {
         legend: {
           position: 'top',
-          align: 'end',
+          align: 'center',
           labels: {
-            boxWidth: 10,
-            boxHeight: 10,
+            boxWidth: 12,
+            boxHeight: 12,
+            usePointStyle: false,
             color: '#475569',
             font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' }
           }
@@ -163,18 +171,34 @@ function renderTrendChart(trendData) {
       },
       scales: {
         x: {
-          ticks: { color: '#64748B', font: { size: 10, weight: '500' } },
-          grid: { color: '#F1F5F9' }
-        },
-        y: {
+          stacked: true,
+          grid: {
+            display: false
+          },
           ticks: {
             color: '#64748B',
-            font: { size: 10, weight: '500' },
+            font: { family: 'Plus Jakarta Sans', size: 10, weight: '500' },
+            maxRotation: 0,
+            autoSkip: true,
+            maxTicksLimit: 15
+          }
+        },
+        y: {
+          stacked: true,
+          grid: {
+            color: '#F1F5F9',
+            drawBorder: false
+          },
+          ticks: {
+            color: '#64748B',
+            font: { family: 'Plus Jakarta Sans', size: 10, weight: '500' },
             callback: function(value) {
+              if (value >= 1000000) {
+                return (value / 1000000).toFixed(1) + 'M';
+              }
               return (value / 1000).toLocaleString('id-ID') + 'k';
             }
-          },
-          grid: { color: '#F1F5F9' }
+          }
         }
       }
     }

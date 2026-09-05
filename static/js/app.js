@@ -41,7 +41,9 @@ function updateUI(data) {
   document.getElementById('kpiHariAktif').textContent = `${kpis.hari_aktif || 0} Hari`;
 
   // Daily Section (Berdasarkan Sheet Hari yang Dipilih)
-  document.getElementById('currentDayBadge').textContent = activeSheet;
+  const currentBadge = document.getElementById('currentDayBadge');
+  if (currentBadge) currentBadge.textContent = activeSheet;
+  
   document.getElementById('chipReady').textContent = `${daily.akun_ready || 0} Ready`;
   document.getElementById('chipSold').textContent = `${daily.sold_berbayar || 0} Sold`;
   document.getElementById('chipClaim').textContent = `${daily.klaim_garansi || 0} Klaim`;
@@ -55,23 +57,21 @@ function updateUI(data) {
 
   // Populate Dropdown Sheet Desktop & Mobile
   const selectDesktop = document.getElementById('activeDaySelect');
-  
-  if (selectDesktop) {
-    if (data.available_sheets && data.available_sheets.length > 0) {
-      if (selectDesktop.children.length <= 1 || selectDesktop.dataset.populated !== "true") {
-        selectDesktop.innerHTML = '';
-        data.available_sheets.forEach(sheet => {
-          const opt = document.createElement('option');
-          opt.value = sheet;
-          opt.textContent = sheet;
-          if (sheet === activeSheet) opt.selected = true;
-          selectDesktop.appendChild(opt);
-        });
-        selectDesktop.dataset.populated = "true";
-      } else {
-        selectDesktop.value = activeSheet;
-      }
+  if (selectDesktop && data.available_sheets && data.available_sheets.length > 0) {
+    if (selectDesktop.children.length <= 1 || selectDesktop.dataset.populated !== "true") {
+      selectDesktop.innerHTML = '';
+      data.available_sheets.forEach(sheet => {
+        const opt = document.createElement('option');
+        opt.value = sheet;
+        opt.textContent = sheet;
+        if (sheet.trim().toLowerCase() === activeSheet.trim().toLowerCase()) {
+          opt.selected = true;
+        }
+        selectDesktop.appendChild(opt);
+      });
+      selectDesktop.dataset.populated = "true";
     }
+    selectDesktop.value = activeSheet;
   }
 
   // Render Visual Charts

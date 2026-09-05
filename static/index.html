@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=frosted3">
+  <link rel="stylesheet" href="/css/style.css?v=frosted4">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -66,10 +66,19 @@
       </div>
     </header>
 
+    <!-- Interactive Top Sync Progress Bar -->
+    <div id="syncProgressBar" class="sync-progress-bar" style="width: 0%;"></div>
+
     <!-- Main Content Work Area -->
     <main class="main-content" id="overview">
       <div class="section-title-wrap">
-        <h2 class="page-title">Ringkasan Eksekutif</h2>
+        <div class="title-with-sync-badge">
+          <h2 class="page-title">Ringkasan Eksekutif</h2>
+          <div id="syncStatusBadge" class="sync-live-badge loading">
+            <span class="sync-spinner"></span>
+            <span id="syncStatusText">Menghubungkan ke Google Sheets...</span>
+          </div>
+        </div>
         <p class="page-subtitle">Pencatatan real-time performa kas, stok ready, klaim garansi, dan omzet 60 hari.</p>
       </div>
 
@@ -389,6 +398,6 @@
     </div>
   </div>
 
-  <script src="/js/app.js?v=frosted3"></script>
+  <script src="/js/app.js?v=frosted4"></script>
 </body>
 </html>

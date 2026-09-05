@@ -11,7 +11,71 @@ function formatRupiah(num) {
   }).format(num);
 }
 
+const elementsToAnimate = [
+  'kpiTotalOmzet', 'kpiSurplusKas', 'kpiSoldBerbayar', 'kpiAvgSold',
+  'kpiKlaimGaransi', 'kpiRasioKlaim', 'kpiTotalModal', 'kpiHariAktif',
+  'dayOmzet', 'dayModal', 'daySurplus', 'dayMargin', 'dayThreads', 'dayReseller'
+];
+
+function setLoadingState(isLoading) {
+  const progressBar = document.getElementById('syncProgressBar');
+  const syncBadge = document.getElementById('syncStatusBadge');
+  const syncText = document.getElementById('syncStatusText');
+
+  if (isLoading) {
+    if (progressBar) {
+      progressBar.style.opacity = '1';
+      progressBar.style.width = '70%';
+    }
+    if (syncBadge) {
+      syncBadge.className = 'sync-live-badge loading';
+    }
+    if (syncText) {
+      syncText.textContent = 'Menghubungkan ke Google Sheets...';
+    }
+
+    elementsToAnimate.forEach(id => {
+      const el = document.getElementById(id);
+      if (el && (!el.textContent || el.textContent === "Rp 0" || el.textContent === "0 Akun" || el.textContent === "0")) {
+        el.classList.add('shimmer-loading');
+      }
+    });
+  } else {
+    if (progressBar) {
+      progressBar.style.width = '100%';
+      setTimeout(() => {
+        progressBar.style.opacity = '0';
+        setTimeout(() => { progressBar.style.width = '0%'; }, 400);
+      }, 300);
+    }
+    if (syncBadge) {
+      syncBadge.className = 'sync-live-badge success';
+    }
+    if (syncText) {
+      syncText.textContent = `Tersinkronisasi (${new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })})`;
+    }
+
+    elementsToAnimate.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.remove('shimmer-loading');
+        el.classList.remove('data-revealed');
+        // trigger reflow
+        void el.offsetWidth;
+        el.classList.add('data-revealed');
+      }
+    });
+
+    document.querySelectorAll('.kpi-banner-card, .saas-card').forEach(card => {
+      card.classList.remove('sync-flash');
+      void card.offsetWidth;
+      card.classList.add('sync-flash');
+    });
+  }
+}
+
 async function fetchDashboardData(sheetOverride = "") {
+  setLoadingState(true);
   try {
     const target = sheetOverride || currentSelectedSheet;
     const url = target ? `/api/dashboard?sheet=${encodeURIComponent(target)}` : '/api/dashboard';
@@ -19,8 +83,18 @@ async function fetchDashboardData(sheetOverride = "") {
     if (!res.ok) throw new Error("Gagal mengambil data dashboard");
     const data = await res.json();
     updateUI(data);
+    setLoadingState(false);
   } catch (err) {
     console.error("Fetch dashboard error:", err);
+    const syncBadge = document.getElementById('syncStatusBadge');
+    const syncText = document.getElementById('syncStatusText');
+    if (syncBadge) syncBadge.className = 'sync-live-badge error';
+    if (syncText) syncText.textContent = 'Koneksi Sheets terhambat, mencoba ulang...';
+    elementsToAnimate.forEach(id => {
+      document.getElementById(id)?.classList.remove('shimmer-loading');
+    });
+    const progressBar = document.getElementById('syncProgressBar');
+    if (progressBar) progressBar.style.opacity = '0';
   }
 }
 

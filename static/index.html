@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workbench Keuangan & Inventaris Akun AI</title>
+  <meta name="description" content="Monitoring penjualan harian, perputaran stok, dan margin keuangan akun AI">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Navigation Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-badge">AU</div>
+        <div class="brand-info">
+          <h2>Finance Auditor</h2>
+          <span class="brand-meta"><span class="live-indicator"></span> Google Sheets Live</span>
+        </div>
+      </div>
+
+      <nav class="nav-menu" aria-label="Menu Utama">
+        <a href="#overview" class="nav-item active">Ringkasan KPI</a>
+        <a href="#tren" class="nav-item">Tren 60 Hari</a>
+        <a href="#rekap-produk" class="nav-item">Kinerja Produk</a>
+        <a href="#operasional" class="nav-item">Operasional Harian</a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sheet-selector-group">
+          <label for="activeDaySelect">Sheet Harian Aktif</label>
+          <select id="activeDaySelect" aria-label="Pilih sheet harian">
+            <option value="Hari 38">Hari 38</option>
+          </select>
+        </div>
+        <div class="system-status-indicator">
+          <span class="status-dot"></span> Bot Telegram Terhubung
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Canvas -->
+    <main class="main-content" id="overview">
+      <header class="top-header">
+        <div class="header-title">
+          <h1>Workbench Auditor & Inventaris Akun AI</h1>
+          <p>Pencatatan real-time performa kas, stok ready, rasio klaim, dan histori penjualan.</p>
+        </div>
+        <div class="header-actions">
+          <button id="refreshBtn" class="btn btn-default" title="Ambil data terbaru dari Google Sheets">
+            Sinkronkan Data
+          </button>
+          <a href="https://t.me" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+            Buka Bot Telegram
+          </a>
+        </div>
+      </header>
+
+      <!-- KPI Summary Cards -->
+      <section class="kpi-grid" aria-label="Indikator Kinerja Utama">
+        <div class="kpi-card">
+          <div class="kpi-card-header">
+            <span class="kpi-label">Total Omzet</span>
+          </div>
+          <div class="kpi-metric-value" id="kpiTotalOmzet">Rp 0</div>
+          <div class="kpi-card-footer">
+            <span>Surplus Kas:</span> <strong id="kpiSurplusKas" class="val-positive">Rp 0</strong>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-card-header">
+            <span class="kpi-label">Sold Berbayar</span>
+          </div>
+          <div class="kpi-metric-value" id="kpiSoldBerbayar">0 Akun</div>
+          <div class="kpi-card-footer">
+            <span>Rata-rata:</span> <strong id="kpiAvgSold">0 / Hari</strong>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-card-header">
+            <span class="kpi-label">Klaim Garansi</span>
+          </div>
+          <div class="kpi-metric-value" id="kpiKlaimGaransi">0 Akun</div>
+          <div class="kpi-card-footer">
+            <span>Rasio Klaim:</span> <strong id="kpiRasioKlaim" class="val-caution">0%</strong>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-card-header">
+            <span class="kpi-label">Modal Terpakai</span>
+          </div>
+          <div class="kpi-metric-value" id="kpiTotalModal">Rp 0</div>
+          <div class="kpi-card-footer">
+            <span>Hari Aktif:</span> <strong id="kpiHariAktif">0 Hari</strong>
+          </div>
+        </div>
+      </section>
+
+      <!-- Daily Focus Section -->
+      <section class="card" id="operasional" aria-label="Ringkasan Hari Aktif">
+        <div class="card-header">
+          <div class="card-title-group">
+            <h3>Operasional Hari Aktif: <span id="currentDayBadge" class="val-positive">Hari 38</span></h3>
+          </div>
+          <div class="status-tags">
+            <span class="tag-badge tag-ready" id="chipReady">0 Ready</span>
+            <span class="tag-badge tag-sold" id="chipSold">0 Sold</span>
+            <span class="tag-badge tag-claim" id="chipClaim">0 Klaim</span>
+          </div>
+        </div>
+
+        <div class="daily-summary-panel">
+          <div class="daily-item">
+            <span class="item-label">Omzet Hari Ini</span>
+            <span class="item-value" id="dayOmzet">Rp 0</span>
+          </div>
+          <div class="daily-item">
+            <span class="item-label">Modal Hari Ini</span>
+            <span class="item-value" id="dayModal">Rp 0</span>
+          </div>
+          <div class="daily-item">
+            <span class="item-label">Surplus Kas</span>
+            <span class="item-value val-positive" id="daySurplus">Rp 0</span>
+          </div>
+          <div class="daily-item">
+            <span class="item-label">Margin Kas</span>
+            <span class="item-value" id="dayMargin">0%</span>
+          </div>
+          <div class="daily-item">
+            <span class="item-label">Sumber Threads</span>
+            <span class="item-value" id="dayThreads">0</span>
+          </div>
+          <div class="daily-item">
+            <span class="item-label">Sumber Reseller</span>
+            <span class="item-value" id="dayReseller">0</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Charts Section -->
+      <section class="charts-grid" id="tren">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <h3>Tren Keuangan Harian (Omzet, Modal, Surplus)</h3>
+            </div>
+            <span class="card-badge-context">Histori 60 Hari</span>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="trendChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card" id="rekap-produk">
+          <div class="card-header">
+            <div class="card-title-group">
+              <h3>Distribusi Produk</h3>
+            </div>
+            <span class="card-badge-context">Volume Terjual</span>
+          </div>
+          <div class="chart-wrapper chart-wrapper-donut">
+            <canvas id="productChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Products Summary Table -->
+      <section class="card" aria-label="Tabel Kinerja Produk">
+        <div class="card-header">
+          <div class="card-title-group">
+            <h3>Rincian Kinerja Berdasarkan Tipe Produk AI</h3>
+          </div>
+          <span class="card-badge-context">Sinkron Tab Rekap</span>
+        </div>
+        <div class="table-container">
+          <table class="workbench-table">
+            <thead>
+              <tr>
+                <th>Produk</th>
+                <th>Sold</th>
+                <th>Klaim Garansi</th>
+                <th>Stok Ready</th>
+                <th>Total Omzet</th>
+                <th>Rasio Klaim</th>
+              </tr>
+            </thead>
+            <tbody id="productTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Helper Notice -->
+      <div class="notice-box">
+        <div>
+          <strong>Alur Kerja Lapangan:</strong> Ketik <code>/start</code> di bot Telegram untuk mencatat transaksi langsung ke sheet hari aktif. Tombol <code>[+ Penjualan]</code> mengisi Tabel B, dan <code>[+ Catat Modal]</code> mengisi Tabel A. Dashboard ini tersinkronisasi otomatis setiap 15 detik.
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>

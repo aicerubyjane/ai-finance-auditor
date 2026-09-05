@@ -3,50 +3,98 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Workbench Keuangan & Inventaris Akun AI</title>
-  <meta name="description" content="Monitoring penjualan harian, perputaran stok, dan margin keuangan akun AI">
+  <title>Finance Auditor Dashboard</title>
+  <meta name="description" content="AI Account Finance & Inventory Real-Time Auditor">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=graphite5">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css?v=frosted1">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="app-layout">
-    <!-- Navigation Sidebar Desktop -->
+    <!-- Left Navigation Sidebar -->
     <aside class="sidebar">
-      <div class="brand">
-        <div class="brand-info">
-          <h2>Finance Auditor</h2>
-          <span class="brand-meta"><span class="live-indicator"></span> Google Sheets Live</span>
+      <div class="sidebar-top">
+        <div class="brand-badge-logo">
+          <div class="brand-square">FA</div>
+          <div class="brand-titles">
+            <h2>Finance Auditor</h2>
+            <span class="brand-tag"><span class="pulse-dot"></span> Google Sheets Live</span>
+          </div>
         </div>
+
+        <div class="nav-section-title">General</div>
+        <nav class="nav-menu" aria-label="Navigasi Utama">
+          <a href="#overview" class="nav-item active">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>
+            </svg>
+            Dashboard
+          </a>
+          <a href="#operasional" class="nav-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+            Operasional Harian
+          </a>
+          <a href="#tren" class="nav-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>
+            </svg>
+            Tren 60 Hari
+          </a>
+          <a href="#produk" class="nav-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>
+            </svg>
+            Kinerja Produk
+          </a>
+        </nav>
       </div>
 
-      <nav class="nav-menu" aria-label="Menu Utama">
-        <a href="#overview" class="nav-item active">Ringkasan KPI</a>
-        <a href="#tren" class="nav-item">Tren 60 Hari</a>
-        <a href="#rekap-produk" class="nav-item">Kinerja Produk</a>
-      </nav>
-
-      <div class="sidebar-footer">
-        <div class="system-status-indicator">
-          <span class="status-dot"></span> Bot Telegram Live
+      <div class="sidebar-bottom">
+        <div class="user-profile-badge">
+          <div class="profile-avatar">AU</div>
+          <div class="profile-info">
+            <span class="profile-name">Admin Auditor</span>
+            <span class="profile-role">Synchronized</span>
+          </div>
         </div>
       </div>
     </aside>
 
-    <!-- Main Content Canvas -->
+    <!-- Main Content Work Area -->
     <main class="main-content" id="overview">
-      <!-- Top Header: Title Left, Sinkronkan Data Right -->
-      <header class="top-header">
-        <div class="header-title">
-          <h1>Workbench Auditor & Inventaris Akun AI</h1>
-          <p>Pencatatan real-time performa kas, stok ready, rasio klaim, dan histori penjualan.</p>
+      <!-- Top Action Bar -->
+      <header class="top-navbar">
+        <div class="navbar-left">
+          <h1 class="page-title">Dashboard</h1>
+          <p class="page-subtitle">Pencatatan real-time performa kas, stok ready, klaim garansi, dan omzet harian.</p>
         </div>
-        <div class="header-actions">
-          <!-- Button Sinkronkan Data di Kanan Atas -->
-          <button id="refreshBtn" class="btn btn-default" title="Ambil data terbaru dari Google Sheets">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+
+        <div class="navbar-right">
+          <!-- Filter Hari Dropdown (Menggantikan Pick a Date) -->
+          <div class="day-picker-container">
+            <label for="activeDaySelect" class="day-picker-label">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>
+              </svg>
+              <span>Sheet Hari:</span>
+            </label>
+            <div class="custom-select-box">
+              <select id="activeDaySelect" class="clean-day-dropdown" aria-label="Pilih hari aktif">
+                <option value="Hari 47">Hari 47</option>
+              </select>
+              <svg class="select-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Tombol Sinkronkan Data (Primary Action) -->
+          <button id="refreshBtn" class="btn-primary-action" title="Ambil data terbaru dari Google Sheets">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
               <path d="M3 3v5h5"/>
               <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
@@ -57,150 +105,189 @@
         </div>
       </header>
 
-      <!-- KPI Summary Cards (4 Kolom Rapat) -->
-      <section class="kpi-grid" aria-label="Indikator Kinerja Utama">
-        <div class="kpi-card">
-          <div class="kpi-card-header">
-            <span class="kpi-label">TOTAL OMZET</span>
+      <!-- KPI 4-Card Row (Layout Referensi Baris Atas) -->
+      <section class="kpi-banner-grid" aria-label="Statistik Utama">
+        <!-- Card 1: Total Omzet -->
+        <div class="kpi-banner-card">
+          <div class="card-meta-row">
+            <span class="card-meta-label">Total Omzet Global</span>
+            <span class="card-meta-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </span>
           </div>
-          <div class="kpi-metric-value" id="kpiTotalOmzet">Rp 0</div>
-          <div class="kpi-card-footer">
-            <span>Surplus Kas:</span> <strong id="kpiSurplusKas" class="val-positive">Rp 0</strong>
-          </div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-card-header">
-            <span class="kpi-label">SOLD BERBAYAR</span>
-          </div>
-          <div class="kpi-metric-value" id="kpiSoldBerbayar">0 Akun</div>
-          <div class="kpi-card-footer">
-            <span>Rata-rata:</span> <strong id="kpiAvgSold">0 / Hari</strong>
+          <div class="card-hero-number" id="kpiTotalOmzet">Rp 0</div>
+          <div class="card-footer-row">
+            <span class="footer-desc">Surplus Kas:</span>
+            <span class="footer-delta positive" id="kpiSurplusKas">Rp 0</span>
           </div>
         </div>
 
-        <div class="kpi-card">
-          <div class="kpi-card-header">
-            <span class="kpi-label">KLAIM GARANSI</span>
+        <!-- Card 2: Sold Berbayar -->
+        <div class="kpi-banner-card">
+          <div class="card-meta-row">
+            <span class="card-meta-label">Sold Berbayar</span>
+            <span class="card-meta-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+            </span>
           </div>
-          <div class="kpi-metric-value" id="kpiKlaimGaransi">0 Akun</div>
-          <div class="kpi-card-footer">
-            <span>Rasio Klaim:</span> <strong id="kpiRasioKlaim" class="val-caution">0%</strong>
+          <div class="card-hero-number" id="kpiSoldBerbayar">0 Akun</div>
+          <div class="card-footer-row">
+            <span class="footer-desc">Rata-rata:</span>
+            <span class="footer-delta neutral" id="kpiAvgSold">0 / Hari</span>
           </div>
         </div>
 
-        <div class="kpi-card">
-          <div class="kpi-card-header">
-            <span class="kpi-label">MODAL TERPAKAI</span>
+        <!-- Card 3: Klaim Garansi -->
+        <div class="kpi-banner-card">
+          <div class="card-meta-row">
+            <span class="card-meta-label">Klaim Garansi</span>
+            <span class="card-meta-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </span>
           </div>
-          <div class="kpi-metric-value" id="kpiTotalModal">Rp 0</div>
-          <div class="kpi-card-footer">
-            <span>Hari Aktif:</span> <strong id="kpiHariAktif">0 Hari</strong>
+          <div class="card-hero-number" id="kpiKlaimGaransi">0 Akun</div>
+          <div class="card-footer-row">
+            <span class="footer-desc">Rasio Klaim:</span>
+            <span class="footer-delta caution" id="kpiRasioKlaim">0%</span>
+          </div>
+        </div>
+
+        <!-- Card 4: Modal Terpakai -->
+        <div class="kpi-banner-card">
+          <div class="card-meta-row">
+            <span class="card-meta-label">Modal Operasional</span>
+            <span class="card-meta-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+            </span>
+          </div>
+          <div class="card-hero-number" id="kpiTotalModal">Rp 0</div>
+          <div class="card-footer-row">
+            <span class="footer-desc">Hari Aktif:</span>
+            <span class="footer-delta neutral" id="kpiHariAktif">0 Hari</span>
           </div>
         </div>
       </section>
 
-      <!-- Operational Strip dengan Dropdown Hari yang Bisa Diklik Langsung -->
-      <section class="operational-strip" aria-label="Ringkasan Hari Aktif">
-        <div class="strip-header">
-          <div class="interactive-day-selector">
-            <label for="activeDaySelect" class="strip-title">Operasional Hari Aktif:</label>
-            <div class="day-select-wrapper">
-              <select id="activeDaySelect" class="day-select-dropdown" aria-label="Pilih hari aktif">
-                <option value="Hari 47">Hari 47</option>
-              </select>
-              <svg class="day-select-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m6 9 6 6 6-6"/>
-              </svg>
+      <!-- Middle Grid: Large Chart Left & Operational Summary Right -->
+      <section class="dashboard-split-grid">
+        <!-- Left: Sales & Finance Activity Chart (Seperti Sale Activity - Monthly pada Referensi) -->
+        <div class="saas-card large-chart-card">
+          <div class="card-header-bar">
+            <div>
+              <h2 class="card-heading">Aktivitas Tren Keuangan Harian</h2>
+              <p class="card-subheading">Monitoring fluktuasi Omzet, Modal Terpakai, dan Surplus Kas selama 60 Hari</p>
             </div>
+            <span class="timeframe-tag">Histori 60 Hari</span>
           </div>
-          <div class="status-tags">
-            <span class="tag-badge tag-ready" id="chipReady">0 Ready</span>
-            <span class="tag-badge tag-sold" id="chipSold">0 Sold</span>
-            <span class="tag-badge tag-claim" id="chipClaim">0 Klaim</span>
-          </div>
-        </div>
-        <div class="strip-metrics">
-          <div class="strip-metric-item">
-            <span class="lbl">Omzet Hari Ini</span>
-            <span class="val" id="dayOmzet">Rp 0</span>
-          </div>
-          <div class="strip-metric-item">
-            <span class="lbl">Modal Hari Ini</span>
-            <span class="val" id="dayModal">Rp 0</span>
-          </div>
-          <div class="strip-metric-item">
-            <span class="lbl">Surplus Kas</span>
-            <span class="val val-positive" id="daySurplus">Rp 0</span>
-          </div>
-          <div class="strip-metric-item">
-            <span class="lbl">Margin</span>
-            <span class="val" id="dayMargin">0%</span>
-          </div>
-          <div class="strip-metric-item">
-            <span class="lbl">Threads</span>
-            <span class="val" id="dayThreads">0</span>
-          </div>
-          <div class="strip-metric-item">
-            <span class="lbl">Reseller</span>
-            <span class="val" id="dayReseller">0</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- Bottom Split Grid (Grafik Kiri & Produk Kanan) -->
-      <section class="workbench-bottom-grid">
-        <!-- Kolom Kiri: Tren 60 Hari -->
-        <div class="card chart-card-compact">
-          <div class="card-header-compact">
-            <h3>Tren Keuangan Harian (Omzet, Modal, Surplus)</h3>
-            <span class="card-badge-context">Histori 60 Hari</span>
-          </div>
-          <div class="chart-wrapper-compact">
+          <div class="chart-container-fluid">
             <canvas id="trendChart"></canvas>
           </div>
         </div>
 
-        <!-- Kolom Kanan: Donut & Tabel Produk Gabung Rapi -->
-        <div class="card products-card-compact">
-          <div class="products-header-compact">
-            <div class="donut-sub-section">
-              <div class="card-header-compact">
-                <h3>Distribusi Produk</h3>
+        <!-- Right: Daily Operational Focus (Seperti Kolom Kanan pada Referensi) -->
+        <div class="saas-card operational-panel-card" id="operasional">
+          <div class="card-header-bar">
+            <div>
+              <h2 class="card-heading">Operasional Hari Aktif</h2>
+              <p class="card-subheading">Kondisi kas dan transaksi hari ini</p>
+            </div>
+            <div class="status-pill-group">
+              <span class="pill-badge pill-ready" id="chipReady">0 Ready</span>
+              <span class="pill-badge pill-sold" id="chipSold">0 Sold</span>
+              <span class="pill-badge pill-claim" id="chipClaim">0 Klaim</span>
+            </div>
+          </div>
+
+          <div class="daily-stat-list">
+            <div class="daily-stat-row">
+              <div class="stat-meta">
+                <span class="stat-name">Omzet Hari Ini</span>
+                <span class="stat-hint">Total penjualan masuk</span>
               </div>
-              <div class="chart-wrapper-donut-compact">
-                <canvas id="productChart"></canvas>
-              </div>
+              <strong class="stat-amount" id="dayOmzet">Rp 0</strong>
             </div>
 
-            <div class="table-sub-section">
-              <div class="card-header-compact">
-                <h3>Rincian Kinerja Akun</h3>
+            <div class="daily-stat-row">
+              <div class="stat-meta">
+                <span class="stat-name">Modal Hari Ini</span>
+                <span class="stat-hint">Pengeluaran beli akun/stok</span>
               </div>
-              <div class="table-container-compact">
-                <table class="workbench-table-compact">
-                  <thead>
-                    <tr>
-                      <th>Produk</th>
-                      <th>Sold</th>
-                      <th>Klaim</th>
-                      <th>Ready</th>
-                      <th>Omzet</th>
-                      <th>Rasio</th>
-                    </tr>
-                  </thead>
-                  <tbody id="productTableBody">
-                    <!-- Injected via JS -->
-                  </tbody>
-                </table>
+              <strong class="stat-amount" id="dayModal">Rp 0</strong>
+            </div>
+
+            <div class="daily-stat-row highlight-surplus">
+              <div class="stat-meta">
+                <span class="stat-name">Surplus Kas Hari Ini</span>
+                <span class="stat-hint">Sisa bersih di tangan</span>
+              </div>
+              <strong class="stat-amount text-success" id="daySurplus">Rp 0</strong>
+            </div>
+
+            <div class="daily-stat-row">
+              <div class="stat-meta">
+                <span class="stat-name">Margin Keuntungan</span>
+                <span class="stat-hint">Rasio surplus terhadap omzet</span>
+              </div>
+              <strong class="stat-amount" id="dayMargin">0%</strong>
+            </div>
+
+            <div class="daily-channel-chips">
+              <div class="channel-chip">
+                <span>Threads:</span> <strong id="dayThreads">0</strong>
+              </div>
+              <div class="channel-chip">
+                <span>Reseller:</span> <strong id="dayReseller">0</strong>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bottom Grid: Detailed Table Left & Product Distribution Donut Right (Seperti Payments Table pada Referensi) -->
+      <section class="dashboard-bottom-grid" id="produk">
+        <!-- Left: Product Performance Table -->
+        <div class="saas-card table-panel-card">
+          <div class="card-header-bar">
+            <div>
+              <h2 class="card-heading">Rincian Kinerja Akun AI</h2>
+              <p class="card-subheading">Volume penjualan, klaim garansi, stok ready, dan omzet per produk</p>
+            </div>
+          </div>
+          <div class="table-scroll-wrapper">
+            <table class="saas-data-table">
+              <thead>
+                <tr>
+                  <th>Produk</th>
+                  <th>Terjual (Sold)</th>
+                  <th>Klaim Garansi</th>
+                  <th>Stok Ready</th>
+                  <th>Total Omzet</th>
+                  <th>Rasio Klaim</th>
+                </tr>
+              </thead>
+              <tbody id="productTableBody">
+                <!-- Diisi otomatis oleh JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Right: Donut Chart Distribution -->
+        <div class="saas-card donut-panel-card">
+          <div class="card-header-bar">
+            <div>
+              <h2 class="card-heading">Distribusi Penjualan</h2>
+              <p class="card-subheading">Porsi volume terjual antar produk</p>
+            </div>
+          </div>
+          <div class="donut-chart-wrapper">
+            <canvas id="productChart"></canvas>
           </div>
         </div>
       </section>
     </main>
   </div>
 
-  <script src="/js/app.js?v=graphite4"></script>
+  <script src="/js/app.js?v=frosted1"></script>
 </body>
 </html>

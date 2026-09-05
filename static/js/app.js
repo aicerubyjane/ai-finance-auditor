@@ -100,34 +100,35 @@ function renderTrendChart(trendData) {
       labels: labels,
       datasets: [
         {
-          label: 'Omzet',
+          label: 'Total Omzet',
           data: omzet,
-          borderColor: '#8A9DB1', // Slate Blue from Graphite palette
-          backgroundColor: 'rgba(138, 157, 177, 0.12)',
+          borderColor: '#5C7E8F', // Frosted Aura primary
+          backgroundColor: 'rgba(92, 126, 143, 0.08)',
           fill: true,
-          tension: 0.25,
-          borderWidth: 2,
-          pointRadius: 2.5,
+          tension: 0.3,
+          borderWidth: 2.5,
+          pointRadius: 2,
           pointHoverRadius: 5,
         },
         {
           label: 'Surplus Kas',
           data: surplus,
-          borderColor: '#34d399', // Emerald
-          backgroundColor: 'transparent',
+          borderColor: '#10B981', // Emerald Success
+          backgroundColor: 'rgba(16, 185, 129, 0.04)',
+          fill: true,
           borderWidth: 2,
-          tension: 0.25,
-          pointRadius: 2.5,
+          tension: 0.3,
+          pointRadius: 2,
           pointHoverRadius: 5,
         },
         {
-          label: 'Modal',
+          label: 'Modal Terpakai',
           data: modal,
-          borderColor: '#ECC5C6', // Blush Rose
+          borderColor: '#EF4444', // Danger Red
           backgroundColor: 'transparent',
           borderWidth: 2,
-          tension: 0.25,
-          pointRadius: 2.5,
+          tension: 0.3,
+          pointRadius: 2,
           pointHoverRadius: 5,
         }
       ]
@@ -140,40 +141,40 @@ function renderTrendChart(trendData) {
           position: 'top',
           align: 'end',
           labels: {
-            boxWidth: 12,
-            boxHeight: 12,
-            color: '#8b949e',
-            font: { family: 'Plus Jakarta Sans', size: 11, weight: '500' }
+            boxWidth: 10,
+            boxHeight: 10,
+            color: '#475569',
+            font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' }
           }
         },
         tooltip: {
-          backgroundColor: '#161b22',
-          titleColor: '#f0f6fc',
-          bodyColor: '#8b949e',
-          borderColor: '#30363d',
+          backgroundColor: '#0F172A',
+          titleColor: '#FFFFFF',
+          bodyColor: '#D4DDE2',
+          borderColor: '#D4DDE2',
           borderWidth: 1,
           padding: 10,
           callbacks: {
             label: function(context) {
-              return `${context.dataset.label}: ${formatRupiah(context.raw)}`;
+              return ` ${context.dataset.label}: ${formatRupiah(context.raw)}`;
             }
           }
         }
       },
       scales: {
         x: {
-          ticks: { color: '#6e7681', font: { size: 10 } },
-          grid: { color: 'rgba(255, 255, 255, 0.04)' }
+          ticks: { color: '#64748B', font: { size: 10, weight: '500' } },
+          grid: { color: '#F1F5F9' }
         },
         y: {
           ticks: {
-            color: '#6e7681',
-            font: { size: 10 },
+            color: '#64748B',
+            font: { size: 10, weight: '500' },
             callback: function(value) {
               return (value / 1000).toLocaleString('id-ID') + 'k';
             }
           },
-          grid: { color: 'rgba(255, 255, 255, 0.04)' }
+          grid: { color: '#F1F5F9' }
         }
       }
     }
@@ -192,46 +193,40 @@ function renderProductChart(rekap) {
     productChartInstance.destroy();
   }
 
-  const isMobile = window.innerWidth < 768;
   productChartInstance = new Chart(ctx, {
     type: 'doughnut',
     data: {
       labels: labels,
       datasets: [{
         data: data,
-        backgroundColor: ['#8A9DB1', '#ECC5C6', '#837D68'],
-        borderColor: '#1a1e24',
-        borderWidth: 2,
-        hoverOffset: 4
+        backgroundColor: ['#5C7E8F', '#A2A2A2', '#D4DDE2'], // Frosted Aura palette
+        borderColor: '#FFFFFF',
+        borderWidth: 3,
+        hoverOffset: 6
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      layout: {
-        padding: isMobile ? 4 : 0
-      },
       plugins: {
         legend: {
-          position: isMobile ? 'bottom' : 'right',
+          position: 'bottom',
           labels: {
-            boxWidth: 8,
-            boxHeight: 8,
-            color: '#8b949e',
-            font: { family: 'Plus Jakarta Sans', size: 10 },
-            padding: 6
+            boxWidth: 10,
+            boxHeight: 10,
+            color: '#475569',
+            font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' },
+            padding: 12
           }
         },
         tooltip: {
-          backgroundColor: '#161b22',
-          titleColor: '#f0f6fc',
-          bodyColor: '#8b949e',
-          borderColor: '#30363d',
-          borderWidth: 1,
-          padding: 6
+          backgroundColor: '#0F172A',
+          titleColor: '#FFFFFF',
+          bodyColor: '#D4DDE2',
+          padding: 8
         }
       },
-      cutout: '60%'
+      cutout: '65%'
     }
   });
 }

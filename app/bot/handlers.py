@@ -47,10 +47,10 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("⛔ Maaf, Anda tidak memiliki akses ke bot audit keuangan ini.")
         return
 
-    active_day = settings.ACTIVE_SHEET_NAME
+    current_sheet = sheets_service.get_current_operational_sheet()
     text = (
         f"👋 **Selamat Datang di Finance & Stock Auditor Bot**\n\n"
-        f"📅 **Sheet Aktif Saat Ini:** `{active_day}`\n"
+        f"📅 **Sheet Kerja Hari Ini:** `{current_sheet}`\n"
         f"Silakan pilih menu di bawah ini untuk memulai input atau kontrol data:"
     )
     await update.message.reply_text(
@@ -358,8 +358,8 @@ async def summary_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
-    data = sheets_service.get_daily_summary(settings.ACTIVE_SHEET_NAME)
-    active_sheet = settings.ACTIVE_SHEET_NAME
+    active_sheet = sheets_service.get_current_operational_sheet()
+    data = sheets_service.get_daily_summary(active_sheet)
 
     sold = data.get("sold_berbayar", 0)
     klaim = data.get("klaim_garansi", 0)

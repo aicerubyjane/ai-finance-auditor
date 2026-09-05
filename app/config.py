@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     SPREADSHEET_ID: str = ""
     SERVICE_ACCOUNT_FILE: str = "credentials.json"
     GOOGLE_SERVICE_ACCOUNT_JSON: Optional[str] = None
-    ACTIVE_SHEET_NAME: str = "Hari 47"
+    ACTIVE_SHEET_NAME: str = ""
     PORT: int = 8000
     HOST: str = "0.0.0.0"
 

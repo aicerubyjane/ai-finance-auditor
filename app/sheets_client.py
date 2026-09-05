@@ -90,14 +90,51 @@ class GoogleSheetsClient:
             logger.error(f"Gagal menghubungkan ke Google Sheets: {e}")
             self.is_connected = False
 
+    def get_current_operational_sheet(self) -> str:
+        """
+        Otomatis mendeteksi tab hari operasional terbaru (angka tertinggi yang ada datanya)
+        """
+        if settings.ACTIVE_SHEET_NAME:
+            return normalize_sheet_name(settings.ACTIVE_SHEET_NAME)
+
+        names = self.list_sheet_names()
+        day_sheets = []
+        for n in names:
+            norm = normalize_sheet_name(n)
+            if norm.lower().startswith("hari "):
+                parts = norm[5:].strip()
+                if parts.isdigit():
+                    day_sheets.append((int(parts), n))
+
+        if day_sheets:
+            # Urutkan berdasarkan nomor hari tertinggi (misal Hari 47)
+            day_sheets.sort(key=lambda x: x[0], reverse=True)
+            for _, sheet_name in day_sheets:
+                try:
+                    ws = self.spreadsheet.worksheet(sheet_name)
+                    # Cek apakah ada data di tabel akun (B16) atau tanggal (B3)
+                    vals = ws.get_all_values()
+                    # Jika baris akun ada data (B16 tidak kosong)
+                    has_data = any(len(r) > 1 and r[1].strip() for r in vals[15:47])
+                    if has_data:
+                        settings.ACTIVE_SHEET_NAME = sheet_name
+                        return sheet_name
+                except Exception:
+                    continue
+            
+            # Jika belum ada yang terdeteksi ada datanya, pakai hari tertinggi
+            settings.ACTIVE_SHEET_NAME = day_sheets[0][1]
+            return day_sheets[0][1]
+
+        return "Hari 47"
+
     def get_worksheet(self, sheet_name: str) -> Optional[gspread.Worksheet]:
         if not self.is_connected or not self.spreadsheet:
             return None
-        norm_name = normalize_sheet_name(sheet_name)
+        norm_name = normalize_sheet_name(sheet_name) if sheet_name else self.get_current_operational_sheet()
         try:
             return self.spreadsheet.worksheet(norm_name)
         except gspread.exceptions.WorksheetNotFound:
-            # Coba alternatif tanpa leading zero jika gagal, misal 'Hari 5' vs 'Hari 05'
             try:
                 alt = norm_name.replace("Hari 0", "Hari ")
                 return self.spreadsheet.worksheet(alt)
@@ -318,8 +355,7 @@ class GoogleSheetsClient:
             return {}
 
     def get_daily_summary(self, sheet_name: Optional[str] = None) -> Dict[str, Any]:
-        raw_name = sheet_name or settings.ACTIVE_SHEET_NAME
-        target_sheet = normalize_sheet_name(raw_name)
+        target_sheet = normalize_sheet_name(sheet_name) if sheet_name else self.get_current_operational_sheet()
 
         if not self.is_connected:
             return {}

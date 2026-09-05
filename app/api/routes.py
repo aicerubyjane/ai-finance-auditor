@@ -14,19 +14,20 @@ async def health_check():
 
 @api_router.get("/dashboard")
 async def get_dashboard_data():
+    current_sheet = sheets_service.get_current_operational_sheet()
     kpis = sheets_service.get_dashboard_kpis()
-    daily = sheets_service.get_daily_summary(settings.ACTIVE_SHEET_NAME)
+    daily = sheets_service.get_daily_summary(current_sheet)
     sheets = sheets_service.list_sheet_names()
     return {
         "kpis": kpis,
         "daily": daily,
         "available_sheets": sheets,
-        "active_sheet": settings.ACTIVE_SHEET_NAME
+        "active_sheet": current_sheet
     }
 
 @api_router.get("/daily-summary")
 async def get_daily(sheet: str = ""):
-    target_sheet = sheet if sheet else settings.ACTIVE_SHEET_NAME
+    target_sheet = sheet if sheet else sheets_service.get_current_operational_sheet()
     return sheets_service.get_daily_summary(target_sheet)
 
 @api_router.post("/set-active-day")

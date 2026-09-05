@@ -17,6 +17,16 @@ const elementsToAnimate = [
   'dayOmzet', 'dayModal', 'daySurplus', 'dayMargin', 'dayThreads', 'dayReseller'
 ];
 
+function updateLiveClock() {
+  const syncText = document.getElementById('syncStatusText');
+  const syncBadge = document.getElementById('syncStatusBadge');
+  if (syncText && syncBadge && syncBadge.classList.contains('success')) {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\./g, ':');
+    syncText.textContent = `Tersinkronisasi secara real-time (${timeStr})`;
+  }
+}
+
 function setLoadingState(isLoading) {
   const progressBar = document.getElementById('syncProgressBar');
   const syncBadge = document.getElementById('syncStatusBadge');
@@ -51,8 +61,9 @@ function setLoadingState(isLoading) {
     if (syncBadge) {
       syncBadge.className = 'sync-live-badge success';
     }
-    if (syncText) {
-      syncText.textContent = `Tersinkronisasi (${new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })})`;
+    updateLiveClock();
+    if (!window.liveClockInterval) {
+      window.liveClockInterval = setInterval(updateLiveClock, 1000);
     }
 
     elementsToAnimate.forEach(id => {

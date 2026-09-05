@@ -59,7 +59,12 @@ class GoogleSheetsClient:
         if settings.GOOGLE_SERVICE_ACCOUNT_JSON:
             try:
                 import json
-                info_dict = json.loads(settings.GOOGLE_SERVICE_ACCOUNT_JSON)
+                import base64
+                raw_val = settings.GOOGLE_SERVICE_ACCOUNT_JSON.strip()
+                # Jika format base64
+                if not raw_val.startswith("{"):
+                    raw_val = base64.b64decode(raw_val).decode('utf-8')
+                info_dict = json.loads(raw_val)
                 creds = Credentials.from_service_account_info(info_dict, scopes=SCOPES)
                 logger.info("Menggunakan kredensial dari GOOGLE_SERVICE_ACCOUNT_JSON env.")
             except Exception as e:

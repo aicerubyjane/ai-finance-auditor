@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=frosted8">
+  <link rel="stylesheet" href="/css/style.css?v=frosted9">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -261,8 +261,40 @@
             <canvas id="productChart"></canvas>
           </div>
         </div>
-      </section>
     </main>
+
+    <!-- Mobile Bottom Action Dock (Membuat Pilih Hari & Input Data Nyaman Diklik Jempol di Layar Bawah Ponsel) -->
+    <nav class="mobile-bottom-dock" aria-label="Aksi Cepat Mobile">
+      <div class="dock-inner-wrap">
+        <div class="dock-day-selector">
+          <label for="mobileDaySelect" class="dock-label">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+              <line x1="16" x2="16" y1="2" y2="6"/>
+              <line x1="8" x2="8" y1="2" y2="6"/>
+              <line x1="3" x2="21" y1="10" y2="10"/>
+            </svg>
+            <span>Sheet Hari:</span>
+          </label>
+          <div class="dock-select-box">
+            <select id="mobileDaySelect" class="dock-select" aria-label="Pilih hari aktif mobile">
+              <option value="Hari 47">Hari 47</option>
+            </select>
+            <svg class="dock-select-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="m6 9 6 6 6-6"/>
+            </svg>
+          </div>
+        </div>
+
+        <button id="mobileInputDataBtn" class="dock-btn-input" title="Buka Spreadsheet Input Data">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M12 20h9"/>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+          </svg>
+          <span>Input Data</span>
+        </button>
+      </div>
+    </nav>
   </div>
 
   <!-- PIN Modal Dialog (6 Digit) -->
@@ -398,6 +430,6 @@
     </div>
   </div>
 
-  <script src="/js/app.js?v=frosted8"></script>
+  <script src="/js/app.js?v=frosted9"></script>
 </body>
 </html>

@@ -690,11 +690,154 @@ html, body {
   }
 }
 
-@media (max-width: 540px) {
-  .header-main-row {
-    padding: 10px 12px;
+/* Mobile Bottom Dock (Hidden on Desktop) */
+.mobile-bottom-dock {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* On mobile: keep only clean title and Sync button in top header */
+  .app-top-header .day-picker-container,
+  .app-top-header #openInputDataBtn {
+    display: none !important;
   }
 
+  .header-main-row {
+    padding: 10px 16px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .header-right-actions {
+    width: auto;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .btn-primary-action {
+    padding: 7px 12px;
+    font-size: 12px;
+    width: auto;
+  }
+
+  .main-content {
+    padding-bottom: 84px !important; /* Space for bottom dock */
+  }
+
+  /* Fixed Floating Mobile Dock at Bottom */
+  .mobile-bottom-dock {
+    display: block;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid var(--fa-frosted-border);
+    box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.08);
+    z-index: 100;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)) 16px;
+    box-sizing: border-box;
+  }
+
+  .dock-inner-wrap {
+    max-width: 480px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .dock-day-selector {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background-color: var(--fa-white);
+    border: 1px solid var(--fa-frosted-border);
+    border-radius: var(--radius-sm);
+    padding: 6px 12px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .dock-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--fa-text-secondary);
+    white-space: nowrap;
+  }
+
+  .dock-label svg {
+    color: var(--fa-primary);
+  }
+
+  .dock-select-box {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .dock-select {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    background: transparent;
+    border: none;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--fa-primary);
+    padding-right: 18px;
+    outline: none;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .dock-select option {
+    background: #FFFFFF;
+    color: #0F172A;
+    font-size: 13px;
+  }
+
+  .dock-select-arrow {
+    position: absolute;
+    right: 0;
+    pointer-events: none;
+    color: var(--fa-primary);
+  }
+
+  .dock-btn-input {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: linear-gradient(180deg, #5C7E8F 0%, #4D6B7B 100%);
+    color: var(--fa-white);
+    border: none;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 800;
+    border-radius: var(--radius-sm);
+    box-shadow: 0 2px 6px rgba(92, 126, 143, 0.3);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+
+  .dock-btn-input:active {
+    transform: scale(0.97);
+  }
+}
+
+@media (max-width: 540px) {
   .kpi-banner-grid {
     grid-template-columns: 1fr;
     gap: 10px;
@@ -702,21 +845,6 @@ html, body {
 
   .card-hero-number {
     font-size: 20px;
-  }
-
-  .header-right-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .day-picker-container {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .btn-primary-action {
-    width: 100%;
-    justify-content: center;
   }
 
   .donut-chart-wrapper {

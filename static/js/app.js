@@ -142,22 +142,26 @@ function updateUI(data) {
 
   // Populate Dropdown Sheet Desktop & Mobile
   const selectDesktop = document.getElementById('activeDaySelect');
-  if (selectDesktop && data.available_sheets && data.available_sheets.length > 0) {
-    if (selectDesktop.children.length <= 1 || selectDesktop.dataset.populated !== "true") {
-      selectDesktop.innerHTML = '';
-      data.available_sheets.forEach(sheet => {
-        const opt = document.createElement('option');
-        opt.value = sheet;
-        opt.textContent = sheet;
-        if (sheet.trim().toLowerCase() === activeSheet.trim().toLowerCase()) {
-          opt.selected = true;
-        }
-        selectDesktop.appendChild(opt);
-      });
-      selectDesktop.dataset.populated = "true";
+  const selectMobile = document.getElementById('mobileDaySelect');
+  
+  [selectDesktop, selectMobile].forEach(sel => {
+    if (sel && data.available_sheets && data.available_sheets.length > 0) {
+      if (sel.children.length <= 1 || sel.dataset.populated !== "true") {
+        sel.innerHTML = '';
+        data.available_sheets.forEach(sheet => {
+          const opt = document.createElement('option');
+          opt.value = sheet;
+          opt.textContent = sheet;
+          if (sheet.trim().toLowerCase() === activeSheet.trim().toLowerCase()) {
+            opt.selected = true;
+          }
+          sel.appendChild(opt);
+        });
+        sel.dataset.populated = "true";
+      }
+      sel.value = activeSheet;
     }
-    selectDesktop.value = activeSheet;
-  }
+  });
 
   // Gabungkan produk global Rekap Jenis Akun + produk harian aktif (misal Apple Music, Canva, dll)
   const combinedProducts = Object.assign({}, kpis.rekap_produk || {});
@@ -404,6 +408,7 @@ function handleSheetChange(e) {
 }
 
 document.getElementById('activeDaySelect')?.addEventListener('change', handleSheetChange);
+document.getElementById('mobileDaySelect')?.addEventListener('change', handleSheetChange);
 
 // --------------------------------------------------------------------------
 // PIN Verification & Google Sheets View/Edit Modal Controller
@@ -412,6 +417,7 @@ const pinModal = document.getElementById('pinModal');
 const pinInput = document.getElementById('pinInputField');
 const pinError = document.getElementById('pinErrorMessage');
 const openInputDataBtn = document.getElementById('openInputDataBtn');
+const mobileInputDataBtn = document.getElementById('mobileInputDataBtn');
 const cancelPinBtn = document.getElementById('cancelPinBtn');
 const submitPinBtn = document.getElementById('submitPinBtn');
 
@@ -424,7 +430,7 @@ const saveNewRowBtn = document.getElementById('saveNewRowBtn');
 
 let verifiedPin = "";
 
-openInputDataBtn?.addEventListener('click', () => {
+function triggerOpenInputFlow() {
   if (verifiedPin) {
     openSheetEditor();
   } else {
@@ -433,7 +439,10 @@ openInputDataBtn?.addEventListener('click', () => {
     pinModal.style.display = "flex";
     setTimeout(() => pinInput.focus(), 100);
   }
-});
+}
+
+openInputDataBtn?.addEventListener('click', triggerOpenInputFlow);
+mobileInputDataBtn?.addEventListener('click', triggerOpenInputFlow);
 
 cancelPinBtn?.addEventListener('click', () => {
   pinModal.style.display = "none";

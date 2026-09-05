@@ -298,6 +298,271 @@ function handleSheetChange(e) {
 
 document.getElementById('activeDaySelect')?.addEventListener('change', handleSheetChange);
 
+// --------------------------------------------------------------------------
+// PIN Verification & Google Sheets View/Edit Modal Controller
+// --------------------------------------------------------------------------
+const pinModal = document.getElementById('pinModal');
+const pinInput = document.getElementById('pinInputField');
+const pinError = document.getElementById('pinErrorMessage');
+const openInputDataBtn = document.getElementById('openInputDataBtn');
+const cancelPinBtn = document.getElementById('cancelPinBtn');
+const submitPinBtn = document.getElementById('submitPinBtn');
+
+const sheetEditorModal = document.getElementById('sheetEditorModal');
+const closeSheetEditorBtn = document.getElementById('closeSheetEditorBtn');
+const refreshSheetTableBtn = document.getElementById('refreshSheetTableBtn');
+const addNewRowBtn = document.getElementById('addNewRowBtn');
+const newRowFormContainer = document.getElementById('newRowFormContainer');
+const saveNewRowBtn = document.getElementById('saveNewRowBtn');
+
+let verifiedPin = "";
+
+openInputDataBtn?.addEventListener('click', () => {
+  if (verifiedPin) {
+    openSheetEditor();
+  } else {
+    pinInput.value = "";
+    pinError.style.display = "none";
+    pinModal.style.display = "flex";
+    setTimeout(() => pinInput.focus(), 100);
+  }
+});
+
+cancelPinBtn?.addEventListener('click', () => {
+  pinModal.style.display = "none";
+});
+
+submitPinBtn?.addEventListener('click', handlePinVerification);
+pinInput?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') handlePinVerification();
+});
+
+async function handlePinVerification() {
+  const pinVal = pinInput.value.trim();
+  if (pinVal.length < 6) {
+    pinError.textContent = "PIN harus 6 digit angka";
+    pinError.style.display = "block";
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/verify-pin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: pinVal })
+    });
+    const result = await res.json();
+    if (result.success) {
+      verifiedPin = pinVal;
+      pinModal.style.display = "none";
+      openSheetEditor();
+    } else {
+      pinError.textContent = result.error || "PIN salah, coba lagi!";
+      pinError.style.display = "block";
+      pinInput.select();
+    }
+  } catch (err) {
+    pinError.textContent = "Gagal memverifikasi PIN";
+    pinError.style.display = "block";
+  }
+}
+
+closeSheetEditorBtn?.addEventListener('click', () => {
+  sheetEditorModal.style.display = "none";
+  // Sync dashboard summary again after editing
+  fetchDashboardData(currentSelectedSheet);
+});
+
+refreshSheetTableBtn?.addEventListener('click', () => {
+  loadSheetTableData();
+});
+
+addNewRowBtn?.addEventListener('click', () => {
+  if (newRowFormContainer.style.display === "none" || !newRowFormContainer.style.display) {
+    newRowFormContainer.style.display = "block";
+  } else {
+    newRowFormContainer.style.display = "none";
+  }
+});
+
+function openSheetEditor() {
+  sheetEditorModal.style.display = "flex";
+  document.getElementById('sheetEditorTitle').textContent = `Salinan Usaha Sell acc Prem - ${currentSelectedSheet || "Hari 47"}`;
+  loadSheetTableData();
+}
+
+async function loadSheetTableData() {
+  const tbody = document.getElementById('rawSheetsTbody');
+  if (!tbody) return;
+  tbody.innerHTML = `<tr><td colspan="13" style="text-align: center; padding: 20px; color: #64748B;">Memuat data spreadsheet dari Google Sheets...</td></tr>`;
+
+  try {
+    const res = await fetch(`/api/sheet-table?sheet=${encodeURIComponent(currentSelectedSheet)}&pin=${encodeURIComponent(verifiedPin)}`);
+    const json = await res.json();
+    if (!json.success) {
+      tbody.innerHTML = `<tr><td colspan="13" style="text-align: center; color: #EF4444; padding: 20px;">${json.error || "Gagal memuat sheet"}</td></tr>`;
+      return;
+    }
+
+    const data = json.data || {};
+    document.getElementById('sheetTotalModalVal').textContent = data.total_modal || "Rp 0";
+    renderRawTable(data.rows || []);
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="13" style="text-align: center; color: #EF4444; padding: 20px;">Error koneksi saat mengambil tabel sheet</td></tr>`;
+  }
+}
+
+function renderRawTable(rows) {
+  const tbody = document.getElementById('rawSheetsTbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  rows.forEach((row) => {
+    const tr = document.createElement('tr');
+    const rIdx = row.row_idx;
+
+    // Menyesuaikan warna cell mirip di spreadsheet asli
+    const posClass = getPosisiClass(row.posisi);
+    const statusClass = row.status_akun?.toLowerCase().includes("premium") ? "cell-premium" : "";
+    const paketClass = row.paket?.toLowerCase().includes("garansi") ? "cell-garansi" : "";
+
+    tr.innerHTML = `
+      <td class="row-number-cell">${rIdx}</td>
+      <td><input class="sheet-cell-edit" data-row="${rIdx}" data-col="A" value="${escapeHtml(row.no)}"></td>
+      <td><input class="sheet-cell-edit" data-row="${rIdx}" data-col="B" value="${escapeHtml(row.email)}"></td>
+      <td><input class="sheet-cell-edit" data-row="${rIdx}" data-col="C" value="${escapeHtml(row.password_email)}"></td>
+      <td><input class="sheet-cell-edit" data-row="${rIdx}" data-col="D" value="${escapeHtml(row.password_cgpt)}"></td>
+      <td class="${statusClass}"><input class="sheet-cell-edit" data-row="${rIdx}" data-col="E" value="${escapeHtml(row.status_akun)}"></td>
+      <td class="${posClass}"><input class="sheet-cell-edit" data-row="${rIdx}" data-col="F" value="${escapeHtml(row.posisi)}"></td>
+      <td><input class="sheet-cell-edit" data-row="${rIdx}" data-col="G" value="${escapeHtml(row.harga_jual)}"></td>
+      <td><input class="sheet-cell-edit" data-row="${rIdx}" data-col="H" value="${escapeHtml(row.jenis_transaksi)}"></td>
+      <td class="${paketClass}"><input class="sheet-cell-edit" data-row="${rIdx}" data-col="I" value="${escapeHtml(row.paket)}"></td>
+      <td><input class="sheet-cell-edit" data-row="${rIdx}" data-col="J" value="${escapeHtml(row.sumber)}"></td>
+      <td><input class="sheet-cell-edit" data-row="${rIdx}" data-col="K" value="${escapeHtml(row.keterangan)}"></td>
+      <td><input class="sheet-cell-edit" data-row="${rIdx}" data-col="L" value="${escapeHtml(row.jenis_akun)}"></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Attach blur listener to all editable cells
+  tbody.querySelectorAll('.sheet-cell-edit').forEach(input => {
+    let originalValue = input.value;
+    input.addEventListener('focus', () => {
+      originalValue = input.value;
+    });
+    input.addEventListener('blur', async () => {
+      const newVal = input.value.trim();
+      if (newVal !== originalValue) {
+        const row = input.dataset.row;
+        const col = input.dataset.col;
+        await saveCellChange(row, col, newVal, input);
+      }
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') input.blur();
+    });
+  });
+}
+
+function getPosisiClass(pos) {
+  if (!pos) return "";
+  const p = pos.trim().toLowerCase();
+  if (p === "sold") return "cell-sold";
+  if (p === "stanby" || p === "ready") return "cell-stanby";
+  if (p === "klaim") return "cell-klaim";
+  if (p === "proses") return "cell-proses";
+  return "";
+}
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return "";
+  return String(str).replace(/"/g, '&quot;');
+}
+
+async function saveCellChange(row, col, val, inputEl) {
+  inputEl.style.backgroundColor = "#FEF3C7"; // Amber saving indicator
+  try {
+    const res = await fetch('/api/update-sheet-cell', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pin: verifiedPin,
+        sheet_name: currentSelectedSheet,
+        row: row,
+        col: col,
+        val: val
+      })
+    });
+    const result = await res.json();
+    if (result.success) {
+      inputEl.style.backgroundColor = "#D1E7DD"; // Success indicator
+      setTimeout(() => {
+        inputEl.style.backgroundColor = "";
+      }, 1000);
+    } else {
+      inputEl.style.backgroundColor = "#FEE2E2"; // Error
+    }
+  } catch (err) {
+    inputEl.style.backgroundColor = "#FEE2E2";
+  }
+}
+
+// Simpan Baris Baru dari Form Cepat
+saveNewRowBtn?.addEventListener('click', async () => {
+  const email = document.getElementById('newRowEmail').value.trim();
+  const passEmail = document.getElementById('newRowPassEmail').value.trim();
+  const passCgpt = document.getElementById('newRowPassCgpt').value.trim();
+  const jenisAkun = document.getElementById('newRowJenisAkun').value;
+  const posisi = document.getElementById('newRowPosisi').value;
+  const harga = document.getElementById('newRowHarga').value;
+  const paket = document.getElementById('newRowPaket').value;
+  const sumber = document.getElementById('newRowSumber').value;
+  const ket = document.getElementById('newRowKeterangan').value.trim();
+
+  saveNewRowBtn.disabled = true;
+  saveNewRowBtn.textContent = "Menyimpan...";
+
+  try {
+    const res = await fetch('/api/add-row-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pin: verifiedPin,
+        sheet_name: currentSelectedSheet,
+        email: email,
+        password_email: passEmail,
+        password_cgpt: passCgpt,
+        status_akun: posisi === "Sold" ? "Signed / Premium" : (posisi === "Stanby" ? "Signed / Free" : "Signed / Premium"),
+        posisi: posisi,
+        harga_jual: harga ? parseFloat(harga) : 0,
+        jenis_transaksi: posisi === "Sold" ? "Penjualan" : (posisi === "Klaim" ? "Klaim" : ""),
+        paket: paket,
+        sumber: sumber,
+        jenis_akun: jenisAkun,
+        keterangan: ket
+      })
+    });
+    const json = await res.json();
+    if (json.success) {
+      // Clear inputs
+      document.getElementById('newRowEmail').value = '';
+      document.getElementById('newRowPassEmail').value = '';
+      document.getElementById('newRowPassCgpt').value = '';
+      document.getElementById('newRowHarga').value = '';
+      document.getElementById('newRowKeterangan').value = '';
+      // Reload table
+      loadSheetTableData();
+    } else {
+      alert(json.error || "Gagal menyimpan baris baru");
+    }
+  } catch (err) {
+    alert("Gagal terhubung ke server");
+  } finally {
+    saveNewRowBtn.disabled = false;
+    saveNewRowBtn.textContent = "Simpan ke Sheets";
+  }
+});
+
 // Initial Fetch & Refresh Polling
 fetchDashboardData();
 setInterval(() => {

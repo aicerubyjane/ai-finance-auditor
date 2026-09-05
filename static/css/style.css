@@ -703,4 +703,408 @@ html, body {
   .donut-chart-wrapper {
     height: 200px;
   }
+/* --------------------------------------------------------------------------
+   Modal & Spreadsheet Editor Styles (PIN & Google Sheets Interface)
+   -------------------------------------------------------------------------- */
+.btn-secondary-action {
+  background-color: var(--fa-white);
+  color: var(--fa-primary);
+  border: 1px solid var(--fa-primary);
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-card);
+}
+
+.btn-secondary-action:hover {
+  background-color: var(--fa-primary-light);
+  color: var(--fa-primary-hover);
+}
+
+.custom-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.custom-modal-card {
+  background-color: var(--fa-white);
+  border-radius: var(--radius-md);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--fa-frosted-border);
+  display: flex;
+  flex-direction: column;
+}
+
+/* PIN Verification Card */
+.pin-card {
+  width: 100%;
+  max-width: 380px;
+  padding: 26px;
+  text-align: center;
+}
+
+.pin-icon-wrap {
+  width: 48px;
+  height: 48px;
+  background-color: var(--fa-primary-light);
+  color: var(--fa-primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 14px auto;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--fa-text-dark);
+}
+
+.modal-desc {
+  font-size: 13px;
+  color: var(--fa-text-muted);
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
+.pin-input-wrap {
+  margin: 20px 0 16px 0;
+}
+
+#pinInputField {
+  width: 100%;
+  max-width: 220px;
+  font-size: 28px;
+  letter-spacing: 10px;
+  text-align: center;
+  font-weight: 800;
+  padding: 10px 14px;
+  border: 2px solid var(--fa-frosted-border);
+  border-radius: var(--radius-sm);
+  color: var(--fa-text-dark);
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+#pinInputField:focus {
+  border-color: var(--fa-primary);
+}
+
+.pin-error-text {
+  color: var(--accent-danger);
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.modal-btn-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.btn-modal-cancel {
+  flex: 1;
+  padding: 9px;
+  border: 1px solid var(--fa-frosted-border);
+  background: var(--fa-white);
+  color: var(--fa-text-secondary);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-modal-confirm {
+  flex: 1;
+  padding: 9px;
+  border: none;
+  background: var(--fa-primary);
+  color: var(--fa-white);
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-modal-confirm:hover {
+  background: var(--fa-primary-hover);
+}
+
+/* Fullscreen Sheet Card */
+.full-sheet-card {
+  width: 96vw;
+  max-width: 1400px;
+  height: 92vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.sheet-toolbar-header {
+  padding: 12px 18px;
+  background-color: #F8FAFC;
+  border-bottom: 1px solid var(--fa-frosted-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.sheet-meta-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sheet-filename {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--fa-text-dark);
+  line-height: 1.2;
+}
+
+.sheet-status-tag {
+  font-size: 11px;
+  color: var(--accent-success);
+  font-weight: 600;
+}
+
+.sheet-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-sheet-tool {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  background-color: var(--fa-white);
+  color: var(--fa-text-dark);
+  border: 1px solid var(--fa-frosted-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-sheet-tool:hover {
+  background-color: var(--fa-soft-ice);
+  border-color: var(--fa-primary);
+  color: var(--fa-primary);
+}
+
+.btn-sheet-close {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--fa-frosted-border);
+  background: var(--fa-white);
+  color: var(--fa-text-muted);
+  font-size: 20px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.btn-sheet-close:hover {
+  color: var(--accent-danger);
+  background-color: #FEE2E2;
+}
+
+/* Quick Add Form Bar */
+.new-row-quick-bar {
+  padding: 10px 18px;
+  background-color: #EEF2F6;
+  border-bottom: 1px solid var(--fa-frosted-border);
+}
+
+.quick-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+}
+
+.sheet-input-field {
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: inherit;
+  border: 1px solid var(--fa-frosted-border);
+  border-radius: 4px;
+  background: var(--fa-white);
+  outline: none;
+}
+
+.sheet-input-field:focus {
+  border-color: var(--fa-primary);
+}
+
+.btn-save-row {
+  background-color: #10B981;
+  color: var(--fa-white);
+  font-weight: 700;
+  font-size: 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 6px 12px;
+}
+
+.btn-save-row:hover {
+  background-color: #059669;
+}
+
+/* Formula & Info Bar */
+.sheet-formula-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 18px;
+  background-color: #F1F5F9;
+  border-bottom: 1px solid var(--fa-frosted-border);
+  font-size: 12px;
+}
+
+.formula-label {
+  font-weight: 800;
+  color: #D97706;
+}
+
+.formula-value {
+  font-weight: 800;
+  color: var(--fa-text-dark);
+  background-color: var(--fa-white);
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--fa-frosted-border);
+}
+
+.formula-info {
+  color: var(--fa-text-muted);
+  font-size: 11px;
+  margin-left: auto;
+}
+
+/* Spreadsheet Viewport */
+.spreadsheet-viewport {
+  flex: 1;
+  overflow: auto;
+  background-color: #FFFFFF;
+}
+
+.google-sheets-grid {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 12px;
+  font-family: 'Arial', sans-serif;
+}
+
+.google-sheets-grid th, 
+.google-sheets-grid td {
+  border: 1px solid #D1D5DB;
+  padding: 4px 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 26px;
+  box-sizing: border-box;
+}
+
+/* Header Cells (Columns A, B, C...) */
+.col-letters-row th {
+  background-color: #F3F4F6;
+  color: #4B5563;
+  font-weight: 600;
+  text-align: center;
+  font-size: 11px;
+  user-select: none;
+}
+
+.row-number-cell {
+  width: 38px;
+  min-width: 38px;
+  max-width: 38px;
+  background-color: #F3F4F6 !important;
+  color: #6B7280 !important;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  user-select: none;
+}
+
+/* Cell Status / Posisi Coloring - Mirip Asli Google Sheets */
+.cell-sold {
+  background-color: #D1E7DD !important;
+  color: #0F5132 !important;
+  font-weight: 700;
+}
+
+.cell-stanby {
+  background-color: #CFE2FF !important;
+  color: #084298 !important;
+  font-weight: 700;
+}
+
+.cell-klaim {
+  background-color: #F8D7DA !important;
+  color: #842029 !important;
+  font-weight: 700;
+}
+
+.cell-proses {
+  background-color: #FFF3CD !important;
+  color: #664D03 !important;
+  font-weight: 700;
+}
+
+.cell-premium {
+  background-color: #F8D7DA !important;
+  color: #842029 !important;
+  font-weight: 600;
+}
+
+.cell-garansi {
+  background-color: #D1E7DD !important;
+  color: #0F5132 !important;
+}
+
+/* Editable Cell Input */
+.sheet-cell-edit {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 12px;
+  color: inherit;
+  outline: none;
+  padding: 0;
+}
+
+.sheet-cell-edit:focus {
+  background-color: #FFFFFF;
+  color: #000000;
+  box-shadow: inset 0 0 0 2px #2563EB;
 }

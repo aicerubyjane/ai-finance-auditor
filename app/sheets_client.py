@@ -526,4 +526,106 @@ class GoogleSheetsClient:
             logger.error(f"Error get_daily_summary: {e}")
             return {}
 
+    def get_sheet_raw_table(self, sheet_name: Optional[str] = None) -> Dict[str, Any]:
+        target_sheet = normalize_sheet_name(sheet_name) if sheet_name else self.get_current_operational_sheet()
+        if not self.is_connected:
+            return {"sheet_name": target_sheet, "headers": [], "rows": [], "modal_rows": [], "total_modal": "Rp 0"}
+
+        try:
+            ws = self.get_worksheet(target_sheet)
+            if not ws:
+                return {"sheet_name": target_sheet, "headers": [], "rows": [], "modal_rows": [], "total_modal": "Rp 0"}
+
+            all_vals = ws.get_all_values()
+            
+            # Modal rows (Row 6 - 11)
+            modal_rows = []
+            total_modal = "Rp 0"
+            if len(all_vals) >= 12:
+                for r_idx in range(5, 11):
+                    if r_idx < len(all_vals):
+                        row = all_vals[r_idx]
+                        if len(row) > 1 and row[1].strip():
+                            modal_rows.append({
+                                "row_idx": r_idx + 1,
+                                "no": row[0] if len(row) > 0 else "",
+                                "kebutuhan": row[1] if len(row) > 1 else "",
+                                "harga_satuan": row[2] if len(row) > 2 else "",
+                                "jumlah": row[3] if len(row) > 3 else "",
+                                "satuan": row[4] if len(row) > 4 else "",
+                                "total": row[5] if len(row) > 5 else ""
+                            })
+                # Check Total Modal cell (usually row 12 col F/G)
+                if len(all_vals) > 11 and len(all_vals[11]) > 6:
+                    total_modal = all_vals[11][6].strip() or all_vals[11][5].strip() or "Rp 0"
+
+            # Akun rows (Row 15 is header, Rows 16 - 47 are data rows)
+            headers = ["No", "Email", "Password Email", "Password CGPT", "Status Akun", "Posisi", "Harga Jual", "Jenis Transaksi", "Paket", "Sumber", "Keterangan", "Jenis Akun"]
+            if len(all_vals) >= 15:
+                raw_head = all_vals[14][:12]
+                if any(h.strip() for h in raw_head):
+                    headers = [h.strip() or headers[i] for i, h in enumerate(raw_head)]
+
+            account_rows = []
+            for r_idx in range(15, min(47, len(all_vals))):
+                row = all_vals[r_idx]
+                account_rows.append({
+                    "row_idx": r_idx + 1,
+                    "no": row[0] if len(row) > 0 else str(r_idx - 14),
+                    "email": row[1] if len(row) > 1 else "",
+                    "password_email": row[2] if len(row) > 2 else "",
+                    "password_cgpt": row[3] if len(row) > 3 else "",
+                    "status_akun": row[4] if len(row) > 4 else "",
+                    "posisi": row[5] if len(row) > 5 else "",
+                    "harga_jual": row[6] if len(row) > 6 else "",
+                    "jenis_transaksi": row[7] if len(row) > 7 else "",
+                    "paket": row[8] if len(row) > 8 else "",
+                    "sumber": row[9] if len(row) > 9 else "",
+                    "keterangan": row[10] if len(row) > 10 else "",
+                    "jenis_akun": row[11] if len(row) > 11 else ""
+                })
+
+            return {
+                "sheet_name": target_sheet,
+                "headers": headers,
+                "rows": account_rows,
+                "modal_rows": modal_rows,
+                "total_modal": total_modal
+            }
+        except Exception as e:
+            logger.error(f"Error get_sheet_raw_table: {e}")
+            return {"sheet_name": target_sheet, "headers": [], "rows": [], "modal_rows": [], "total_modal": "Rp 0"}
+
+    def update_raw_cell(self, sheet_name: str, row: int, col: str, value: Any) -> bool:
+        target_sheet = normalize_sheet_name(sheet_name)
+        if not self.is_connected:
+            return True
+        try:
+            ws = self.get_worksheet(target_sheet)
+            if not ws:
+                return False
+            cell_address = f"{col.upper()}{row}"
+            ws.update(range_name=cell_address, values=[[value]], raw=False)
+            logger.info(f"Berhasil update cell {cell_address} = {value} di {target_sheet}")
+            return True
+        except Exception as e:
+            logger.error(f"Error update_raw_cell {cell_address}: {e}")
+            return False
+
+    def update_raw_row(self, sheet_name: str, row: int, row_data: List[Any]) -> bool:
+        target_sheet = normalize_sheet_name(sheet_name)
+        if not self.is_connected:
+            return True
+        try:
+            ws = self.get_worksheet(target_sheet)
+            if not ws:
+                return False
+            range_str = f"B{row}:L{row}"
+            ws.update(range_name=range_str, values=[row_data], raw=False)
+            logger.info(f"Berhasil update baris {range_str} di {target_sheet}")
+            return True
+        except Exception as e:
+            logger.error(f"Error update_raw_row {row}: {e}")
+            return False
+
 sheets_service = GoogleSheetsClient()

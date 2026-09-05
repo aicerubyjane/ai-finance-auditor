@@ -8,18 +8,18 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/style.css?v=compact1">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="app-layout">
-    <!-- Navigation Sidebar -->
+    <!-- Navigation Sidebar Compact -->
     <aside class="sidebar">
       <div class="brand">
         <div class="brand-badge">AU</div>
         <div class="brand-info">
           <h2>Finance Auditor</h2>
-          <span class="brand-meta"><span class="live-indicator"></span> Google Sheets Live</span>
+          <span class="brand-meta"><span class="live-indicator"></span> Google Sheets</span>
         </div>
       </div>
 
@@ -27,28 +27,28 @@
         <a href="#overview" class="nav-item active">Ringkasan KPI</a>
         <a href="#tren" class="nav-item">Tren 60 Hari</a>
         <a href="#rekap-produk" class="nav-item">Kinerja Produk</a>
-        <a href="#operasional" class="nav-item">Operasional Harian</a>
       </nav>
 
       <div class="sidebar-footer">
         <div class="sheet-selector-group">
-          <label for="activeDaySelect">Sheet Harian Aktif</label>
+          <label for="activeDaySelect">Pilih Sheet Hari</label>
           <select id="activeDaySelect" aria-label="Pilih sheet harian">
-            <option value="Hari 38">Hari 38</option>
+            <option value="Hari 47">Hari 47</option>
           </select>
         </div>
         <div class="system-status-indicator">
-          <span class="status-dot"></span> Bot Telegram Terhubung
+          <span class="status-dot"></span> Bot Telegram Live
         </div>
       </div>
     </aside>
 
-    <!-- Main Content Canvas -->
+    <!-- Main Content Canvas (Single Screen Workbench) -->
     <main class="main-content" id="overview">
+      <!-- Compact Top Header -->
       <header class="top-header">
         <div class="header-title">
           <h1>Workbench Auditor & Inventaris Akun AI</h1>
-          <p>Pencatatan real-time performa kas, stok ready, rasio klaim, dan histori penjualan.</p>
+          <p>Monitoring kas harian, perputaran stok, rasio klaim garansi, dan histori penjualan.</p>
         </div>
         <div class="header-actions">
           <button id="refreshBtn" class="btn btn-default" title="Ambil data terbaru dari Google Sheets">
@@ -60,21 +60,23 @@
         </div>
       </header>
 
-      <!-- KPI Summary Cards -->
+      <!-- KPI Summary Cards (4 Kolom Rapat) -->
       <section class="kpi-grid" aria-label="Indikator Kinerja Utama">
         <div class="kpi-card">
           <div class="kpi-card-header">
             <span class="kpi-label">Total Omzet</span>
+            <span class="kpi-sub-tag">Global</span>
           </div>
           <div class="kpi-metric-value" id="kpiTotalOmzet">Rp 0</div>
           <div class="kpi-card-footer">
-            <span>Surplus Kas:</span> <strong id="kpiSurplusKas" class="val-positive">Rp 0</strong>
+            <span>Surplus:</span> <strong id="kpiSurplusKas" class="val-positive">Rp 0</strong>
           </div>
         </div>
 
         <div class="kpi-card">
           <div class="kpi-card-header">
             <span class="kpi-label">Sold Berbayar</span>
+            <span class="kpi-sub-tag">Penjualan</span>
           </div>
           <div class="kpi-metric-value" id="kpiSoldBerbayar">0 Akun</div>
           <div class="kpi-card-footer">
@@ -85,16 +87,18 @@
         <div class="kpi-card">
           <div class="kpi-card-header">
             <span class="kpi-label">Klaim Garansi</span>
+            <span class="kpi-sub-tag">Quality</span>
           </div>
           <div class="kpi-metric-value" id="kpiKlaimGaransi">0 Akun</div>
           <div class="kpi-card-footer">
-            <span>Rasio Klaim:</span> <strong id="kpiRasioKlaim" class="val-caution">0%</strong>
+            <span>Rasio:</span> <strong id="kpiRasioKlaim" class="val-caution">0%</strong>
           </div>
         </div>
 
         <div class="kpi-card">
           <div class="kpi-card-header">
             <span class="kpi-label">Modal Terpakai</span>
+            <span class="kpi-sub-tag">Operasional</span>
           </div>
           <div class="kpi-metric-value" id="kpiTotalModal">Rp 0</div>
           <div class="kpi-card-footer">
@@ -103,110 +107,97 @@
         </div>
       </section>
 
-      <!-- Daily Focus Section -->
-      <section class="card" id="operasional" aria-label="Ringkasan Hari Aktif">
-        <div class="card-header">
-          <div class="card-title-group">
-            <h3>Operasional Hari Aktif: <span id="currentDayBadge" class="val-positive">Hari 38</span></h3>
-          </div>
+      <!-- Compact Operational Strip (Hari Aktif yang Dipilih) -->
+      <section class="operational-strip" aria-label="Ringkasan Hari Aktif">
+        <div class="strip-header">
+          <span class="strip-title">Operasional: <strong id="currentDayBadge" class="val-positive">Hari 47</strong></span>
           <div class="status-tags">
             <span class="tag-badge tag-ready" id="chipReady">0 Ready</span>
             <span class="tag-badge tag-sold" id="chipSold">0 Sold</span>
             <span class="tag-badge tag-claim" id="chipClaim">0 Klaim</span>
           </div>
         </div>
-
-        <div class="daily-summary-panel">
-          <div class="daily-item">
-            <span class="item-label">Omzet Hari Ini</span>
-            <span class="item-value" id="dayOmzet">Rp 0</span>
+        <div class="strip-metrics">
+          <div class="strip-metric-item">
+            <span class="lbl">Omzet Hari Ini</span>
+            <span class="val" id="dayOmzet">Rp 0</span>
           </div>
-          <div class="daily-item">
-            <span class="item-label">Modal Hari Ini</span>
-            <span class="item-value" id="dayModal">Rp 0</span>
+          <div class="strip-metric-item">
+            <span class="lbl">Modal Hari Ini</span>
+            <span class="val" id="dayModal">Rp 0</span>
           </div>
-          <div class="daily-item">
-            <span class="item-label">Surplus Kas</span>
-            <span class="item-value val-positive" id="daySurplus">Rp 0</span>
+          <div class="strip-metric-item">
+            <span class="lbl">Surplus Kas</span>
+            <span class="val val-positive" id="daySurplus">Rp 0</span>
           </div>
-          <div class="daily-item">
-            <span class="item-label">Margin Kas</span>
-            <span class="item-value" id="dayMargin">0%</span>
+          <div class="strip-metric-item">
+            <span class="lbl">Margin</span>
+            <span class="val" id="dayMargin">0%</span>
           </div>
-          <div class="daily-item">
-            <span class="item-label">Sumber Threads</span>
-            <span class="item-value" id="dayThreads">0</span>
+          <div class="strip-metric-item">
+            <span class="lbl">Threads</span>
+            <span class="val" id="dayThreads">0</span>
           </div>
-          <div class="daily-item">
-            <span class="item-label">Sumber Reseller</span>
-            <span class="item-value" id="dayReseller">0</span>
+          <div class="strip-metric-item">
+            <span class="lbl">Reseller</span>
+            <span class="val" id="dayReseller">0</span>
           </div>
         </div>
       </section>
 
-      <!-- Charts Section -->
-      <section class="charts-grid" id="tren">
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title-group">
-              <h3>Tren Keuangan Harian (Omzet, Modal, Surplus)</h3>
-            </div>
+      <!-- Bottom Split Grid (Grafik Kiri & Produk Kanan) -->
+      <section class="workbench-bottom-grid">
+        <!-- Kolom Kiri: Tren 60 Hari -->
+        <div class="card chart-card-compact">
+          <div class="card-header-compact">
+            <h3>Tren Keuangan Harian (Omzet, Modal, Surplus)</h3>
             <span class="card-badge-context">Histori 60 Hari</span>
           </div>
-          <div class="chart-wrapper">
+          <div class="chart-wrapper-compact">
             <canvas id="trendChart"></canvas>
           </div>
         </div>
 
-        <div class="card" id="rekap-produk">
-          <div class="card-header">
-            <div class="card-title-group">
-              <h3>Distribusi Produk</h3>
+        <!-- Kolom Kanan: Donut & Tabel Produk Gabung Rapi -->
+        <div class="card products-card-compact">
+          <div class="products-header-compact">
+            <div class="donut-sub-section">
+              <div class="card-header-compact">
+                <h3>Distribusi Produk</h3>
+              </div>
+              <div class="chart-wrapper-donut-compact">
+                <canvas id="productChart"></canvas>
+              </div>
             </div>
-            <span class="card-badge-context">Volume Terjual</span>
-          </div>
-          <div class="chart-wrapper chart-wrapper-donut">
-            <canvas id="productChart"></canvas>
+
+            <div class="table-sub-section">
+              <div class="card-header-compact">
+                <h3>Rincian Kinerja Akun</h3>
+              </div>
+              <div class="table-container-compact">
+                <table class="workbench-table-compact">
+                  <thead>
+                    <tr>
+                      <th>Produk</th>
+                      <th>Sold</th>
+                      <th>Klaim</th>
+                      <th>Ready</th>
+                      <th>Omzet</th>
+                      <th>Rasio</th>
+                    </tr>
+                  </thead>
+                  <tbody id="productTableBody">
+                    <!-- Injected via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </section>
-
-      <!-- Products Summary Table -->
-      <section class="card" aria-label="Tabel Kinerja Produk">
-        <div class="card-header">
-          <div class="card-title-group">
-            <h3>Rincian Kinerja Berdasarkan Tipe Produk AI</h3>
-          </div>
-          <span class="card-badge-context">Sinkron Tab Rekap</span>
-        </div>
-        <div class="table-container">
-          <table class="workbench-table">
-            <thead>
-              <tr>
-                <th>Produk</th>
-                <th>Sold</th>
-                <th>Klaim Garansi</th>
-                <th>Stok Ready</th>
-                <th>Total Omzet</th>
-                <th>Rasio Klaim</th>
-              </tr>
-            </thead>
-            <tbody id="productTableBody">
-              <!-- Dynamically populated -->
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- Helper Notice -->
-      <div class="notice-box">
-        <div>
-          <strong>Alur Kerja Lapangan:</strong> Ketik <code>/start</code> di bot Telegram untuk mencatat transaksi langsung ke sheet hari aktif. Tombol <code>[+ Penjualan]</code> mengisi Tabel B, dan <code>[+ Catat Modal]</code> mengisi Tabel A. Dashboard ini tersinkronisasi otomatis setiap 15 detik.
-        </div>
-      </div>
     </main>
   </div>
 
-  <script src="/js/app.js?v=20260905"></script>
+  <script src="/js/app.js?v=compact1"></script>
 </body>
 </html>

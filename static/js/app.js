@@ -198,7 +198,7 @@ function renderProductChart(rekap) {
         backgroundColor: ['#2f81f7', '#a371f7', '#3fb950'],
         borderColor: '#161b22',
         borderWidth: 2,
-        hoverOffset: 4
+        hoverOffset: 3
       }]
     },
     options: {
@@ -206,12 +206,13 @@ function renderProductChart(rekap) {
       maintainAspectRatio: false,
       plugins: {
         legend: {
-          position: 'bottom',
+          position: 'right',
           labels: {
-            boxWidth: 10,
-            boxHeight: 10,
+            boxWidth: 8,
+            boxHeight: 8,
             color: '#8b949e',
-            font: { family: 'Plus Jakarta Sans', size: 11 }
+            font: { family: 'Plus Jakarta Sans', size: 10 },
+            padding: 6
           }
         },
         tooltip: {
@@ -220,10 +221,10 @@ function renderProductChart(rekap) {
           bodyColor: '#8b949e',
           borderColor: '#30363d',
           borderWidth: 1,
-          padding: 8
+          padding: 6
         }
       },
-      cutout: '68%'
+      cutout: '62%'
     }
   });
 }

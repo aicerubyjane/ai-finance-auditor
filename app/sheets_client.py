@@ -112,24 +112,20 @@ class GoogleSheetsClient:
                     day_sheets.append((int(parts), n))
 
         if day_sheets:
-            # Urutkan berdasarkan nomor hari tertinggi (misal Hari 47)
+            # Urutkan berdasarkan nomor hari tertinggi (misal Hari 60, 59, ... 47)
             day_sheets.sort(key=lambda x: x[0], reverse=True)
             for _, sheet_name in day_sheets:
                 try:
-                    ws = self.spreadsheet.worksheet(sheet_name)
-                    # Cek apakah ada data di tabel akun (B16) atau tanggal (B3)
-                    vals = ws.get_all_values()
-                    # Jika baris akun ada data (B16 tidak kosong)
-                    has_data = any(len(r) > 1 and r[1].strip() for r in vals[15:47])
-                    if has_data:
+                    summary = self.get_daily_summary(sheet_name)
+                    # Jika ada sold atau modal atau akun ready > 0, berarti ini hari kerja aktif terakhir!
+                    if summary.get("sold_berbayar", 0) > 0 or summary.get("total_omzet", 0) > 0 or summary.get("akun_ready", 0) > 0:
                         settings.ACTIVE_SHEET_NAME = sheet_name
                         return sheet_name
                 except Exception:
                     continue
-            
-            # Jika belum ada yang terdeteksi ada datanya, pakai hari tertinggi
-            settings.ACTIVE_SHEET_NAME = day_sheets[0][1]
-            return day_sheets[0][1]
+
+            settings.ACTIVE_SHEET_NAME = "Hari 47"
+            return "Hari 47"
 
         return "Hari 47"
 

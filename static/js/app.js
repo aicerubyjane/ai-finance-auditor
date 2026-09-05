@@ -53,23 +53,28 @@ function updateUI(data) {
   document.getElementById('dayThreads').textContent = daily.dari_threads || 0;
   document.getElementById('dayReseller').textContent = daily.dari_reseller || 0;
 
-  // Populate Dropdown Sheet (Hanya jika belum diisi atau berubah)
-  const select = document.getElementById('activeDaySelect');
-  if (data.available_sheets && data.available_sheets.length > 0) {
-    if (select.children.length <= 1 || select.dataset.populated !== "true") {
-      select.innerHTML = '';
-      data.available_sheets.forEach(sheet => {
-        const opt = document.createElement('option');
-        opt.value = sheet;
-        opt.textContent = sheet;
-        if (sheet === activeSheet) opt.selected = true;
-        select.appendChild(opt);
-      });
-      select.dataset.populated = "true";
-    } else {
-      select.value = activeSheet;
+  // Populate Dropdown Sheet Desktop & Mobile
+  const selectDesktop = document.getElementById('activeDaySelect');
+  const selectMobile = document.getElementById('activeDaySelectMobile');
+  
+  [selectDesktop, selectMobile].forEach(sel => {
+    if (!sel) return;
+    if (data.available_sheets && data.available_sheets.length > 0) {
+      if (sel.children.length <= 1 || sel.dataset.populated !== "true") {
+        sel.innerHTML = '';
+        data.available_sheets.forEach(sheet => {
+          const opt = document.createElement('option');
+          opt.value = sheet;
+          opt.textContent = sheet;
+          if (sheet === activeSheet) opt.selected = true;
+          sel.appendChild(opt);
+        });
+        sel.dataset.populated = "true";
+      } else {
+        sel.value = activeSheet;
+      }
     }
-  }
+  });
 
   // Render Visual Charts
   renderTrendChart(kpis.trend_harian || []);
@@ -261,22 +266,27 @@ document.getElementById('refreshBtn')?.addEventListener('click', () => {
   fetchDashboardData(currentSelectedSheet);
 });
 
-// Ganti Sheet via Dropdown -> Langsung update tampilan seketika!
-document.getElementById('activeDaySelect')?.addEventListener('change', async (e) => {
+function handleSheetChange(e) {
   const newSheet = e.target.value;
   currentSelectedSheet = newSheet;
   document.getElementById('currentDayBadge').textContent = newSheet;
 
-  // Update backend setting
+  const selectDesktop = document.getElementById('activeDaySelect');
+  const selectMobile = document.getElementById('activeDaySelectMobile');
+  if (selectDesktop) selectDesktop.value = newSheet;
+  if (selectMobile) selectMobile.value = newSheet;
+
   fetch('/api/set-active-day', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ sheet_name: newSheet })
   }).catch(err => console.error("Error setting active day:", err));
 
-  // Ambil data hari yang dipilih secara instan
   fetchDashboardData(newSheet);
-});
+}
+
+document.getElementById('activeDaySelect')?.addEventListener('change', handleSheetChange);
+document.getElementById('activeDaySelectMobile')?.addEventListener('change', handleSheetChange);
 
 // Initial Fetch & Refresh Polling
 fetchDashboardData();

@@ -8,12 +8,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=compact2">
+  <link rel="stylesheet" href="/css/style.css?v=mobileclean1">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="app-layout">
-    <!-- Navigation Sidebar Compact -->
+    <!-- Navigation Sidebar Desktop -->
     <aside class="sidebar">
       <div class="brand">
         <div class="brand-badge">AU</div>
@@ -32,7 +32,7 @@
       <div class="sidebar-footer">
         <div class="sheet-selector-group">
           <label for="activeDaySelect">Pilih Sheet Hari</label>
-          <select id="activeDaySelect" aria-label="Pilih sheet harian">
+          <select id="activeDaySelect" class="sheet-select-sync" aria-label="Pilih sheet harian">
             <option value="Hari 47">Hari 47</option>
           </select>
         </div>
@@ -42,20 +42,26 @@
       </div>
     </aside>
 
-    <!-- Main Content Canvas (Single Screen Workbench) -->
+    <!-- Main Content Canvas -->
     <main class="main-content" id="overview">
-      <!-- Compact Top Header -->
+      <!-- Compact Top Header with Direct Mobile Day Selector -->
       <header class="top-header">
         <div class="header-title">
-          <h1>Workbench Auditor & Inventaris Akun AI</h1>
-          <p>Monitoring kas harian, perputaran stok, rasio klaim garansi, dan histori penjualan.</p>
+          <h1>Finance Auditor</h1>
+          <p>Workbench Monitoring Keuangan & Inventaris Akun AI</p>
         </div>
         <div class="header-actions">
+          <!-- Mobile Quick Day Switcher (Tampil di HP langsung di header) -->
+          <div class="mobile-day-picker">
+            <select id="activeDaySelectMobile" class="sheet-select-sync" aria-label="Pilih sheet harian di HP">
+              <option value="Hari 47">Hari 47</option>
+            </select>
+          </div>
           <button id="refreshBtn" class="btn btn-default" title="Ambil data terbaru dari Google Sheets">
-            Sinkronkan Data
+            Sinkron
           </button>
           <a href="https://t.me" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
-            Buka Bot Telegram
+            Bot
           </a>
         </div>
       </header>
@@ -198,6 +204,6 @@
     </main>
   </div>
 
-  <script src="/js/app.js?v=compact2"></script>
+  <script src="/js/app.js?v=mobileclean1"></script>
 </body>
 </html>

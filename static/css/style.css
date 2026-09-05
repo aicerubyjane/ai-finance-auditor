@@ -227,10 +227,27 @@ html, body {
   color: var(--text-secondary);
 }
 
+/* Header Actions */
 .header-actions {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.mobile-day-picker {
+  display: none; /* Sembunyi di desktop */
+}
+
+.mobile-day-picker select {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  height: 32px;
 }
 
 .btn {
@@ -539,17 +556,9 @@ html, body {
     overflow-y: auto;
   }
 
+  /* Hilangkan sidebar dan tab berderet di mobile */
   .sidebar {
-    width: 100%;
-    height: auto;
-    border-right: none;
-    border-bottom: 1px solid var(--border-default);
-    padding: 10px 14px;
-  }
-
-  .nav-menu {
-    flex-direction: row;
-    overflow-x: auto;
+    display: none;
   }
 
   .main-content {
@@ -559,6 +568,39 @@ html, body {
     padding: 12px;
   }
 
+  /* Header Mobile Bersih & Ringkas */
+  .top-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: 8px;
+  }
+
+  .header-title h1 {
+    font-size: 15px;
+  }
+
+  .header-title p {
+    display: none; /* Sembunyikan subtitle di HP biar hemat tempat */
+  }
+
+  .mobile-day-picker {
+    display: block; /* Munculkan dropdown hari di header HP */
+  }
+
+  .header-actions {
+    gap: 6px;
+  }
+
+  .btn {
+    padding: 5px 9px;
+    font-size: 11px;
+    height: 32px;
+  }
+
   .kpi-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -566,12 +608,13 @@ html, body {
   .operational-strip {
     flex-direction: column;
     align-items: stretch;
+    gap: 6px;
   }
 
   .strip-metrics {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+    gap: 6px;
   }
 
   .workbench-bottom-grid {
@@ -580,7 +623,7 @@ html, body {
   }
 
   .chart-wrapper-compact {
-    height: 220px;
+    height: 200px;
   }
 
   .donut-sub-section {

@@ -657,9 +657,30 @@ html, body {
   .operational-panel-card,
   .table-panel-card,
   .donut-panel-card {
+    height: auto !important;
     min-height: auto;
     width: 100%;
     box-sizing: border-box;
+    overflow: visible !important;
+  }
+
+  .operational-panel-card {
+    padding: 16px !important;
+  }
+
+  .daily-stat-list {
+    gap: 12px;
+  }
+
+  .daily-channel-chips {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--fa-frosted-border);
+  }
+
+  .channel-chip {
+    padding: 8px 12px;
+    font-size: 12px;
   }
 
   .chart-container-fluid {
@@ -667,9 +688,9 @@ html, body {
   }
 
   .saas-card {
-    padding: 12px 14px;
+    padding: 14px 16px;
     max-width: 100%;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .table-scroll-wrapper {

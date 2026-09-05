@@ -1,5 +1,6 @@
 let trendChartInstance = null;
 let productChartInstance = null;
+let currentSelectedSheet = "";
 
 function formatRupiah(num) {
   if (num === undefined || num === null || isNaN(num)) return "Rp 0";
@@ -10,9 +11,11 @@ function formatRupiah(num) {
   }).format(num);
 }
 
-async function fetchDashboardData() {
+async function fetchDashboardData(sheetOverride = "") {
   try {
-    const res = await fetch('/api/dashboard');
+    const target = sheetOverride || currentSelectedSheet;
+    const url = target ? `/api/dashboard?sheet=${encodeURIComponent(target)}` : '/api/dashboard';
+    const res = await fetch(url);
     if (!res.ok) throw new Error("Gagal mengambil data dashboard");
     const data = await res.json();
     updateUI(data);
@@ -24,9 +27,10 @@ async function fetchDashboardData() {
 function updateUI(data) {
   const kpis = data.kpis || {};
   const daily = data.daily || {};
-  const activeSheet = data.active_sheet || "Hari 38";
+  const activeSheet = data.active_sheet || "Hari 47";
+  currentSelectedSheet = activeSheet;
 
-  // Top KPI Cards
+  // Top KPI Global Cards (Tab Dashboard Usaha 60 Hari)
   document.getElementById('kpiTotalOmzet').textContent = formatRupiah(kpis.total_omzet);
   document.getElementById('kpiSurplusKas').textContent = formatRupiah(kpis.surplus_kas);
   document.getElementById('kpiSoldBerbayar').textContent = `${kpis.sold_berbayar || 0} Akun`;
@@ -36,7 +40,7 @@ function updateUI(data) {
   document.getElementById('kpiTotalModal').textContent = formatRupiah(kpis.total_modal);
   document.getElementById('kpiHariAktif').textContent = `${kpis.hari_aktif || 0} Hari`;
 
-  // Daily Section
+  // Daily Section (Berdasarkan Sheet Hari yang Dipilih)
   document.getElementById('currentDayBadge').textContent = activeSheet;
   document.getElementById('chipReady').textContent = `${daily.akun_ready || 0} Ready`;
   document.getElementById('chipSold').textContent = `${daily.sold_berbayar || 0} Sold`;
@@ -49,17 +53,22 @@ function updateUI(data) {
   document.getElementById('dayThreads').textContent = daily.dari_threads || 0;
   document.getElementById('dayReseller').textContent = daily.dari_reseller || 0;
 
-  // Sheet Select Options
+  // Populate Dropdown Sheet (Hanya jika belum diisi atau berubah)
   const select = document.getElementById('activeDaySelect');
-  if (data.available_sheets && select.options.length <= 1) {
-    select.innerHTML = '';
-    data.available_sheets.forEach(sheet => {
-      const opt = document.createElement('option');
-      opt.value = sheet;
-      opt.textContent = sheet;
-      if (sheet === activeSheet) opt.selected = true;
-      select.appendChild(opt);
-    });
+  if (data.available_sheets && data.available_sheets.length > 0) {
+    if (select.children.length <= 1 || select.dataset.populated !== "true") {
+      select.innerHTML = '';
+      data.available_sheets.forEach(sheet => {
+        const opt = document.createElement('option');
+        opt.value = sheet;
+        opt.textContent = sheet;
+        if (sheet === activeSheet) opt.selected = true;
+        select.appendChild(opt);
+      });
+      select.dataset.populated = "true";
+    } else {
+      select.value = activeSheet;
+    }
   }
 
   // Render Visual Charts
@@ -243,22 +252,29 @@ function renderProductTable(rekap) {
 }
 
 // Event Listeners
-document.getElementById('refreshBtn')?.addEventListener('click', fetchDashboardData);
+document.getElementById('refreshBtn')?.addEventListener('click', () => {
+  fetchDashboardData(currentSelectedSheet);
+});
 
+// Ganti Sheet via Dropdown -> Langsung update tampilan seketika!
 document.getElementById('activeDaySelect')?.addEventListener('change', async (e) => {
   const newSheet = e.target.value;
-  try {
-    await fetch('/api/set-active-day', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sheet_name: newSheet })
-    });
-    fetchDashboardData();
-  } catch (err) {
-    console.error("Gagal mengubah sheet aktif:", err);
-  }
+  currentSelectedSheet = newSheet;
+  document.getElementById('currentDayBadge').textContent = newSheet;
+
+  // Update backend setting
+  fetch('/api/set-active-day', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sheet_name: newSheet })
+  }).catch(err => console.error("Error setting active day:", err));
+
+  // Ambil data hari yang dipilih secara instan
+  fetchDashboardData(newSheet);
 });
 
 // Initial Fetch & Refresh Polling
 fetchDashboardData();
-setInterval(fetchDashboardData, 15000);
+setInterval(() => {
+  fetchDashboardData(currentSelectedSheet);
+}, 15000);

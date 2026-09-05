@@ -13,15 +13,19 @@ async def health_check():
     }
 
 @api_router.get("/dashboard")
-async def get_dashboard_data():
-    current_sheet = sheets_service.get_current_operational_sheet()
+async def get_dashboard_data(sheet: str = ""):
+    current_sheet = sheet if sheet else sheets_service.get_current_operational_sheet()
     kpis = sheets_service.get_dashboard_kpis()
     daily = sheets_service.get_daily_summary(current_sheet)
-    sheets = sheets_service.list_sheet_names()
+    
+    # Filter dan sortir hanya sheet harian untuk dropdown
+    all_sheets = sheets_service.list_sheet_names()
+    day_sheets = [s for s in all_sheets if s.lower().startswith("hari")]
+    
     return {
         "kpis": kpis,
         "daily": daily,
-        "available_sheets": sheets,
+        "available_sheets": day_sheets if day_sheets else all_sheets,
         "active_sheet": current_sheet
     }
 

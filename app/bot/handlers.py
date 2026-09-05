@@ -114,15 +114,40 @@ async def sale_package_chosen(update: Update, context: ContextTypes.DEFAULT_TYPE
     pkg = query.data.replace("pkg_", "")
     context.user_data["sale"]["package"] = pkg
 
+    from app.bot.keyboards import get_account_input_keyboard
     await query.edit_message_text(
         f"Paket: *{pkg}*\n\n🛒 **[Input Penjualan] - Langkah 4/6**\n"
         "Ketik data akun dengan format:\n"
         "`Email | Password Email | Password CGPT`\n\n"
-        "_(Contoh: user1@gmail.com | pass123 | cgptPass45)_",
-        reply_markup=get_cancel_keyboard(),
+        "Atau klik tombol **⏩ Lewati** di bawah jika ingin otomatis memotong stok akun yang sudah *Ready (Stanby)* di Google Sheets:",
+        reply_markup=get_account_input_keyboard(),
         parse_mode="Markdown"
     )
     return SALE_ACCOUNT_DATA
+
+async def sale_account_skipped(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    context.user_data["sale"]["use_standby"] = True
+    context.user_data["sale"]["email"] = "Stok Ready Otomatis"
+    context.user_data["sale"]["pass_mail"] = "-"
+    context.user_data["sale"]["pass_cgpt"] = "-"
+
+    if context.user_data["sale"].get("status") == "Klaim Garansi":
+        context.user_data["sale"]["price"] = 0.0
+        await query.edit_message_text(
+            "Menggunakan Stok Ready (Klaim: Harga Rp 0).\n\n🛒 **[Input Penjualan] - Langkah 5/6**\nPilih sumber transaksi:",
+            reply_markup=get_source_keyboard(),
+            parse_mode="Markdown"
+        )
+        return SALE_SOURCE
+
+    await query.edit_message_text(
+        "⏩ Menggunakan **Stok Ready (Stanby)** dari Google Sheets.\n\n🛒 **[Input Penjualan] - Langkah 5/6**\nKetik nominal harga jual:\n_(Contoh: 70000)_",
+        reply_markup=get_cancel_keyboard(),
+        parse_mode="Markdown"
+    )
+    return SALE_PRICE
 
 async def sale_account_received(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
@@ -132,11 +157,11 @@ async def sale_account_received(update: Update, context: ContextTypes.DEFAULT_TY
     pass_mail = parts[1] if len(parts) > 1 else "-"
     pass_cgpt = parts[2] if len(parts) > 2 else "-"
 
+    context.user_data["sale"]["use_standby"] = False
     context.user_data["sale"]["email"] = email
     context.user_data["sale"]["pass_mail"] = pass_mail
     context.user_data["sale"]["pass_cgpt"] = pass_cgpt
 
-    # Default harga rekomendasi jika klaim
     if context.user_data["sale"].get("status") == "Klaim Garansi":
         context.user_data["sale"]["price"] = 0.0
         await update.message.reply_text(
@@ -147,7 +172,7 @@ async def sale_account_received(update: Update, context: ContextTypes.DEFAULT_TY
         return SALE_SOURCE
 
     await update.message.reply_text(
-        f"Akun: `{email}`\n\n🛒 **[Input Penjualan] - Langkah 5/6**\nKetik nominal harga jual:\n_(Contoh: 45000)_",
+        f"Akun: `{email}`\n\n🛒 **[Input Penjualan] - Langkah 5/6**\nKetik nominal harga jual:\n_(Contoh: 70000)_",
         reply_markup=get_cancel_keyboard(),
         parse_mode="Markdown"
     )
@@ -158,7 +183,7 @@ async def sale_price_received(update: Update, context: ContextTypes.DEFAULT_TYPE
     try:
         price = float(text)
     except ValueError:
-        await update.message.reply_text("Nominal tidak valid. Silakan ketik angka saja (misal: 45000):")
+        await update.message.reply_text("Nominal tidak valid. Silakan ketik angka saja (misal: 70000):")
         return SALE_PRICE
 
     context.user_data["sale"]["price"] = price
@@ -178,41 +203,78 @@ async def sale_source_chosen(update: Update, context: ContextTypes.DEFAULT_TYPE)
     sale_data = context.user_data["sale"]
     product = sale_data.get("product", "ChatGPT")
     status = sale_data.get("status", "Sold Berbayar")
-    pkg = sale_data.get("package", "Paket Garansi")
+    pkg = sale_data.get("package", "Garansi")
+    use_standby = sale_data.get("use_standby", False)
     email = sale_data.get("email", "")
     pass_mail = sale_data.get("pass_mail", "-")
     pass_cgpt = sale_data.get("pass_cgpt", "-")
     price = sale_data.get("price", 0.0)
 
     target_sheet = sheets_service.get_current_operational_sheet()
+    source_clean = source.replace("Dari ", "").strip()
+    pkg_clean = "Non Garansi" if "non" in pkg.lower() else "Garansi"
 
-    # Simpan ke Google Sheets Tabel B
-    success = sheets_service.add_account_transaction(
-        email=email,
-        password_email=pass_mail,
-        password_cgpt=pass_cgpt,
-        status_akun=status,
-        harga_jual=price,
-        jenis_transaksi="Penjualan" if status == "Sold Berbayar" else "Klaim",
-        paket="Garansi" if "garansi" in pkg.lower() and "non" not in pkg.lower() else ("Non Garansi" if "non" in pkg.lower() else ""),
-        sumber=source.replace("Dari ", "").strip(),
-        jenis_akun=product,
-        keterangan=f"via {source.replace('Dari ', '').strip()}",
-        posisi="Sold" if status == "Sold Berbayar" else "Klaim",
-        sheet_name=target_sheet
-    )
+    success = False
+    sold_email_info = email
+
+    # Jika user memilih tombol LEWATI / PAKAI STOK READY
+    if use_standby:
+        standby_res = sheets_service.sell_standby_account(
+            product=product,
+            harga_jual=price,
+            paket=pkg_clean,
+            sumber=source_clean,
+            keterangan=f"via {source_clean}",
+            sheet_name=target_sheet
+        )
+        if standby_res:
+            success = True
+            sold_email_info = standby_res.get("email", "Stok Ready")
+        else:
+            # Jika stok standby habis, fallback tambahkan baris baru
+            success = sheets_service.add_account_transaction(
+                email=f"Akun Baru ({product})",
+                password_email="-",
+                password_cgpt="-",
+                status_akun=status,
+                harga_jual=price,
+                jenis_transaksi="Penjualan" if status == "Sold Berbayar" else "Klaim",
+                paket=pkg_clean,
+                sumber=source_clean,
+                jenis_akun=product,
+                keterangan=f"via {source_clean} (Stok Ready habis)",
+                posisi="Sold",
+                sheet_name=target_sheet
+            )
+            sold_email_info = "Akun Baru (Stok Standby tidak ditemukan)"
+    else:
+        # User input manual email & pass
+        success = sheets_service.add_account_transaction(
+            email=email,
+            password_email=pass_mail,
+            password_cgpt=pass_cgpt,
+            status_akun=status,
+            harga_jual=price,
+            jenis_transaksi="Penjualan" if status == "Sold Berbayar" else "Klaim",
+            paket=pkg_clean,
+            sumber=source_clean,
+            jenis_akun=product,
+            keterangan=f"via {source_clean}",
+            posisi="Sold" if status == "Sold Berbayar" else "Klaim",
+            sheet_name=target_sheet
+        )
 
     if success:
         result_text = (
             f"✅ **Transaksi Penjualan Berhasil Dicatat!**\n\n"
             f"• **Sheet:** `{target_sheet}`\n"
             f"• **Produk:** {product}\n"
-            f"• **Status:** {status}\n"
-            f"• **Email:** `{email}`\n"
-            f"• **Harga Jual:** Rp {price:,.0f}\n"
-            f"• **Paket:** {'Garansi' if 'garansi' in pkg.lower() and 'non' not in pkg.lower() else 'Non Garansi'}\n"
-            f"• **Sumber:** {source.replace('Dari ', '').strip()}\n\n"
-            f"Data valid dan otomatis terhitung ke ringkasan harian Google Sheets."
+            f"• **Status:** {status} (Stanby ➔ SOLD)\n"
+            f"• **Akun:** `{sold_email_info}`\n"
+            f"• **Harga Jual:** Rp {price:,.0f} _(Angka murni terdeteksi rumus)_\n"
+            f"• **Paket:** {pkg_clean}\n"
+            f"• **Sumber:** {source_clean}\n\n"
+            f"Stok Ready berkurang & omzet langsung terhitung di Google Sheets."
         )
     else:
         result_text = "⚠️ Gagal mencatat transaksi ke Google Sheets. Silakan cek koneksi kredensial."
@@ -475,7 +537,10 @@ def register_bot_handlers(application):
             SALE_PRODUCT: [CallbackQueryHandler(sale_product_chosen, pattern="^sale_prod_")],
             SALE_STATUS: [CallbackQueryHandler(sale_status_chosen, pattern="^status_")],
             SALE_PACKAGE: [CallbackQueryHandler(sale_package_chosen, pattern="^pkg_")],
-            SALE_ACCOUNT_DATA: [MessageHandler(filters.TEXT & ~filters.COMMAND, sale_account_received)],
+            SALE_ACCOUNT_DATA: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, sale_account_received),
+                CallbackQueryHandler(sale_account_skipped, pattern="^skip_account_input$")
+            ],
             SALE_PRICE: [MessageHandler(filters.TEXT & ~filters.COMMAND, sale_price_received)],
             SALE_SOURCE: [CallbackQueryHandler(sale_source_chosen, pattern="^src_")],
         },

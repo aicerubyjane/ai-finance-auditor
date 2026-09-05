@@ -154,6 +154,84 @@ class GoogleSheetsClient:
         except Exception:
             return ["Hari 47", "Hari 38", "Dashboard", "Rekap 60 Hari", "Rekap Jenis Akun"]
 
+    def sell_standby_account(
+        self,
+        product: str,
+        harga_jual: float,
+        paket: str,
+        sumber: str,
+        keterangan: str = "",
+        sheet_name: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Mencari akun yang berstatus 'Stanby' di sheet aktif, lalu mengubahnya menjadi 'Sold'
+        """
+        target_sheet = normalize_sheet_name(sheet_name or settings.ACTIVE_SHEET_NAME)
+        if not self.is_connected:
+            return {"email": f"mock_ready_{product.lower()}@gmail.com", "row": 16}
+
+        try:
+            ws = self.get_worksheet(target_sheet)
+            if not ws:
+                return None
+
+            all_vals = ws.get_all_values()
+            
+            # Cari baris yang posisinya 'Stanby' (kolom F / index 5)
+            # Prioritaskan yang jenis akunnya cocok (kolom L / index 11)
+            target_row_idx = None
+            found_email = ""
+            
+            # Pass 1: Cocok produk & Stanby
+            for idx in range(15, min(47, len(all_vals))):
+                row = all_vals[idx]
+                if len(row) > 5:
+                    posisi = row[5].strip().lower()
+                    jenis = row[11].strip().lower() if len(row) > 11 else ""
+                    if "stanby" in posisi and (product.lower() in jenis or not jenis):
+                        target_row_idx = idx + 1
+                        found_email = row[1].strip() if len(row) > 1 else "Akun Ready"
+                        break
+
+            # Pass 2: Jika tidak ada yang cocok produk, ambil akun Stanby apa saja
+            if not target_row_idx:
+                for idx in range(15, min(47, len(all_vals))):
+                    row = all_vals[idx]
+                    if len(row) > 5 and "stanby" in row[5].strip().lower():
+                        target_row_idx = idx + 1
+                        found_email = row[1].strip() if len(row) > 1 else "Akun Ready"
+                        break
+
+            if not target_row_idx:
+                return None # Tidak ada stok Stanby
+
+            # Paket (Col I): 'Garansi' atau 'Non Garansi'
+            paket_val = "Non Garansi" if "non" in paket.lower() else ("Garansi" if "garansi" in paket.lower() else "")
+            sumber_clean = sumber.replace("Dari ", "").strip()
+
+            # Update kolom E sampai L:
+            # Col E: Status Akun, Col F: Posisi, Col G: Harga Jual (angka murni!),
+            # Col H: Jenis Transaksi, Col I: Paket, Col J: Sumber, Col K: Keterangan, Col L: Jenis Akun
+            vals_to_update = [
+                "Signed / Premium",
+                "Sold",
+                harga_jual, # ANGKA MURNI agar rumus Google Sheets mendeteksi!
+                "Penjualan",
+                paket_val,
+                sumber_clean,
+                keterangan or f"via {sumber_clean}",
+                product
+            ]
+
+            range_str = f"E{target_row_idx}:L{target_row_idx}"
+            ws.update(range_name=range_str, values=[vals_to_update], raw=False)
+            logger.info(f"Berhasil mengubah stok Stanby baris {target_row_idx} ({found_email}) menjadi Sold!")
+
+            return {"email": found_email, "row": target_row_idx}
+        except Exception as e:
+            logger.error(f"Error sell_standby_account: {e}")
+            return None
+
     def add_account_transaction(
         self,
         email: str,
@@ -182,21 +260,15 @@ class GoogleSheetsClient:
 
             all_vals = ws.get_all_values()
             
-            # Cari baris kosong di Tabel B (mulai dari row 16 / index 15 sampai batas sebelum ringkasan harian)
             target_row_idx = None
             for idx in range(15, min(47, len(all_vals))):
                 row = all_vals[idx]
                 col_b = row[1].strip() if len(row) > 1 else ""
                 col_e = row[4].strip() if len(row) > 4 else ""
-                # Kosong jika tidak ada email DAN status akun kosong
                 if not col_b and not col_e:
                     target_row_idx = idx + 1
                     break
 
-            formatted_price = f"Rp {harga_jual:,.0f}" if harga_jual > 0 else ""
-            
-            # Normalisasi presisi dengan aturan data validation Google Sheets:
-            # Status Akun (Col E)
             if "sold" in status_akun.lower() or "premium" in status_akun.lower():
                 status_val = "Signed / Premium"
                 posisi_val = "Sold"
@@ -210,23 +282,8 @@ class GoogleSheetsClient:
                 status_val = status_akun
                 posisi_val = posisi
 
-            # Jenis Transaksi (Col H): Wajib 'Penjualan' / 'Klaim' / 'Stok'
-            if "klaim" in status_akun.lower():
-                transaksi_val = "Klaim"
-            elif posisi_val == "Sold":
-                transaksi_val = "Penjualan"
-            else:
-                transaksi_val = ""
-
-            # Paket (Col I): Wajib 'Garansi' atau 'Non Garansi'
-            if "non" in paket.lower():
-                paket_val = "Non Garansi"
-            elif "garansi" in paket.lower():
-                paket_val = "Garansi"
-            else:
-                paket_val = ""
-
-            # Sumber (Col J): Wajib 'Threads', 'Reseller', 'Teman', dll (tanpa kata 'Dari')
+            transaksi_val = "Klaim" if "klaim" in status_akun.lower() else ("Penjualan" if posisi_val == "Sold" else "")
+            paket_val = "Non Garansi" if "non" in paket.lower() else ("Garansi" if "garansi" in paket.lower() else "")
             sumber_clean = sumber.replace("Dari ", "").strip()
 
             row_data = [
@@ -235,7 +292,7 @@ class GoogleSheetsClient:
                 password_cgpt,
                 status_val,
                 posisi_val,
-                formatted_price,
+                harga_jual if harga_jual > 0 else "", # Simpan harga jual sebagai ANGKA MURNI!
                 transaksi_val,
                 paket_val,
                 sumber_clean,
@@ -245,7 +302,7 @@ class GoogleSheetsClient:
 
             if target_row_idx:
                 range_str = f"B{target_row_idx}:L{target_row_idx}"
-                ws.update(range_name=range_str, values=[row_data])
+                ws.update(range_name=range_str, values=[row_data], raw=False)
                 logger.info(f"Berhasil mengisi baris {target_row_idx} di {target_sheet} ({range_str})")
             else:
                 ws.insert_row(["+"] + row_data, index=47)

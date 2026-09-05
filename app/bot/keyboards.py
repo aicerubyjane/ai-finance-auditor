@@ -71,6 +71,13 @@ def get_source_keyboard() -> InlineKeyboardMarkup:
     ]
     return InlineKeyboardMarkup(keyboard)
 
+def get_account_input_keyboard() -> InlineKeyboardMarkup:
+    keyboard = [
+        [InlineKeyboardButton("⏩ Lewati (Pakai Stok Ready)", callback_data="skip_account_input")],
+        [InlineKeyboardButton("❌ Batalkan", callback_data="cancel_action")]
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
 def get_cancel_keyboard() -> InlineKeyboardMarkup:
     keyboard = [
         [InlineKeyboardButton("❌ Batalkan", callback_data="cancel_action")]

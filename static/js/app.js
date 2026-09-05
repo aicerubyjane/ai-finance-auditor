@@ -189,6 +189,7 @@ function renderProductChart(rekap) {
     productChartInstance.destroy();
   }
 
+  const isMobile = window.innerWidth < 768;
   productChartInstance = new Chart(ctx, {
     type: 'doughnut',
     data: {
@@ -204,9 +205,12 @@ function renderProductChart(rekap) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: {
+        padding: isMobile ? 4 : 0
+      },
       plugins: {
         legend: {
-          position: 'right',
+          position: isMobile ? 'bottom' : 'right',
           labels: {
             boxWidth: 8,
             boxHeight: 8,
@@ -224,7 +228,7 @@ function renderProductChart(rekap) {
           padding: 6
         }
       },
-      cutout: '62%'
+      cutout: '60%'
     }
   });
 }

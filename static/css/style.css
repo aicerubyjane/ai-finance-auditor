@@ -442,6 +442,12 @@ html, body {
   position: relative;
   width: 100%;
   min-height: 0;
+  max-width: 100%;
+}
+
+.chart-wrapper-compact canvas,
+.chart-wrapper-donut-compact canvas {
+  max-width: 100% !important;
 }
 
 /* Products Right Card (Donut + Table Split) */
@@ -449,6 +455,8 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .products-header-compact {
@@ -457,6 +465,7 @@ html, body {
   flex: 1;
   gap: 8px;
   min-height: 0;
+  max-width: 100%;
 }
 
 .donut-sub-section {
@@ -464,12 +473,15 @@ html, body {
   flex-direction: column;
   height: 120px;
   flex-shrink: 0;
+  width: 100%;
+  max-width: 100%;
 }
 
 .chart-wrapper-donut-compact {
   flex: 1;
   position: relative;
   width: 100%;
+  max-width: 100%;
   min-height: 0;
 }
 
@@ -573,5 +585,12 @@ html, body {
 
   .donut-sub-section {
     height: 180px;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .chart-wrapper-donut-compact {
+    height: 150px;
+    width: 100%;
   }
 }

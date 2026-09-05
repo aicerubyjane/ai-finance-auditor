@@ -184,6 +184,8 @@ async def sale_source_chosen(update: Update, context: ContextTypes.DEFAULT_TYPE)
     pass_cgpt = sale_data.get("pass_cgpt", "-")
     price = sale_data.get("price", 0.0)
 
+    target_sheet = sheets_service.get_current_operational_sheet()
+
     # Simpan ke Google Sheets Tabel B
     success = sheets_service.add_account_transaction(
         email=email,
@@ -191,26 +193,26 @@ async def sale_source_chosen(update: Update, context: ContextTypes.DEFAULT_TYPE)
         password_cgpt=pass_cgpt,
         status_akun=status,
         harga_jual=price,
-        jenis_transaksi="Penjualan Baru",
-        paket=pkg,
-        sumber=source,
+        jenis_transaksi="Penjualan" if status == "Sold Berbayar" else "Klaim",
+        paket="Garansi" if "garansi" in pkg.lower() and "non" not in pkg.lower() else ("Non Garansi" if "non" in pkg.lower() else ""),
+        sumber=source.replace("Dari ", "").strip(),
         jenis_akun=product,
-        keterangan=f"Input bot: {source}",
-        posisi="Keluar",
-        sheet_name=settings.ACTIVE_SHEET_NAME
+        keterangan=f"via {source.replace('Dari ', '').strip()}",
+        posisi="Sold" if status == "Sold Berbayar" else "Klaim",
+        sheet_name=target_sheet
     )
 
     if success:
         result_text = (
             f"✅ **Transaksi Penjualan Berhasil Dicatat!**\n\n"
-            f"• **Sheet:** `{settings.ACTIVE_SHEET_NAME}`\n"
+            f"• **Sheet:** `{target_sheet}`\n"
             f"• **Produk:** {product}\n"
             f"• **Status:** {status}\n"
             f"• **Email:** `{email}`\n"
             f"• **Harga Jual:** Rp {price:,.0f}\n"
-            f"• **Paket:** {pkg}\n"
-            f"• **Sumber:** {source}\n\n"
-            f"Data langsung ter-update di Google Sheets."
+            f"• **Paket:** {'Garansi' if 'garansi' in pkg.lower() and 'non' not in pkg.lower() else 'Non Garansi'}\n"
+            f"• **Sumber:** {source.replace('Dari ', '').strip()}\n\n"
+            f"Data valid dan otomatis terhitung ke ringkasan harian Google Sheets."
         )
     else:
         result_text = "⚠️ Gagal mencatat transaksi ke Google Sheets. Silakan cek koneksi kredensial."
@@ -268,24 +270,25 @@ async def stock_accounts_received(update: Update, context: ContextTypes.DEFAULT_
         pass_mail = parts[1] if len(parts) > 1 else "-"
         pass_cgpt = parts[2] if len(parts) > 2 else "-"
 
+        target_sheet = sheets_service.get_current_operational_sheet()
         sheets_service.add_account_transaction(
             email=email,
             password_email=pass_mail,
             password_cgpt=pass_cgpt,
-            status_akun="Akun Ready",
+            status_akun="Signed / Free",
             harga_jual=0,
-            jenis_transaksi="Stok Masuk",
-            paket="-",
-            sumber="Supplier / Buat Sendiri",
+            jenis_transaksi="",
+            paket="",
+            sumber="",
             jenis_akun=product,
-            keterangan="Stok Ready baru",
-            posisi="Toko",
-            sheet_name=settings.ACTIVE_SHEET_NAME
+            keterangan="Stok Ready",
+            posisi="Stanby",
+            sheet_name=target_sheet
         )
         count += 1
 
     await update.message.reply_text(
-        f"✅ Berhasil menambahkan **{count} akun Ready** ({product}) ke sheet `{settings.ACTIVE_SHEET_NAME}`!",
+        f"✅ Berhasil menambahkan **{count} akun Ready** ({product}) ke sheet `{target_sheet}`!\nStatus diset `Stanby` dan siap dijual.",
         reply_markup=get_main_menu_keyboard(),
         parse_mode="Markdown"
     )

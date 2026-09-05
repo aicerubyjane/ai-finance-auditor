@@ -182,28 +182,63 @@ class GoogleSheetsClient:
 
             all_vals = ws.get_all_values()
             
+            # Cari baris kosong di Tabel B (mulai dari row 16 / index 15 sampai batas sebelum ringkasan harian)
             target_row_idx = None
             for idx in range(15, min(47, len(all_vals))):
                 row = all_vals[idx]
                 col_b = row[1].strip() if len(row) > 1 else ""
-                if not col_b:
+                col_e = row[4].strip() if len(row) > 4 else ""
+                # Kosong jika tidak ada email DAN status akun kosong
+                if not col_b and not col_e:
                     target_row_idx = idx + 1
                     break
 
             formatted_price = f"Rp {harga_jual:,.0f}" if harga_jual > 0 else ""
-            status_value = "Signed / Premium" if status_akun == "Sold Berbayar" else ("Signed / Free" if status_akun == "Akun Ready" else status_akun)
-            posisi_value = "Sold" if status_akun == "Sold Berbayar" else ("Stanby" if status_akun == "Akun Ready" else ("Klaim" if status_akun == "Klaim Garansi" else posisi))
+            
+            # Normalisasi presisi dengan aturan data validation Google Sheets:
+            # Status Akun (Col E)
+            if "sold" in status_akun.lower() or "premium" in status_akun.lower():
+                status_val = "Signed / Premium"
+                posisi_val = "Sold"
+            elif "ready" in status_akun.lower() or "free" in status_akun.lower():
+                status_val = "Signed / Free"
+                posisi_val = "Stanby"
+            elif "klaim" in status_akun.lower():
+                status_val = "Signed / Premium"
+                posisi_val = "Klaim"
+            else:
+                status_val = status_akun
+                posisi_val = posisi
+
+            # Jenis Transaksi (Col H): Wajib 'Penjualan' / 'Klaim' / 'Stok'
+            if "klaim" in status_akun.lower():
+                transaksi_val = "Klaim"
+            elif posisi_val == "Sold":
+                transaksi_val = "Penjualan"
+            else:
+                transaksi_val = ""
+
+            # Paket (Col I): Wajib 'Garansi' atau 'Non Garansi'
+            if "non" in paket.lower():
+                paket_val = "Non Garansi"
+            elif "garansi" in paket.lower():
+                paket_val = "Garansi"
+            else:
+                paket_val = ""
+
+            # Sumber (Col J): Wajib 'Threads', 'Reseller', 'Teman', dll (tanpa kata 'Dari')
+            sumber_clean = sumber.replace("Dari ", "").strip()
 
             row_data = [
                 email,
                 password_email,
                 password_cgpt,
-                status_value,
-                posisi_value,
+                status_val,
+                posisi_val,
                 formatted_price,
-                jenis_transaksi,
-                paket,
-                sumber,
+                transaksi_val,
+                paket_val,
+                sumber_clean,
                 keterangan,
                 jenis_akun
             ]

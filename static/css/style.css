@@ -250,37 +250,254 @@ html, body {
   height: 32px;
 }
 
+/* --------------------------------------------------------------------------
+   Button System: MetalButton, LiquidButton, Cool & Utility Variants
+   -------------------------------------------------------------------------- */
 .btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 12px;
+  gap: 6px;
+  padding: 6px 14px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   border-radius: var(--radius-md);
   cursor: pointer;
-  border: 1px solid transparent;
+  border: none;
   text-decoration: none;
   font-family: inherit;
+  white-space: nowrap;
+  user-select: none;
+  outline: none;
+  transition: all 250ms cubic-bezier(0.1, 0.4, 0.2, 1);
+  will-change: transform;
 }
 
-.btn-default {
-  background-color: var(--bg-surface);
-  border-color: var(--border-default);
+/* Metal Button (Default Silver / Dark Titanium) */
+.btn-metal-wrapper {
+  position: relative;
+  display: inline-flex;
+  border-radius: 8px;
+  padding: 1.25px;
+  background: linear-gradient(to bottom, #2a2e39, #64748b);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+  transition: all 250ms cubic-bezier(0.1, 0.4, 0.2, 1);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-metal-wrapper:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  filter: brightness(1.08);
+}
+
+.btn-metal-wrapper:active {
+  transform: translateY(1.5px) scale(0.98);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.btn-metal-inner {
+  position: absolute;
+  inset: 1px;
+  border-radius: 7px;
+  background: linear-gradient(to bottom, #334155 via #1e293b to #0f172a);
+  pointer-events: none;
+  transition: all 250ms cubic-bezier(0.1, 0.4, 0.2, 1);
+}
+
+.btn-metal-btn {
+  position: relative;
+  z-index: 10;
+  margin: 1px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
+  font-size: 12px;
+  font-weight: 600;
+  background: linear-gradient(to bottom, #475569, #334155);
+  color: #f8fafc;
+  border: none;
+  cursor: pointer;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  font-family: inherit;
+  transition: all 250ms cubic-bezier(0.1, 0.4, 0.2, 1);
+}
+
+/* Metal Button Variant: Success / Emerald */
+.btn-metal-wrapper.metal-success {
+  background: linear-gradient(to bottom, #065f46, #34d399);
+}
+.btn-metal-wrapper.metal-success .btn-metal-inner {
+  background: linear-gradient(to bottom, #047857 via #064e3b to #022c22);
+}
+.btn-metal-wrapper.metal-success .btn-metal-btn {
+  background: linear-gradient(to bottom, #10b981, #059669);
+  color: #f0fdf4;
+  text-shadow: 0 -1px 0 rgba(6, 78, 59, 0.8);
+}
+
+/* Shine overlay effect */
+.shine-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+  pointer-events: none;
+}
+.btn-metal-wrapper:hover .shine-overlay {
+  transform: translateX(100%);
+}
+
+/* Liquid Glass Button Variant */
+.btn-liquid {
+  position: relative;
+  background: transparent;
   color: var(--text-primary);
+  border: none;
+  height: 32px;
+  padding: 0 14px;
+  overflow: hidden;
 }
 
-.btn-default:hover {
-  background-color: var(--bg-surface-elevated);
+.btn-liquid .liquid-glass-bg {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 
+    0 0 6px rgba(0, 0, 0, 0.15),
+    0 2px 6px rgba(0, 0, 0, 0.25),
+    inset 1px 1px 1px -0.5px rgba(255, 255, 255, 0.4),
+    inset -1px -1px 1px -0.5px rgba(0, 0, 0, 0.6),
+    inset 0 0 6px 2px rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: all 0.3s ease;
+  z-index: 1;
 }
 
-.btn-primary {
-  background-color: var(--accent-green);
-  color: #fff;
+.btn-liquid:hover .liquid-glass-bg {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: scale(1.03);
 }
 
-.btn-primary:hover {
-  background-color: #2ea043;
+.btn-liquid .liquid-content {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Cool Variant from User Spec */
+.btn-cool {
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.6);
+  color: #f1f5f9;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transition: all 0.2s cubic-bezier(0.1, 0.4, 0.2, 1);
+}
+
+.btn-cool:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+}
+
+.btn-cool:active {
+  filter: brightness(0.9);
+  transform: translateY(1px);
+}
+
+/* Jelly Fluid Animated Header Hero Section */
+.jelly-hero-wrapper {
+  position: relative;
+  border-radius: var(--radius-md);
+  background: radial-gradient(ellipse 80% 80% at 50% -20%, rgba(16, 185, 129, 0.15), rgba(15, 23, 42, 0.6)),
+              linear-gradient(180deg, #0f172a 0%, #090d16 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Subtle Jelly Fluid Wave Ambient */
+.jelly-hero-wrapper::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -20%;
+  width: 140%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.07) 0%, rgba(16, 185, 129, 0.04) 40%, transparent 70%);
+  animation: jellyDrift 12s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes jellyDrift {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(3%, 4%) scale(1.05) skewX(2deg); }
+  100% { transform: translate(-2%, 2%) scale(0.98) skewY(-1deg); }
+}
+
+.jelly-hero-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.jelly-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.jelly-hero-title h1 {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  margin: 0;
+  background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.jelly-hero-title p {
+  font-size: 11px;
+  color: #94a3b8;
+  margin: 2px 0 0 0;
+}
+
+.jelly-hero-actions {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 /* --------------------------------------------------------------------------

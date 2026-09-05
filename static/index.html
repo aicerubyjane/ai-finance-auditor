@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=metaljelly2">
+  <link rel="stylesheet" href="/css/style.css?v=customobsidian1">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -16,10 +16,9 @@
     <!-- Navigation Sidebar Desktop -->
     <aside class="sidebar">
       <div class="brand">
-        <div class="brand-badge">AU</div>
         <div class="brand-info">
           <h2>Finance Auditor</h2>
-          <span class="brand-meta"><span class="live-indicator"></span> Google Sheets</span>
+          <span class="brand-meta"><span class="live-indicator"></span> Google Sheets Live</span>
         </div>
       </div>
 
@@ -30,12 +29,6 @@
       </nav>
 
       <div class="sidebar-footer">
-        <div class="sheet-selector-group">
-          <label for="activeDaySelect">Pilih Sheet Hari</label>
-          <select id="activeDaySelect" class="sheet-select-sync" aria-label="Pilih sheet harian">
-            <option value="Hari 47">Hari 47</option>
-          </select>
-        </div>
         <div class="system-status-indicator">
           <span class="status-dot"></span> Bot Telegram Live
         </div>
@@ -44,94 +37,41 @@
 
     <!-- Main Content Canvas -->
     <main class="main-content" id="overview">
-      <!-- FUIHeroWithJelly Hero Section -->
-      <section class="fui-hero-section">
-        <div class="fui-hero-container">
-          <!-- Background Video with Jelly / Ambient Atmosphere -->
-          <div class="fui-video-wrapper">
-            <video
-              autoplay
-              loop
-              muted
-              playsinline
-              src="https://ease-one.vercel.app/bg/something.mp4"
-              class="fui-hero-video"
-            ></video>
-            <div class="fui-video-overlay"></div>
-            <div class="fui-ambient-glow"></div>
-          </div>
-
-          <div class="fui-hero-body">
-            <!-- Badge Status -->
-            <div class="fui-hero-badge">
-              <span class="live-indicator"></span> SISTEM AUDITOR KEUANGAN & STOK AI
-            </div>
-
-            <!-- Gradient Typography from FUIHeroWithJelly -->
-            <h1 class="fui-hero-title">
-              Manage your sales and analytics in one place.
-            </h1>
-
-            <p class="fui-hero-desc">
-              Pencatatan real-time performa kas, stok ready, rasio klaim garansi, dan histori penjualan otomatis terhubung langsung ke Google Sheets.
-            </p>
-
-            <!-- Action Controls (MetalButton, LiquidButton, Quick Selector) -->
-            <div class="fui-hero-actions">
-              <!-- Mobile Quick Day Switcher -->
-              <div class="mobile-day-picker">
-                <select id="activeDaySelectMobile" class="sheet-select-sync" aria-label="Pilih sheet harian di HP">
-                  <option value="Hari 47">Hari 47</option>
-                </select>
-              </div>
-
-              <!-- Liquid Glass Button: Sinkron Data -->
-              <button id="refreshBtn" class="btn btn-liquid" title="Sinkronkan data dengan Google Sheets">
-                <div class="liquid-glass-bg"></div>
-                <span class="liquid-content">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-                    <path d="M3 3v5h5"/>
-                    <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
-                    <path d="M16 21h5v-5"/>
-                  </svg>
-                  Sinkron Data
-                </span>
-              </button>
-
-              <!-- MetalButton (Success Variant): Buka Bot Telegram -->
-              <div class="btn-metal-wrapper metal-success">
-                <div class="btn-metal-inner"></div>
-                <a href="https://t.me" target="_blank" rel="noopener noreferrer" class="btn-metal-btn">
-                  <div class="shine-overlay"></div>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="m20.665 3.717-17.73 6.837c-1.21.486-1.203 1.161-.222 1.462l4.552 1.42 10.532-6.645c.498-.303.953-.14.579.192l-8.533 7.701h-.002l-.313 4.674c.458 0 .66-.21.916-.458l2.199-2.138 4.573 3.378c.843.464 1.448.225 1.658-.783l2.997-14.13c.307-1.233-.473-1.794-1.28-1.428z"/>
-                  </svg>
-                  Buka Bot Telegram
-                </a>
-              </div>
-            </div>
-          </div>
+      <!-- Top Header: Title Left, Sinkronkan Data Right -->
+      <header class="top-header">
+        <div class="header-title">
+          <h1>Workbench Auditor & Inventaris Akun AI</h1>
+          <p>Pencatatan real-time performa kas, stok ready, rasio klaim, dan histori penjualan.</p>
         </div>
-      </section>
+        <div class="header-actions">
+          <!-- Button Sinkronkan Data di Kanan Atas -->
+          <button id="refreshBtn" class="btn btn-default" title="Ambil data terbaru dari Google Sheets">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+              <path d="M3 3v5h5"/>
+              <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+              <path d="M16 21h5v-5"/>
+            </svg>
+            Sinkronkan Data
+          </button>
+        </div>
+      </header>
 
       <!-- KPI Summary Cards (4 Kolom Rapat) -->
       <section class="kpi-grid" aria-label="Indikator Kinerja Utama">
         <div class="kpi-card">
           <div class="kpi-card-header">
-            <span class="kpi-label">Total Omzet</span>
-            <span class="kpi-sub-tag">Global</span>
+            <span class="kpi-label">TOTAL OMZET</span>
           </div>
           <div class="kpi-metric-value" id="kpiTotalOmzet">Rp 0</div>
           <div class="kpi-card-footer">
-            <span>Surplus:</span> <strong id="kpiSurplusKas" class="val-positive">Rp 0</strong>
+            <span>Surplus Kas:</span> <strong id="kpiSurplusKas" class="val-positive">Rp 0</strong>
           </div>
         </div>
 
         <div class="kpi-card">
           <div class="kpi-card-header">
-            <span class="kpi-label">Sold Berbayar</span>
-            <span class="kpi-sub-tag">Penjualan</span>
+            <span class="kpi-label">SOLD BERBAYAR</span>
           </div>
           <div class="kpi-metric-value" id="kpiSoldBerbayar">0 Akun</div>
           <div class="kpi-card-footer">
@@ -141,19 +81,17 @@
 
         <div class="kpi-card">
           <div class="kpi-card-header">
-            <span class="kpi-label">Klaim Garansi</span>
-            <span class="kpi-sub-tag">Quality</span>
+            <span class="kpi-label">KLAIM GARANSI</span>
           </div>
           <div class="kpi-metric-value" id="kpiKlaimGaransi">0 Akun</div>
           <div class="kpi-card-footer">
-            <span>Rasio:</span> <strong id="kpiRasioKlaim" class="val-caution">0%</strong>
+            <span>Rasio Klaim:</span> <strong id="kpiRasioKlaim" class="val-caution">0%</strong>
           </div>
         </div>
 
         <div class="kpi-card">
           <div class="kpi-card-header">
-            <span class="kpi-label">Modal Terpakai</span>
-            <span class="kpi-sub-tag">Operasional</span>
+            <span class="kpi-label">MODAL TERPAKAI</span>
           </div>
           <div class="kpi-metric-value" id="kpiTotalModal">Rp 0</div>
           <div class="kpi-card-footer">
@@ -162,10 +100,20 @@
         </div>
       </section>
 
-      <!-- Compact Operational Strip (Hari Aktif yang Dipilih) -->
+      <!-- Operational Strip dengan Dropdown Hari yang Bisa Diklik Langsung -->
       <section class="operational-strip" aria-label="Ringkasan Hari Aktif">
         <div class="strip-header">
-          <span class="strip-title">Operasional: <strong id="currentDayBadge" class="val-positive">Hari 47</strong></span>
+          <div class="interactive-day-selector">
+            <label for="activeDaySelect" class="strip-title">Operasional Hari Aktif:</label>
+            <div class="day-select-wrapper">
+              <select id="activeDaySelect" class="day-select-dropdown" aria-label="Pilih hari aktif">
+                <option value="Hari 47">Hari 47</option>
+              </select>
+              <svg class="day-select-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
+            </div>
+          </div>
           <div class="status-tags">
             <span class="tag-badge tag-ready" id="chipReady">0 Ready</span>
             <span class="tag-badge tag-sold" id="chipSold">0 Sold</span>
@@ -253,6 +201,6 @@
     </main>
   </div>
 
-  <script src="/js/app.js?v=mobileclean1"></script>
+  <script src="/js/app.js?v=customobsidian1"></script>
 </body>
 </html>

@@ -55,26 +55,24 @@ function updateUI(data) {
 
   // Populate Dropdown Sheet Desktop & Mobile
   const selectDesktop = document.getElementById('activeDaySelect');
-  const selectMobile = document.getElementById('activeDaySelectMobile');
   
-  [selectDesktop, selectMobile].forEach(sel => {
-    if (!sel) return;
+  if (selectDesktop) {
     if (data.available_sheets && data.available_sheets.length > 0) {
-      if (sel.children.length <= 1 || sel.dataset.populated !== "true") {
-        sel.innerHTML = '';
+      if (selectDesktop.children.length <= 1 || selectDesktop.dataset.populated !== "true") {
+        selectDesktop.innerHTML = '';
         data.available_sheets.forEach(sheet => {
           const opt = document.createElement('option');
           opt.value = sheet;
           opt.textContent = sheet;
           if (sheet === activeSheet) opt.selected = true;
-          sel.appendChild(opt);
+          selectDesktop.appendChild(opt);
         });
-        sel.dataset.populated = "true";
+        selectDesktop.dataset.populated = "true";
       } else {
-        sel.value = activeSheet;
+        selectDesktop.value = activeSheet;
       }
     }
-  });
+  }
 
   // Render Visual Charts
   renderTrendChart(kpis.trend_harian || []);
@@ -269,12 +267,6 @@ document.getElementById('refreshBtn')?.addEventListener('click', () => {
 function handleSheetChange(e) {
   const newSheet = e.target.value;
   currentSelectedSheet = newSheet;
-  document.getElementById('currentDayBadge').textContent = newSheet;
-
-  const selectDesktop = document.getElementById('activeDaySelect');
-  const selectMobile = document.getElementById('activeDaySelectMobile');
-  if (selectDesktop) selectDesktop.value = newSheet;
-  if (selectMobile) selectMobile.value = newSheet;
 
   fetch('/api/set-active-day', {
     method: 'POST',
@@ -286,7 +278,6 @@ function handleSheetChange(e) {
 }
 
 document.getElementById('activeDaySelect')?.addEventListener('change', handleSheetChange);
-document.getElementById('activeDaySelectMobile')?.addEventListener('change', handleSheetChange);
 
 // Initial Fetch & Refresh Polling
 fetchDashboardData();

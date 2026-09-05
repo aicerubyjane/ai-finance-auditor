@@ -724,7 +724,7 @@ html, body {
   white-space: nowrap;
 }
 
-/* Dropdown Hari yang Menyatu & Bisa Diklik Langsung */
+/* Dropdown Hari yang Menyatu & Nyaman Diklik */
 .day-select-wrapper {
   position: relative;
   display: inline-flex;
@@ -735,33 +735,42 @@ html, body {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  background: var(--bg-surface-elevated);
+  background-color: var(--bg-surface-elevated);
   border: 1px solid var(--accent-green);
   color: var(--accent-green-text);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   font-family: inherit;
-  padding: 4px 24px 4px 10px;
+  padding: 5px 30px 5px 12px;
   border-radius: var(--radius-sm);
   cursor: pointer;
   outline: none;
   transition: all 0.2s ease;
-  box-shadow: 0 0 10px rgba(16, 185, 129, 0.15);
 }
 
 .day-select-dropdown:hover {
-  background: rgba(16, 185, 129, 0.12);
+  background-color: rgba(52, 211, 153, 0.15);
   border-color: #34d399;
 }
 
-.day-select-dropdown:focus {
-  border-color: #34d399;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+/* Opsi Dropdown: Wajib Gelap & Teks Terang agar Sangat Kontras dan Jelas */
+.day-select-dropdown option {
+  background-color: #1a1e24 !important;
+  color: #F5E9E7 !important;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 12px;
+}
+
+.day-select-dropdown option:checked,
+.day-select-dropdown option:hover {
+  background-color: #262c35 !important;
+  color: #34d399 !important;
 }
 
 .day-select-chevron {
   position: absolute;
-  right: 8px;
+  right: 10px;
   pointer-events: none;
   color: var(--accent-green-text);
 }

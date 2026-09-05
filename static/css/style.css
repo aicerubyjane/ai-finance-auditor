@@ -8,34 +8,41 @@
    ========================================================================== */
 
 :root {
-  /* Premium Dark Palette (Gambar 5: Deep Midnight Obsidian & Slate) */
-  --bg-canvas: #090d16;
-  --bg-surface: #0f172a;
-  --bg-surface-elevated: #1e293b;
-  --bg-surface-subtle: #0b1120;
+  /* Palette: Graphite & Warm Slate (Gambar 2 User) */
+  --bg-canvas: #121417;             /* Deep graphite base */
+  --bg-surface: #1a1e24;            /* Solid charcoal graphite surface */
+  --bg-surface-elevated: #262c35;   /* Elevated graphite card */
+  --bg-surface-subtle: #15181e;     /* Sub-surface list/table */
+
+  /* Palette Accents from Graphite Card */
+  --graphite-silver: #C1C0C2;       /* Light neutral text/icon */
+  --graphite-warm-white: #F5E9E7;   /* Off-white primary text */
+  --graphite-blush: #ECC5C6;        /* Subtle rose/blush accent highlight */
+  --graphite-olive: #837D68;        /* Muted olive border / tag */
+  --graphite-slate-blue: #8A9DB1;   /* Soft slate blue secondary accent */
 
   /* Structural Borders */
-  --border-subtle: #1e293b;
-  --border-default: #334155;
-  --border-active: #475569;
+  --border-subtle: #222730;
+  --border-default: #2d3440;
+  --border-active: #404a5c;
 
   /* Typography */
   --font-base: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+  --text-primary: #F5E9E7;          /* Warm white for superior readability */
+  --text-secondary: #C1C0C2;        /* Silver secondary text */
+  --text-muted: #8A9DB1;            /* Slate blue-grey muted */
 
   /* Functional Status Colors */
-  --accent-blue: #38bdf8;
-  --accent-green: #10b981;
+  --accent-blue: #8A9DB1;
+  --accent-green: #34d399;
   --accent-green-text: #34d399;
   --accent-yellow-text: #fbbf24;
-  --accent-red-text: #f87171;
+  --accent-red-text: #ECC5C6;       /* Blush rose for claim alert */
 
-  /* Compact Radii */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  /* Clean Professional Radii (antislop-ui R-11: deliberate, not uniform pill) */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
 }
 
 *, *::before, *::after {
@@ -616,70 +623,81 @@ html, body {
   gap: 12px;
   margin-top: 2px;
 }
+/* --------------------------------------------------------------------------
+   KPI Grid (High-Density Top Bar with Solid Typography)
+   -------------------------------------------------------------------------- */
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+  gap: 12px;
 }
 
 .kpi-card {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
-  padding: 10px 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: border-color 0.15s ease;
+}
+
+.kpi-card:hover {
+  border-color: var(--border-active);
 }
 
 .kpi-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .kpi-label {
   font-size: 11px;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
-}
-
-.kpi-sub-tag {
-  font-size: 9px;
-  background-color: var(--bg-surface-elevated);
-  padding: 1px 5px;
-  border-radius: 3px;
+  letter-spacing: 0.6px;
   color: var(--text-muted);
 }
 
 .kpi-metric-value {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
-  line-height: 1.15;
-  margin-bottom: 4px;
+  letter-spacing: -0.5px;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+  line-height: 1.2;
 }
 
 .kpi-card-footer {
-  font-size: 11px;
-  color: var(--text-muted);
+  font-size: 13px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 8px;
+  margin-top: 4px;
 }
 
 .kpi-card-footer strong {
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .val-positive { color: var(--accent-green-text); }
-.val-caution { color: var(--accent-yellow-text); }
+.val-caution { color: #fbbf24; }
 .val-danger { color: var(--accent-red-text); }
 
 /* --------------------------------------------------------------------------
-   Operational Strip (Compact Row)
+   Operational Strip (Tengah - Graphite Elevated)
    -------------------------------------------------------------------------- */
 .operational-strip {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
-  padding: 8px 14px;
+  padding: 10px 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -900,29 +918,31 @@ html, body {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .workbench-table-compact th {
   background-color: var(--bg-surface-elevated);
   color: var(--text-secondary);
-  font-size: 10px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
-  padding: 6px 8px;
+  letter-spacing: 0.5px;
+  padding: 8px 10px;
   border-bottom: 1px solid var(--border-default);
   position: sticky;
   top: 0;
+  z-index: 2;
 }
 
 .workbench-table-compact td {
-  padding: 6px 8px;
+  padding: 8px 10px;
   border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
 }
 
 .workbench-table-compact tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.02);
+  background-color: rgba(255, 255, 255, 0.04);
 }
 
 /* ==========================================================================

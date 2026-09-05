@@ -102,33 +102,33 @@ function renderTrendChart(trendData) {
         {
           label: 'Omzet',
           data: omzet,
-          borderColor: '#2f81f7',
-          backgroundColor: 'rgba(47, 129, 247, 0.08)',
+          borderColor: '#8A9DB1', // Slate Blue from Graphite palette
+          backgroundColor: 'rgba(138, 157, 177, 0.12)',
           fill: true,
-          tension: 0.2,
-          borderWidth: 1.75,
-          pointRadius: 2,
-          pointHoverRadius: 4,
+          tension: 0.25,
+          borderWidth: 2,
+          pointRadius: 2.5,
+          pointHoverRadius: 5,
         },
         {
           label: 'Surplus Kas',
           data: surplus,
-          borderColor: '#238636',
+          borderColor: '#34d399', // Emerald
           backgroundColor: 'transparent',
-          borderWidth: 1.75,
-          tension: 0.2,
-          pointRadius: 2,
-          pointHoverRadius: 4,
+          borderWidth: 2,
+          tension: 0.25,
+          pointRadius: 2.5,
+          pointHoverRadius: 5,
         },
         {
           label: 'Modal',
           data: modal,
-          borderColor: '#f85149',
+          borderColor: '#ECC5C6', // Blush Rose
           backgroundColor: 'transparent',
-          borderWidth: 1.75,
-          tension: 0.2,
-          pointRadius: 2,
-          pointHoverRadius: 4,
+          borderWidth: 2,
+          tension: 0.25,
+          pointRadius: 2.5,
+          pointHoverRadius: 5,
         }
       ]
     },
@@ -199,10 +199,10 @@ function renderProductChart(rekap) {
       labels: labels,
       datasets: [{
         data: data,
-        backgroundColor: ['#2f81f7', '#a371f7', '#3fb950'],
-        borderColor: '#161b22',
+        backgroundColor: ['#8A9DB1', '#ECC5C6', '#837D68'],
+        borderColor: '#1a1e24',
         borderWidth: 2,
-        hoverOffset: 3
+        hoverOffset: 4
       }]
     },
     options: {

@@ -444,7 +444,7 @@ async def summary_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"🛡️ **Klaim Garansi:** {klaim} Akun\n"
         f"📦 **Akun Ready:** {ready} Akun\n"
         f"━━━━━━━━━━━━━━━━━━━\n"
-        f"Buka Dashboard Web untuk melihat analitik lengkap 60 hari & grafik produk."
+        f"Buka Dashboard Web untuk melihat analitik lengkap 90 hari & grafik produk."
     )
 
     await query.edit_message_text(
@@ -463,7 +463,7 @@ async def web_info_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"👉 `http://localhost:{port}`\n\n"
         f"Fitur web mencakup:\n"
         f"• Indikator KPI Global (Tab Dashboard)\n"
-        f"• Grafik Omzet vs Modal vs Surplus 60 Hari\n"
+        f"• Grafik Omzet vs Modal vs Surplus 90 Hari\n"
         f"• Breakdown ChatGPT, Claude, Gemini\n"
         f"• Live Inventory Auditor"
     )

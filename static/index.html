@@ -1,435 +1,417 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Finance Auditor Dashboard</title>
-  <meta name="description" content="AI Account Finance & Inventory Real-Time Auditor">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=frosted11">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#f6f7f3">
+  <title>Ringkasan Usaha · Finance Auditor</title><meta name="description" content="Pantau penjualan, kas, dan persediaan akun dalam satu ruang kerja.">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css?v=v2026_fix5">
+  <style>
+    .icon-definitions { display: none !important; width: 0 !important; height: 0 !important; position: absolute !important; }
+    .icon { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: inline-block; vertical-align: middle; flex-shrink: 0; }
+    .icon * { fill: none; stroke: currentColor; }
+  </style>
+  <script src="/vendor/chart.umd.js" defer></script>
+  <script src="/js/app.js?v=v2026_fix5" defer></script>
+  <script src="/js/editor.js?v=v2026_fix5" defer></script>
+  <script src="/js/navigation.js?v=v2026_fix5" defer></script>
 </head>
 <body>
+  <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display:none">
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="6" height="6" rx="1"/><rect x="14.5" y="3.5" width="6" height="6" rx="1"/><rect x="3.5" y="14.5" width="6" height="6" rx="1"/><rect x="14.5" y="14.5" width="6" height="6" rx="1"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 4v16h16M7 14l4-5 4 3 5-7"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5ZM3 8v9l9 5 9-5V8M12 13v9M7.5 5.5l9 5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M6 6a8 8 0 0 1 13 2l1 4M4 12l1 4a8 8 0 0 0 13 2"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-4-4 4 4 4-4M4 16v5h16v-5"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 2v6M17 2v6M3 11h18"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></symbol>
+    <symbol id="i-sheet" viewBox="0 0 24 24"><path d="M14 3H5v18h14V8l-5-5Zm0 0v5h5M8 12h8M8 16h8M12 12v7"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+    <symbol id="i-sort" viewBox="0 0 24 24"><path d="m8 9 4-4 4 4m-8 6 4 4 4-4"/></symbol>
+    <symbol id="i-zoom-in" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></symbol>
+    <symbol id="i-zoom-out" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></symbol>
+    <symbol id="i-chevron-left" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></symbol>
+    <symbol id="i-chevron-right" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></symbol>
+  </svg>
+  <a class="skip-link" href="#overview">Lewati ke ringkasan</a>
   <div class="app-layout">
-    <!-- Top Modern Application Header & Navbar -->
-    <header class="app-top-header">
-      <div class="header-main-row">
-        <div class="brand-titles-left">
-          <div class="brand-header-text">
-            <h1 class="brand-title">Finance Auditor</h1>
-            <span class="brand-tag"><span class="pulse-dot"></span> Google Sheets Live</span>
+    <aside class="sidebar">
+      <a class="brand" href="#overview" aria-label="Finance Auditor, ringkasan"><span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span><span class="brand-name">Finance<span>Auditor</span></span></a>
+      <div class="workspace-label">Ruang kerja</div>
+      <nav class="side-nav" aria-label="Navigasi utama">
+        <a class="nav-link active" href="#overview" data-target-view="overview" aria-current="location"><svg class="icon"><use href="#i-grid"/></svg><span>Ringkasan</span></a>
+        <a class="nav-link" href="#tren" data-target-view="tren"><svg class="icon"><use href="#i-chart"/></svg><span>Tren keuangan</span></a>
+        <a class="nav-link" href="#produk" data-target-view="produk"><svg class="icon"><use href="#i-box"/></svg><span>Produk &amp; stok</span></a>
+      </nav>
+
+      <!-- Sidebar Executive Info Panel (Fills the sidebar meaningfully) -->
+      <div class="sidebar-center-panel">
+        <div class="sidebar-section-header">
+          <span>Ringkasan sistem</span>
+          <span class="sidebar-live-pill"><span class="live-dot"></span>Online</span>
+        </div>
+        <div class="sidebar-kpi-compact">
+          <div class="sidebar-kpi-item">
+            <span class="sidebar-kpi-sub">Total omzet tercatat</span>
+            <strong class="sidebar-kpi-val" id="sidebarOmzetVal">—</strong>
+          </div>
+          <div class="sidebar-kpi-item">
+            <span class="sidebar-kpi-sub">Surplus kas bersih</span>
+            <strong class="sidebar-kpi-val surplus-val" id="sidebarSurplusVal">—</strong>
+          </div>
+          <div class="sidebar-kpi-split">
+            <div>
+              <small>Akun terjual</small>
+              <b id="sidebarSoldVal">—</b>
+            </div>
+            <div>
+              <small>Stok ready</small>
+              <b id="sidebarReadyVal">—</b>
+            </div>
           </div>
         </div>
 
-
-        <div class="header-right-actions">
-          <!-- Filter Hari Dropdown -->
-          <div class="day-picker-container">
-            <label for="activeDaySelect" class="day-picker-label">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>
-              </svg>
-              <span>Sheet Hari:</span>
-            </label>
-            <div class="custom-select-box">
-              <select id="activeDaySelect" class="clean-day-dropdown" aria-label="Pilih hari aktif">
-                <option value="Hari 47">Hari 47</option>
-              </select>
-              <svg class="select-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="m6 9 6 6 6-6"/>
-              </svg>
-            </div>
-          </div>
-
-          <!-- Tombol Input Data (Meminta PIN 6 Digit) -->
-          <button id="openInputDataBtn" class="btn-secondary-action" title="Buka Spreadsheet Input Data Harian">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 20h9"/>
-              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-            </svg>
-            <span>Input Data</span>
-          </button>
-
-          <!-- Tombol Sinkronkan Data (Primary Action) -->
-          <button id="refreshBtn" class="btn-primary-action" title="Ambil data terbaru dari Google Sheets">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-              <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-              <path d="M3 3v5h5"/>
-              <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
-              <path d="M16 21h5v-5"/>
-            </svg>
-            <span>Sinkronkan Data</span>
+        <div class="sidebar-section-header" style="margin-top:12px;">
+          <span>Pintasan</span>
+        </div>
+        <div class="sidebar-actions-compact">
+          <button id="sidebarQuickInputBtn" type="button" class="sidebar-action-pill">
+            <svg class="icon"><use href="#i-plus"/></svg>
+            <span>Input transaksi</span>
           </button>
         </div>
       </div>
-    </header>
 
-    <!-- Interactive Top Sync Progress Bar -->
-    <div id="syncProgressBar" class="sync-progress-bar" style="width: 0%;"></div>
-
-    <!-- Main Content Work Area -->
-    <main class="main-content" id="overview">
-      <div class="section-title-wrap">
-        <div class="title-with-sync-badge">
-          <h2 class="page-title">Ringkasan Eksekutif</h2>
-          <div id="syncStatusBadge" class="sync-live-badge loading">
-            <span class="sync-spinner"></span>
-            <span id="syncStatusText">Menghubungkan ke Google Sheets...</span>
-          </div>
+      <div class="sidebar-bottom">
+        <div class="sheet-source"><svg class="icon"><use href="#i-sheet"/></svg><div><strong>Google Sheets</strong><span>Sumber pencatatan</span></div></div>
+        <div class="sidebar-day"><span>Hari dipilih</span><strong id="sidebarDay">—</strong></div>
+        <div class="workspace-signature">
+          <span class="status-indicator-dot" aria-hidden="true"></span>
+          <div>Operasional usaha<small>Finance &amp; inventory</small></div>
         </div>
-        <p class="page-subtitle">Pencatatan real-time performa kas, stok ready, klaim garansi, dan omzet 60 hari.</p>
       </div>
-
-      <!-- KPI 4-Card Row (Layout Referensi Baris Atas) -->
-      <section class="kpi-banner-grid" aria-label="Statistik Utama">
-        <!-- Card 1: Total Omzet -->
-        <div class="kpi-banner-card">
-          <div class="card-meta-row">
-            <span class="card-meta-label">Total Omzet Global</span>
-            <span class="card-meta-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            </span>
-          </div>
-          <div class="card-hero-number shimmer-loading" id="kpiTotalOmzet">Rp 0</div>
-          <div class="card-footer-row">
-            <span class="footer-desc">Surplus Kas:</span>
-            <span class="footer-delta positive shimmer-loading" id="kpiSurplusKas">Rp 0</span>
-          </div>
-        </div>
-
-        <!-- Card 2: Sold Berbayar -->
-        <div class="kpi-banner-card">
-          <div class="card-meta-row">
-            <span class="card-meta-label">Sold Berbayar</span>
-            <span class="card-meta-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
-            </span>
-          </div>
-          <div class="card-hero-number shimmer-loading" id="kpiSoldBerbayar">0 Akun</div>
-          <div class="card-footer-row">
-            <span class="footer-desc">Rata-rata:</span>
-            <span class="footer-delta neutral shimmer-loading" id="kpiAvgSold">0 / Hari</span>
-          </div>
-        </div>
-
-        <!-- Card 3: Klaim Garansi -->
-        <div class="kpi-banner-card">
-          <div class="card-meta-row">
-            <span class="card-meta-label">Klaim Garansi</span>
-            <span class="card-meta-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            </span>
-          </div>
-          <div class="card-hero-number shimmer-loading" id="kpiKlaimGaransi">0 Akun</div>
-          <div class="card-footer-row">
-            <span class="footer-desc">Rasio Klaim:</span>
-            <span class="footer-delta caution shimmer-loading" id="kpiRasioKlaim">0%</span>
-          </div>
-        </div>
-
-        <!-- Card 4: Modal Terpakai -->
-        <div class="kpi-banner-card">
-          <div class="card-meta-row">
-            <span class="card-meta-label">Modal Operasional</span>
-            <span class="card-meta-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
-            </span>
-          </div>
-          <div class="card-hero-number shimmer-loading" id="kpiTotalModal">Rp 0</div>
-          <div class="card-footer-row">
-            <span class="footer-desc">Hari Aktif:</span>
-            <span class="footer-delta neutral shimmer-loading" id="kpiHariAktif">0 Hari</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- Middle Grid: Large Chart Left & Operational Summary Right -->
-      <section class="dashboard-split-grid">
-        <!-- Left: Sales & Finance Activity Chart (Seperti Sale Activity - Monthly pada Referensi) -->
-        <div class="saas-card large-chart-card" id="tren">
-          <div class="card-header-bar">
+    </aside>
+    <div class="workspace-main">
+      <header class="app-top-header"><div class="breadcrumb"><span id="breadcrumbRoot">Workspace</span><span class="breadcrumb-slash">/</span><strong id="breadcrumbCurrent">Ringkasan usaha</strong></div><div class="header-right-actions"><span class="header-date" id="localDate"></span><button id="refreshBtn" class="btn btn-quiet" title="Ambil data terbaru"><svg class="icon"><use href="#i-refresh"/></svg><span>Sinkronkan</span></button></div></header>
+      <div id="syncProgressBar" class="sync-progress-bar" style="width:0%;opacity:0" aria-hidden="true"></div>
+      <main class="main-content" id="mainContent" tabindex="-1">
+        
+        <!-- VIEW 1: OVERVIEW / RINGKASAN -->
+        <div class="spa-view active" id="viewOverview" data-view="overview">
+          <section class="page-intro" aria-labelledby="pageTitle">
             <div>
-              <h2 class="card-heading">Aktivitas Tren Keuangan Harian</h2>
-              <p class="card-subheading">Komposisi Omzet, Modal Terpakai, dan Surplus Kas harian (Stacked Bar)</p>
+              <div class="eyebrow">Pantau usaha, lebih jelas.</div>
+              <h1 id="pageTitle">Ringkasan usaha<span class="heading-period">.</span></h1>
+              <p class="page-subtitle">Penjualan, perputaran kas, dan stok dalam satu pandangan.</p>
             </div>
-            <span class="timeframe-tag">Histori 60 Hari</span>
+            <div class="page-actions">
+              <button id="exportCsvBtn" class="btn btn-secondary" disabled><svg class="icon"><use href="#i-download"/></svg>Ekspor CSV</button>
+              <button id="openInputDataBtn" class="btn btn-primary"><svg class="icon"><use href="#i-plus"/></svg>Input data</button>
+            </div>
+          </section>
+          
+          <div class="section-meta">
+            <span>Akumulasi usaha <span class="meta-divider">/</span> Rekap seluruh periode</span>
+            <div id="syncStatusBadge" class="sync-live-badge loading" role="status">
+              <span class="sync-spinner" aria-hidden="true"></span>
+              <span id="syncStatusText">Memuat data…</span>
+            </div>
           </div>
-          <div class="chart-container-fluid">
-            <canvas id="trendChart"></canvas>
+          
+          <div id="dashboardNotice" class="dashboard-notice" role="status" hidden></div>
+          
+          <section class="kpi-banner-grid" aria-label="Ringkasan seluruh periode">
+            <article class="kpi-banner-card kpi-featured">
+              <div class="card-meta-label">Total omzet<span class="metric-symbol" aria-hidden="true">Rp</span></div>
+              <div class="card-hero-number shimmer-loading" id="kpiTotalOmzet">—</div>
+              <div class="card-footer-row"><span>Surplus kas</span><strong id="kpiSurplusKas">—</strong></div>
+            </article>
+            <article class="kpi-banner-card">
+              <div class="card-meta-label">Akun terjual<svg class="icon"><use href="#i-arrow"/></svg></div>
+              <div class="card-hero-number shimmer-loading" id="kpiSoldBerbayar">—</div>
+              <div class="card-footer-row"><span>Rata-rata penjualan</span><strong id="kpiAvgSold">—</strong></div>
+            </article>
+            <article class="kpi-banner-card">
+              <div class="card-meta-label">Klaim garansi<svg class="icon"><use href="#i-lock"/></svg></div>
+              <div class="card-hero-number shimmer-loading" id="kpiKlaimGaransi">—</div>
+              <div class="card-footer-row"><span>Rasio klaim</span><strong class="caution" id="kpiRasioKlaim">—</strong></div>
+            </article>
+            <article class="kpi-banner-card">
+              <div class="card-meta-label">Modal operasional<svg class="icon"><use href="#i-box"/></svg></div>
+              <div class="card-hero-number shimmer-loading" id="kpiTotalModal">—</div>
+              <div class="card-footer-row"><span>Hari aktif</span><strong id="kpiHariAktif">—</strong></div>
+            </article>
+          </section>
+
+          <section class="dashboard-split-grid">
+            <article class="saas-card large-chart-card" aria-labelledby="trendHeading">
+              <div class="card-header-bar">
+                <div>
+                  <h2 id="trendHeading">Arus keuangan</h2>
+                  <p class="card-subheading">Stacked Bar: Modal &amp; Surplus (merah jika minus)</p>
+                </div>
+                <div class="chart-header-controls">
+                  <div class="zoom-btn-group" role="group" aria-label="Kontrol zoom dan geser grafik">
+                    <button id="btnZoomOut" class="btn btn-zoom" title="Perkecil (lihat lebih banyak hari)"><svg class="icon"><use href="#i-zoom-out"/></svg></button>
+                    <button id="btnZoomIn" class="btn btn-zoom" title="Perbesar (detail per hari)"><svg class="icon"><use href="#i-zoom-in"/></svg></button>
+                    <button id="btnPanLeft" class="btn btn-zoom" title="Geser ke hari sebelumnya"><svg class="icon"><use href="#i-chevron-left"/></svg></button>
+                    <button id="btnPanRight" class="btn btn-zoom" title="Geser ke hari berikutnya"><svg class="icon"><use href="#i-chevron-right"/></svg></button>
+                    <button id="btnResetZoom" class="btn btn-zoom btn-zoom-reset" title="Kembalikan zoom"><svg class="icon"><use href="#i-refresh"/></svg></button>
+                  </div>
+                  <div class="range-control" role="group" aria-label="Rentang grafik">
+                    <button data-range="7" aria-pressed="false">7 hari</button>
+                    <button data-range="14" aria-pressed="false">14 hari</button>
+                    <button data-range="30" aria-pressed="true" class="active">30 hari</button>
+                    <button data-range="90" aria-pressed="false">90 hari</button>
+                  </div>
+                </div>
+              </div>
+              <div class="chart-meta">
+                <div>
+                  <span class="chart-total" id="trendTotal">—</span>
+                  <span class="chart-period" id="trendPeriod">Omzet dalam periode terpilih</span>
+                </div>
+                <div class="chart-series" role="group" aria-label="Seri grafik">
+                  <button data-series="0" aria-pressed="true"><span class="series-dot series-modal"></span>Modal</button>
+                  <button data-series="1" aria-pressed="true"><span class="series-dot series-surplus"></span>Surplus</button>
+                  <span class="series-legend-note"><span class="series-dot series-deficit"></span>Mines (merah)</span>
+                </div>
+              </div>
+              <div class="chart-container-fluid">
+                <canvas id="trendChart" role="img" aria-label="Grafik stacked bar modal dan surplus harian"></canvas>
+                <p id="trendEmpty" class="chart-empty" hidden>Belum ada aktivitas pada periode ini.</p>
+              </div>
+              <div class="chart-footnote">
+                <span id="zoomWindowBadge" class="zoom-badge-info">Gunakan tombol zoom / geser untuk melihat detail harian</span>
+                <span>Arahkan ke grafik untuk rincian harian</span>
+              </div>
+            </article>
+
+            <article class="saas-card operational-panel-card" aria-labelledby="dayHeading">
+              <div class="card-header-bar">
+                <div>
+                  <h2 id="dayHeading">Catatan harian</h2>
+                  <p class="card-subheading">Aktivitas hari yang dipilih</p>
+                </div>
+                <svg class="icon muted-icon"><use href="#i-calendar"/></svg>
+              </div>
+              <div class="day-picker-container">
+                <label for="activeDaySelect">Pilih hari</label>
+                <select id="activeDaySelect" aria-label="Pilih hari aktif"><option value="">Memuat…</option></select>
+              </div>
+              <div class="daily-surplus">
+                <div class="surplus-label">Surplus kas<span id="currentDayBadge">—</span></div>
+                <strong id="daySurplus">—</strong>
+                <div class="surplus-caption">
+                  <span>Margin kas</span><span id="dayMargin">—</span>
+                </div>
+              </div>
+              <div class="daily-stat-list">
+                <div class="daily-stat-row"><span>Omzet</span><strong id="dayOmzet">—</strong></div>
+                <div class="daily-stat-row"><span>Modal</span><strong id="dayModal">—</strong></div>
+              </div>
+              <div class="status-pill-group">
+                <span class="pill-badge pill-ready" id="chipReady">— Ready</span>
+                <span class="pill-badge pill-sold" id="chipSold">— Terjual</span>
+                <span class="pill-badge pill-claim" id="chipClaim">— Klaim</span>
+              </div>
+              <div class="daily-channel-chips">
+                <span>Sumber penjualan</span>
+                <div>
+                  <span>Threads <strong id="dayThreads">—</strong></span>
+                  <span>Reseller <strong id="dayReseller">—</strong></span>
+                </div>
+              </div>
+            </article>
+          </section>
+
+          <!-- Quick Navigation Link to Dedicated Products Page -->
+          <div class="quick-nav-card">
+            <div class="quick-nav-text">
+              <strong>Katalog Produk &amp; Persediaan Stok</strong>
+              <span>Kelola rincian stok ready, rasio klaim garansi, dan komposisi penjualan per produk.</span>
+            </div>
+            <a href="#produk" class="btn btn-secondary quick-nav-action-btn">
+              <span>Buka Produk &amp; Stok</span>
+              <svg class="icon"><use href="#i-arrow"/></svg>
+            </a>
           </div>
         </div>
 
-        <!-- Right: Daily Operational Focus (Seperti Kolom Kanan pada Referensi) -->
-        <div class="saas-card operational-panel-card" id="operasional">
-          <div class="card-header-bar">
+        <!-- VIEW 2: TREN KEUANGAN -->
+        <div class="spa-view" id="viewTren" data-view="tren">
+          <section class="page-intro" aria-labelledby="trenPageTitle">
             <div>
-              <h2 class="card-heading">Operasional Hari Aktif</h2>
-              <p class="card-subheading">Kondisi kas dan transaksi hari ini</p>
+              <div class="eyebrow">Analisis Arus Kas</div>
+              <h1 id="trenPageTitle">Tren keuangan<span class="heading-period">.</span></h1>
+              <p class="page-subtitle">Visualisasi stacked vertical bar modal terpakai dan surplus kas harian.</p>
             </div>
-            <div class="status-pill-group">
-              <span class="pill-badge pill-ready" id="chipReady">0 Ready</span>
-              <span class="pill-badge pill-sold" id="chipSold">0 Sold</span>
-              <span class="pill-badge pill-claim" id="chipClaim">0 Klaim</span>
+            <div class="page-actions">
+              <button id="btnResetZoomDeep" class="btn btn-secondary"><svg class="icon"><use href="#i-refresh"/></svg>Reset tampilan</button>
             </div>
-          </div>
+          </section>
 
-          <div class="daily-stat-list">
-            <div class="daily-stat-row">
-              <div class="stat-meta">
-                <span class="stat-name">Omzet Hari Ini</span>
-                <span class="stat-hint">Total penjualan masuk</span>
+          <article class="saas-card large-chart-card full-width-chart-card">
+            <div class="card-header-bar">
+              <div>
+                <h2>Detail Arus Keuangan (Stacked Vertical Bar)</h2>
+                <p class="card-subheading">Modal (dasar) + Surplus kas = Total Omzet harian</p>
               </div>
-              <strong class="stat-amount" id="dayOmzet">Rp 0</strong>
-            </div>
-
-            <div class="daily-stat-row">
-              <div class="stat-meta">
-                <span class="stat-name">Modal Hari Ini</span>
-                <span class="stat-hint">Pengeluaran beli akun/stok</span>
-              </div>
-              <strong class="stat-amount" id="dayModal">Rp 0</strong>
-            </div>
-
-            <div class="daily-stat-row highlight-surplus">
-              <div class="stat-meta">
-                <span class="stat-name">Surplus Kas Hari Ini</span>
-                <span class="stat-hint">Sisa bersih di tangan</span>
-              </div>
-              <strong class="stat-amount text-success" id="daySurplus">Rp 0</strong>
-            </div>
-
-            <div class="daily-stat-row">
-              <div class="stat-meta">
-                <span class="stat-name">Margin Keuntungan</span>
-                <span class="stat-hint">Rasio surplus terhadap omzet</span>
-              </div>
-              <strong class="stat-amount" id="dayMargin">0%</strong>
-            </div>
-
-            <div class="daily-channel-chips">
-              <div class="channel-chip">
-                <span>Threads:</span> <strong id="dayThreads">0</strong>
-              </div>
-              <div class="channel-chip">
-                <span>Reseller:</span> <strong id="dayReseller">0</strong>
+              <div class="chart-header-controls">
+                <div class="zoom-btn-group" role="group" aria-label="Kontrol zoom dan geser grafik">
+                  <button id="btnZoomOutTren" class="btn btn-zoom" title="Perkecil (lihat lebih banyak hari)"><svg class="icon"><use href="#i-zoom-out"/></svg></button>
+                  <button id="btnZoomInTren" class="btn btn-zoom" title="Perbesar (detail per hari)"><svg class="icon"><use href="#i-zoom-in"/></svg></button>
+                  <button id="btnPanLeftTren" class="btn btn-zoom" title="Geser ke hari sebelumnya"><svg class="icon"><use href="#i-chevron-left"/></svg></button>
+                  <button id="btnPanRightTren" class="btn btn-zoom" title="Geser ke hari berikutnya"><svg class="icon"><use href="#i-chevron-right"/></svg></button>
+                  <button id="btnResetZoomTren" class="btn btn-zoom btn-zoom-reset" title="Kembalikan zoom"><svg class="icon"><use href="#i-refresh"/></svg></button>
+                </div>
+                <div class="range-control" role="group" aria-label="Rentang grafik">
+                  <button data-range="7" aria-pressed="false">7 hari</button>
+                  <button data-range="14" aria-pressed="false">14 hari</button>
+                  <button data-range="30" aria-pressed="true" class="active">30 hari</button>
+                  <button data-range="90" aria-pressed="false">90 hari</button>
+                </div>
               </div>
             </div>
-          </div>
+            <div class="chart-meta">
+              <div>
+                <span class="chart-total" id="trendTotalTren">—</span>
+                <span class="chart-period" id="trendPeriodTren">Omzet dalam periode terpilih</span>
+              </div>
+              <div class="chart-series" role="group" aria-label="Seri grafik">
+                <button data-series="0" aria-pressed="true"><span class="series-dot series-modal"></span>Modal</button>
+                <button data-series="1" aria-pressed="true"><span class="series-dot series-surplus"></span>Surplus</button>
+                <span class="series-legend-note"><span class="series-dot series-deficit"></span>Mines (merah)</span>
+              </div>
+            </div>
+            <div class="chart-container-fluid chart-container-large">
+              <canvas id="trendChartTren" role="img" aria-label="Grafik stacked bar detail arus kas harian"></canvas>
+              <p id="trendEmptyTren" class="chart-empty" hidden>Belum ada aktivitas pada periode ini.</p>
+            </div>
+            <div class="chart-footnote">
+              <span id="zoomWindowBadgeTren" class="zoom-badge-info">Gunakan zoom in untuk melihat batang per hari lebih lebar dan jelas</span>
+              <span>Arahkan ke batang untuk rincian harian</span>
+            </div>
+          </article>
         </div>
-      </section>
 
-      <!-- Bottom Grid: Detailed Table Left & Product Distribution Donut Right (Seperti Payments Table pada Referensi) -->
-      <section class="dashboard-bottom-grid" id="produk">
-        <!-- Left: Product Performance Table -->
-        <div class="saas-card table-panel-card">
-          <div class="card-header-bar">
+        <!-- VIEW 3: PRODUK & STOK -->
+        <div class="spa-view" id="viewProduk" data-view="produk">
+          <section class="page-intro" aria-labelledby="produkPageTitle">
             <div>
-              <h2 class="card-heading">Rincian Kinerja Akun AI</h2>
-              <p class="card-subheading">Volume penjualan, klaim garansi, stok ready, dan omzet per produk</p>
+              <div class="eyebrow">Manajemen Persediaan</div>
+              <h1 id="produkPageTitle">Produk &amp; persediaan<span class="heading-period">.</span></h1>
+              <p class="page-subtitle">Pantau stok akun ready, total terjual, dan rasio klaim garansi.</p>
             </div>
-          </div>
-          <div class="table-scroll-wrapper">
-            <table class="saas-data-table">
-              <thead>
-                <tr>
-                  <th>Produk</th>
-                  <th>Terjual (Sold)</th>
-                  <th>Klaim Garansi</th>
-                  <th>Stok Ready</th>
-                  <th>Total Omzet</th>
-                  <th>Rasio Klaim</th>
-                </tr>
-              </thead>
-              <tbody id="productTableBody">
-                <!-- Diisi otomatis oleh JavaScript -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Right: Donut Chart Distribution -->
-        <div class="saas-card donut-panel-card">
-          <div class="card-header-bar">
-            <div>
-              <h2 class="card-heading">Distribusi Penjualan</h2>
-              <p class="card-subheading">Porsi volume terjual antar produk</p>
+            <div class="page-actions">
+              <button id="exportCsvBtnProduk" class="btn btn-secondary"><svg class="icon"><use href="#i-download"/></svg>Ekspor CSV</button>
+              <button id="openInputDataBtnProduk" class="btn btn-primary"><svg class="icon"><use href="#i-plus"/></svg>Input data</button>
             </div>
-          </div>
-          <div class="donut-chart-wrapper">
-            <canvas id="productChart"></canvas>
-          </div>
+          </section>
+
+          <!-- Mini KPI Row for Products -->
+          <section class="kpi-mini-strip" aria-label="Ringkasan persediaan produk">
+            <div class="mini-kpi-card">
+              <span class="mini-kpi-label">Total produk terdaftar</span>
+              <strong class="mini-kpi-val" id="miniTotalProducts">—</strong>
+            </div>
+            <div class="mini-kpi-card">
+              <span class="mini-kpi-label">Akun terjual</span>
+              <strong class="mini-kpi-val" id="miniTotalSold">—</strong>
+            </div>
+            <div class="mini-kpi-card">
+              <span class="mini-kpi-label">Stok ready saat ini</span>
+              <strong class="mini-kpi-val" id="miniTotalReady">—</strong>
+            </div>
+            <div class="mini-kpi-card">
+              <span class="mini-kpi-label">Rata-rata klaim garansi</span>
+              <strong class="mini-kpi-val" id="miniAvgClaim">—</strong>
+            </div>
+          </section>
+
+          <section class="dashboard-bottom-grid">
+            <article class="saas-card table-panel-card" aria-labelledby="productHeading">
+              <div class="card-header-bar">
+                <div class="table-heading">
+                  <h2 id="productHeading">Produk &amp; persediaan</h2>
+                  <span class="count-badge" id="totalProducts">—</span>
+                </div>
+                <span class="section-kicker">Rincian per produk</span>
+              </div>
+              <div class="table-toolbar">
+                <label class="search-field">
+                  <svg class="icon"><use href="#i-search"/></svg>
+                  <input id="productSearch" type="search" placeholder="Cari produk…" aria-label="Cari produk" autocomplete="off">
+                </label>
+                <select id="productFilter" aria-label="Filter produk">
+                  <option value="all">Semua produk</option>
+                  <option value="ready">Stok tersedia</option>
+                  <option value="claims">Ada klaim</option>
+                </select>
+              </div>
+              <div class="table-scroll-wrapper" tabindex="0" role="region" aria-label="Tabel produk, geser untuk kolom lainnya">
+                <table class="saas-data-table">
+                  <thead>
+                    <tr>
+                      <th scope="col" aria-sort="none"><button data-sort="product">Produk<svg class="sort-icon"><use href="#i-sort"/></svg></button></th>
+                      <th scope="col" aria-sort="none"><button data-sort="sold">Terjual<svg class="sort-icon"><use href="#i-sort"/></svg></button></th>
+                      <th scope="col" aria-sort="none"><button data-sort="klaim">Klaim<svg class="sort-icon"><use href="#i-sort"/></svg></button></th>
+                      <th scope="col" aria-sort="none"><button data-sort="ready">Ready<svg class="sort-icon"><use href="#i-sort"/></svg></button></th>
+                      <th scope="col" aria-sort="descending"><button data-sort="omzet">Omzet<svg class="sort-icon"><use href="#i-sort"/></svg></button></th>
+                      <th scope="col" aria-sort="none"><button data-sort="claimRate">Rasio klaim<svg class="sort-icon"><use href="#i-sort"/></svg></button></th>
+                    </tr>
+                  </thead>
+                  <tbody id="productTableBody">
+                    <tr><td colspan="6" class="table-empty">Memuat rincian produk…</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="table-footnote">
+                Penjualan mengikuti rekap usaha. Stok ready mengikuti hari yang dipilih.
+              </div>
+            </article>
+
+            <article class="saas-card donut-panel-card" aria-labelledby="distributionHeading">
+              <div class="card-header-bar">
+                <div>
+                  <h2 id="distributionHeading">Komposisi penjualan</h2>
+                  <p class="card-subheading">Berdasarkan jumlah akun terjual</p>
+                </div>
+              </div>
+              <div class="donut-chart-wrapper">
+                <canvas id="productChart" role="img" aria-label="Komposisi penjualan per produk"></canvas>
+                <div class="donut-center">
+                  <strong id="productTotal">—</strong>
+                  <span>akun terjual</span>
+                </div>
+                <p id="productEmpty" class="chart-empty" hidden>Belum ada penjualan.</p>
+              </div>
+              <div id="productLegend" class="product-legend" aria-label="Rincian komposisi penjualan"></div>
+            </article>
+          </section>
         </div>
-    </main>
 
-    <!-- Mobile Bottom Action Dock (Membuat Pilih Hari & Input Data Nyaman Diklik Jempol di Layar Bawah Ponsel) -->
-    <nav class="mobile-bottom-dock" aria-label="Aksi Cepat Mobile">
-      <div class="dock-inner-wrap">
-        <div class="dock-day-selector">
-          <label for="mobileDaySelect" class="dock-label">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
-              <line x1="16" x2="16" y1="2" y2="6"/>
-              <line x1="8" x2="8" y1="2" y2="6"/>
-              <line x1="3" x2="21" y1="10" y2="10"/>
-            </svg>
-            <span>Sheet Hari:</span>
-          </label>
-          <div class="dock-select-box">
-            <select id="mobileDaySelect" class="dock-select" aria-label="Pilih hari aktif mobile">
-              <option value="Hari 47">Hari 47</option>
-            </select>
-            <svg class="dock-select-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="m6 9 6 6 6-6"/>
-            </svg>
-          </div>
-        </div>
-
-        <button id="mobileInputDataBtn" class="dock-btn-input" title="Buka Spreadsheet Input Data">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-            <path d="M12 20h9"/>
-            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-          </svg>
-          <span>Input Data</span>
-        </button>
-      </div>
-    </nav>
-  </div>
-
-  <!-- PIN Modal Dialog (6 Digit) -->
-  <div id="pinModal" class="custom-modal-overlay" style="display: none;">
-    <div class="custom-modal-card pin-card">
-      <div class="modal-header">
-        <div class="pin-icon-wrap">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
-        </div>
-        <h3 class="modal-title">Verifikasi Akses</h3>
-        <p class="modal-desc">Masukkan PIN 6 Digit keamanan untuk membuka editor spreadsheet manual.</p>
-      </div>
-
-      <div class="pin-input-wrap">
-        <input type="password" id="pinInputField" maxlength="6" inputmode="numeric" pattern="[0-9]*" placeholder="••••••" autocomplete="off">
-        <div id="pinErrorMessage" class="pin-error-text" style="display: none;">PIN salah, silakan coba lagi!</div>
-      </div>
-
-      <div class="modal-btn-row">
-        <button type="button" id="cancelPinBtn" class="btn-modal-cancel">Batal</button>
-        <button type="button" id="submitPinBtn" class="btn-modal-confirm">Buka Sheet</button>
-      </div>
+        <footer class="page-footer">
+          <span>Finance Auditor <span class="footer-separator">/</span> Ruang kerja operasional</span>
+          <span>Data diperbarui berkala dari Google Sheets</span>
+        </footer>
+      </main>
     </div>
   </div>
-
-  <!-- Fullscreen Sheet Editor Modal (Tampilan Plek Mirip Google Sheets) -->
-  <div id="sheetEditorModal" class="custom-modal-overlay" style="display: none;">
-    <div class="custom-modal-card full-sheet-card">
-      <!-- Sheet Toolbar Header -->
-      <div class="sheet-toolbar-header">
-        <div class="sheet-meta-title">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-            <line x1="16" y1="13" x2="8" y2="13"/>
-            <line x1="16" y1="17" x2="8" y2="17"/>
-            <polyline points="10 9 9 9 8 9"/>
-          </svg>
-          <div>
-            <h3 id="sheetEditorTitle" class="sheet-filename">Salinan Usaha Sell acc Prem - Hari 47</h3>
-            <span class="sheet-status-tag">Mode Edit Manual Terhubung Langsung</span>
-          </div>
-        </div>
-
-        <div class="sheet-toolbar-actions">
-          <button id="addNewRowBtn" class="btn-sheet-tool" title="Tambah Baris Transaksi Baru">+ Tambah Baris Baru</button>
-          <button id="refreshSheetTableBtn" class="btn-sheet-tool" title="Muat Ulang Data Sheet">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
-            Refresh
-          </button>
-          <button id="closeSheetEditorBtn" class="btn-sheet-close" title="Tutup Editor">&times;</button>
-        </div>
-      </div>
-
-      <!-- Quick Add Row Form Bar (Optional fast input) -->
-      <div id="newRowFormContainer" class="new-row-quick-bar" style="display: none;">
-        <div class="quick-form-grid">
-          <input type="email" id="newRowEmail" placeholder="Email akun..." class="sheet-input-field">
-          <input type="text" id="newRowPassEmail" placeholder="Pass Email..." class="sheet-input-field">
-          <input type="text" id="newRowPassCgpt" placeholder="Pass Akun..." class="sheet-input-field">
-          
-          <select id="newRowJenisAkun" class="sheet-input-field">
-            <option value="ChatGPT">ChatGPT</option>
-            <option value="Claude">Claude</option>
-            <option value="Gemini">Gemini</option>
-            <option value="Apple Music">Apple Music</option>
-            <option value="Canva">Canva</option>
-            <option value="Lainnya">Lainnya</option>
-          </select>
-
-          <select id="newRowPosisi" class="sheet-input-field">
-            <option value="Sold">Sold</option>
-            <option value="Stanby">Stanby (Ready)</option>
-            <option value="Klaim">Klaim</option>
-            <option value="Proses">Proses</option>
-          </select>
-
-          <input type="number" id="newRowHarga" placeholder="Harga Jual (Rp)..." class="sheet-input-field">
-          
-          <select id="newRowPaket" class="sheet-input-field">
-            <option value="Garansi">Garansi</option>
-            <option value="Non Garansi">Non Garansi</option>
-          </select>
-
-          <select id="newRowSumber" class="sheet-input-field">
-            <option value="Threads">Threads</option>
-            <option value="Reseller">Reseller</option>
-            <option value="Langganan">Langganan</option>
-            <option value="Website">Website</option>
-          </select>
-
-          <input type="text" id="newRowKeterangan" placeholder="Keterangan..." class="sheet-input-field">
-          
-          <button id="saveNewRowBtn" class="btn-save-row">Simpan ke Sheets</button>
-        </div>
-      </div>
-
-      <!-- Modal Ringkasan Bar (Total Modal) -->
-      <div class="sheet-formula-bar">
-        <div class="formula-label">TOTAL MODAL:</div>
-        <div class="formula-value" id="sheetTotalModalVal">Rp 0</div>
-        <div class="formula-info">Edit sel langsung di bawah untuk menyimpan perubahan otomatis ke Google Sheets.</div>
-      </div>
-
-      <!-- Spreadsheet Grid Table Container -->
-      <div class="spreadsheet-viewport">
-        <table class="google-sheets-grid" id="rawSheetsTable">
-          <thead>
-            <tr class="col-letters-row">
-              <th class="row-number-cell"></th>
-              <th>A (No)</th>
-              <th>B (Email)</th>
-              <th>C (Pass Email)</th>
-              <th>D (Pass CGPT)</th>
-              <th>E (Status Akun)</th>
-              <th>F (Posisi)</th>
-              <th>G (Harga Jual)</th>
-              <th>H (Jenis Transaksi)</th>
-              <th>I (Paket)</th>
-              <th>J (Sumber)</th>
-              <th>K (Keterangan)</th>
-              <th>L (Jenis Akun)</th>
-            </tr>
-          </thead>
-          <tbody id="rawSheetsTbody">
-            <!-- Di-generate otomatis oleh app.js -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <script src="/js/app.js?v=frosted11"></script>
+  <div id="pinModal" class="custom-modal-overlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="pinTitle" aria-describedby="pinDescription" tabindex="-1"><div class="custom-modal-card pin-card"><div class="pin-icon-wrap"><svg class="icon"><use href="#i-lock"/></svg></div><h2 id="pinTitle">Buka pencatatan</h2><p id="pinDescription" class="modal-desc">Masukkan PIN untuk mengakses dan mengubah data Google Sheets.</p><div class="pin-input-wrap"><label for="pinInputField">PIN akses · 6 digit</label><input type="password" id="pinInputField" maxlength="6" inputmode="numeric" pattern="[0-9]{6}" placeholder="••••••" autocomplete="off" aria-describedby="pinErrorMessage"><div id="pinErrorMessage" class="pin-error-text" role="alert" style="display:none"></div></div><div class="modal-btn-row"><button id="cancelPinBtn" type="button" class="btn btn-secondary">Batal</button><button id="submitPinBtn" type="button" class="btn btn-primary">Buka sheet</button></div></div></div>
+  <div id="sheetEditorModal" class="custom-modal-overlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="sheetEditorTitle" tabindex="-1"><div class="custom-modal-card full-sheet-card">
+    <div class="sheet-toolbar-header"><div class="sheet-meta-title"><span class="sheet-icon"><svg class="icon"><use href="#i-sheet"/></svg></span><div><h2 id="sheetEditorTitle" class="sheet-filename">Pencatatan harian</h2><span id="sheetSaveStatus" class="sheet-status-tag" role="status">Perubahan sel disimpan otomatis.</span></div></div><div class="sheet-toolbar-actions"><button id="addNewRowBtn" class="btn btn-primary" aria-expanded="false" aria-controls="newRowFormContainer"><svg class="icon"><use href="#i-plus"/></svg>Tambah transaksi</button><button id="refreshSheetTableBtn" class="btn btn-secondary"><svg class="icon"><use href="#i-refresh"/></svg><span>Muat ulang</span></button><button id="closeSheetEditorBtn" class="btn btn-icon" aria-label="Tutup editor"><svg class="icon"><use href="#i-close"/></svg></button></div></div>
+    <div id="newRowFormContainer" class="new-row-quick-bar" style="display:none"><h3>Transaksi baru</h3><div class="quick-form-grid">
+      <label>Email akun<input type="email" id="newRowEmail" placeholder="nama@email.com" class="sheet-input-field" required></label><label>Password email<input type="text" id="newRowPassEmail" class="sheet-input-field" autocomplete="off"></label><label>Password akun<input type="text" id="newRowPassCgpt" class="sheet-input-field" autocomplete="off"></label>
+      <label>Produk<select id="newRowJenisAkun" class="sheet-input-field"><option>ChatGPT</option><option>Claude</option><option>Gemini</option><option>Apple Music</option><option>Canva</option><option>Lainnya</option></select></label><label>Posisi akun<select id="newRowPosisi" class="sheet-input-field"><option value="Sold">Terjual</option><option value="Stanby">Ready</option><option value="Klaim">Klaim</option><option value="Proses">Proses</option></select></label><label>Harga jual (Rp)<input type="number" id="newRowHarga" placeholder="0" min="0" class="sheet-input-field"></label>
+      <label>Paket<select id="newRowPaket" class="sheet-input-field"><option>Garansi</option><option>Non Garansi</option></select></label><label>Sumber<select id="newRowSumber" class="sheet-input-field"><option>Threads</option><option>Reseller</option><option>Langganan</option><option>Website</option></select></label><label class="field-wide">Keterangan<input type="text" id="newRowKeterangan" placeholder="Catatan tambahan (opsional)" class="sheet-input-field"></label><button id="saveNewRowBtn" class="btn btn-primary btn-save-row">Simpan ke Sheets</button>
+    </div><p id="newRowError" class="pin-error-text" role="alert" hidden></p></div>
+    <div class="sheet-formula-bar"><span>Modal hari ini</span><strong id="sheetTotalModalVal">—</strong><span class="formula-info">Klik sel untuk mengedit. Tekan Enter untuk menyimpan.</span></div>
+    <div class="spreadsheet-viewport" tabindex="0" role="region" aria-label="Editor spreadsheet, geser untuk melihat seluruh kolom"><table class="google-sheets-grid" id="rawSheetsTable"><thead><tr><th scope="col">Baris</th><th scope="col">No.</th><th scope="col">Email</th><th scope="col">Password email</th><th scope="col">Password akun</th><th scope="col">Status akun</th><th scope="col">Posisi</th><th scope="col">Harga jual</th><th scope="col">Transaksi</th><th scope="col">Paket</th><th scope="col">Sumber</th><th scope="col">Keterangan</th><th scope="col">Produk</th></tr></thead><tbody id="rawSheetsTbody"></tbody></table></div>
+  </div></div>
+  <div id="toastRegion" class="toast-region" role="status" aria-live="polite" aria-atomic="true"></div>
 </body>
 </html>

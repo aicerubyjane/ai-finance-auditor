@@ -62,6 +62,9 @@ app.add_middleware(
 
 app.include_router(api_router)
 
+# Mount assets directory for product logos
+app.mount("/assets", StaticFiles(directory="assets"), name="assets")
+
 # Mount frontend web dashboard static files
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
 

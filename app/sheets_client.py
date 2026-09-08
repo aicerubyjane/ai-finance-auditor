@@ -35,7 +35,7 @@ def normalize_sheet_name(name: str) -> str:
     if cleaned.isdigit():
         num = int(cleaned)
         return f"Hari {num:02d}" if num < 10 else f"Hari {num}"
-    if cleaned.lower().startswith("hari") and not cleaned.startswith("Hari "):
+    if cleaned.lower().startswith("hari"):
         parts = cleaned[4:].strip()
         if parts.isdigit():
             num = int(parts)
@@ -137,7 +137,17 @@ class GoogleSheetsClient:
             return self.spreadsheet.worksheet(norm_name)
         except gspread.exceptions.WorksheetNotFound:
             try:
-                alt = norm_name.replace("Hari 0", "Hari ")
+                # Coba format alternatif (misal Hari 05 vs Hari 5)
+                if "Hari 0" in norm_name:
+                    alt = norm_name.replace("Hari 0", "Hari ")
+                elif "Hari " in norm_name:
+                    parts = norm_name[5:].strip()
+                    if parts.isdigit() and int(parts) < 10:
+                        alt = f"Hari {int(parts):02d}"
+                    else:
+                        alt = norm_name
+                else:
+                    alt = norm_name
                 return self.spreadsheet.worksheet(alt)
             except Exception:
                 logger.error(f"Worksheet {norm_name} tidak ditemukan.")
@@ -147,14 +157,14 @@ class GoogleSheetsClient:
             return None
 
     def list_sheet_names(self) -> List[str]:
-        default_days = [f"Hari {i:02d}" for i in range(1, 61)]
+        default_days = [f"Hari {i:02d}" for i in range(1, 91)]
         if not self.is_connected or not self.spreadsheet:
-            return default_days + ["Dashboard", "Rekap 60 Hari", "Rekap Jenis Akun"]
+            return default_days + ["Dashboard", "Rekap 90 Hari", "Rekap 60 Hari", "Rekap Jenis Akun"]
         try:
             ws_titles = [ws.title for ws in self.spreadsheet.worksheets()]
             return ws_titles if ws_titles else default_days
         except Exception:
-            return default_days + ["Dashboard", "Rekap 60 Hari", "Rekap Jenis Akun"]
+            return default_days + ["Dashboard", "Rekap 90 Hari", "Rekap 60 Hari", "Rekap Jenis Akun"]
 
     def sell_standby_account(
         self,
@@ -383,7 +393,7 @@ class GoogleSheetsClient:
             hari_aktif = parse_int(r9[9]) if len(r9) > 9 else 0
 
             trend_harian = []
-            for row in vals[16:76]:
+            for row in vals[16:]:
                 if len(row) >= 8 and row[0].strip() and row[0].isdigit():
                     hari_label = f"Hari {row[0].strip()}"
                     sold = parse_int(row[2])

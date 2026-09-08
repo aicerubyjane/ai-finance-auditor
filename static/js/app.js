@@ -1,279 +1,430 @@
 let trendChartInstance = null;
+let trendChartTrenInstance = null;
 let productChartInstance = null;
-let currentSelectedSheet = "";
+let currentSelectedSheet = '';
 
-function formatRupiah(num) {
-  if (num === undefined || num === null || isNaN(num)) return "Rp 0";
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0
-  }).format(num);
-}
-
-const elementsToAnimate = [
-  'kpiTotalOmzet', 'kpiSurplusKas', 'kpiSoldBerbayar', 'kpiAvgSold',
-  'kpiKlaimGaransi', 'kpiRasioKlaim', 'kpiTotalModal', 'kpiHariAktif',
-  'dayOmzet', 'dayModal', 'daySurplus', 'dayMargin', 'dayThreads', 'dayReseller'
+const dashboardState = {
+  hasData: false, lastSyncedAt: null, requestId: 0, controller: null,
+  changingDay: false, loading: false, range: 30, trend: [], products: [],
+  search: '', filter: 'all', sort: 'sold', direction: 'desc',
+  visibleSeries: [true, true, true], trendSignature: '', productSignature: '', tableSignature: '',
+  zoomRange: 30, zoomOffset: 0
+};
+const rupiahFormatter = new Intl.NumberFormat('id-ID', {
+  style: 'currency', currency: 'IDR', maximumFractionDigits: 0
+});
+const numberFormatter = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 });
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+const productPalette = ['#235c46', '#7a947e', '#b98c51', '#b8c5b5', '#525e54', '#d2ba94'];
+const metricIds = [
+  'kpiTotalOmzet', 'kpiSurplusKas', 'kpiSoldBerbayar', 'kpiAvgSold', 'kpiKlaimGaransi',
+  'kpiRasioKlaim', 'kpiTotalModal', 'kpiHariAktif', 'dayOmzet', 'dayModal', 'daySurplus',
+  'dayMargin', 'dayThreads', 'dayReseller'
 ];
 
-function updateLiveClock() {
-  const syncText = document.getElementById('syncStatusText');
-  const syncBadge = document.getElementById('syncStatusBadge');
-  if (syncText && syncBadge && syncBadge.classList.contains('success')) {
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\./g, ':');
-    syncText.textContent = `Tersinkronisasi secara real-time (${timeStr})`;
+function numeric(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatRupiah(value) {
+  return rupiahFormatter.format(numeric(value));
+}
+
+function setText(id, value) {
+  const element = document.getElementById(id);
+  if (element && element.textContent !== String(value)) element.textContent = value;
+}
+
+function setHidden(id, hidden) {
+  const element = document.getElementById(id);
+  if (element) element.hidden = hidden;
+}
+
+function showDashboardNotice(message = '') {
+  const notice = document.getElementById('dashboardNotice');
+  if (notice) {
+    notice.textContent = message;
+    notice.hidden = !message;
   }
 }
 
-function setLoadingState(isLoading) {
-  const progressBar = document.getElementById('syncProgressBar');
-  const syncBadge = document.getElementById('syncStatusBadge');
-  const syncText = document.getElementById('syncStatusText');
+function syncTimestamp() {
+  return dashboardState.lastSyncedAt?.toLocaleTimeString('id-ID', {
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  }).replace(/\./g, ':') || '';
+}
 
-  if (isLoading) {
-    if (progressBar) {
-      progressBar.style.opacity = '1';
-      progressBar.style.width = '70%';
-    }
-    if (syncBadge) {
-      syncBadge.className = 'sync-live-badge loading';
-    }
-    if (syncText) {
-      syncText.textContent = 'Menghubungkan ke Google Sheets...';
-    }
+function setSyncStatus(status, message) {
+  const badge = document.getElementById('syncStatusBadge');
+  if (badge) {
+    badge.classList.remove('loading', 'success', 'error');
+    badge.classList.add(status);
+  }
+  setText('syncStatusText', message);
+}
 
-    elementsToAnimate.forEach(id => {
-      const el = document.getElementById(id);
-      if (el && (!el.textContent || el.textContent === "Rp 0" || el.textContent === "0 Akun" || el.textContent === "0")) {
-        el.classList.add('shimmer-loading');
-      }
-    });
-  } else {
-    if (progressBar) {
-      progressBar.style.width = '100%';
-      setTimeout(() => {
-        progressBar.style.opacity = '0';
-        setTimeout(() => { progressBar.style.width = '0%'; }, 400);
-      }, 300);
-    }
-    if (syncBadge) {
-      syncBadge.className = 'sync-live-badge success';
-    }
-    updateLiveClock();
-    if (!window.liveClockInterval) {
-      window.liveClockInterval = setInterval(updateLiveClock, 1000);
-    }
+function setDaySelects(value = currentSelectedSheet, disabled = dashboardState.changingDay) {
+  ['activeDaySelect', 'mobileDaySelect'].forEach(id => {
+    const select = document.getElementById(id);
+    if (!select) return;
+    if (value) select.value = value;
+    select.disabled = disabled || !dashboardState.hasData;
+  });
+}
 
-    elementsToAnimate.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.classList.remove('shimmer-loading');
-        el.classList.remove('data-revealed');
-        // trigger reflow
-        void el.offsetWidth;
-        el.classList.add('data-revealed');
-      }
-    });
+function setLoadingState(loading, background = false) {
+  dashboardState.loading = loading;
+  const refresh = document.getElementById('refreshBtn');
+  if (refresh) {
+    refresh.disabled = loading;
+    refresh.classList.toggle('is-loading', loading && !background);
+    refresh.setAttribute('aria-busy', String(loading));
+  }
+  const progress = document.getElementById('syncProgressBar');
+  if (progress) {
+    progress.style.opacity = loading && !background ? '1' : '0';
+    progress.style.width = loading ? '65%' : '100%';
+  }
+  metricIds.forEach(id => document.getElementById(id)?.classList.toggle('shimmer-loading', loading && !dashboardState.hasData));
+  if (loading && !background) {
+    setSyncStatus('loading', dashboardState.hasData ? 'Memperbarui data…' : 'Mengambil data Google Sheets…');
+  }
+  setDaySelects();
+}
 
-    document.querySelectorAll('.kpi-banner-card, .saas-card').forEach(card => {
-      card.classList.remove('sync-flash');
-      void card.offsetWidth;
-      card.classList.add('sync-flash');
-    });
+function validateDashboard(data) {
+  // Sheets errors currently reach this endpoint as empty objects with HTTP 200.
+  if (!data || !data.kpis || !data.daily || !Object.keys(data.kpis).length || !Object.keys(data.daily).length) {
+    throw new Error('Data Google Sheets belum tersedia.');
   }
 }
 
-async function fetchDashboardData(sheetOverride = "") {
-  setLoadingState(true);
+async function fetchDashboardData(sheetOverride = '', options = {}) {
+  if (dashboardState.changingDay && !options.dayChange) return false;
+  if (options.background && dashboardState.loading) return false;
+  const previousSheet = currentSelectedSheet;
+  const target = sheetOverride || previousSheet;
+  const requestId = ++dashboardState.requestId;
+  dashboardState.controller?.abort();
+  const controller = new AbortController();
+  dashboardState.controller = controller;
+  dashboardState.changingDay = Boolean(options.dayChange);
+  setLoadingState(true, options.background);
+  if (options.dayChange) setDaySelects(target, true);
+  const timeout = setTimeout(() => controller.abort(), 25000);
   try {
-    const target = sheetOverride || currentSelectedSheet;
     const url = target ? `/api/dashboard?sheet=${encodeURIComponent(target)}` : '/api/dashboard';
-    const res = await fetch(url);
-    if (!res.ok) throw new Error("Gagal mengambil data dashboard");
-    const data = await res.json();
+    const response = await fetch(url, { signal: controller.signal, cache: 'no-store' });
+    if (!response.ok) throw new Error('Dashboard gagal dimuat.');
+    const data = await response.json();
+    validateDashboard(data);
+    if (requestId !== dashboardState.requestId) return false;
+    if (options.dayChange) {
+      // Preserve the current view until the sheet data and selected day are confirmed.
+      const dayResponse = await fetch('/api/set-active-day', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sheet_name: target }), signal: controller.signal
+      });
+      if (!dayResponse.ok || !(await dayResponse.json()).success) throw new Error('Hari aktif gagal diganti.');
+    }
+    if (requestId !== dashboardState.requestId) return false;
     updateUI(data);
-    setLoadingState(false);
-  } catch (err) {
-    console.error("Fetch dashboard error:", err);
-    const syncBadge = document.getElementById('syncStatusBadge');
-    const syncText = document.getElementById('syncStatusText');
-    if (syncBadge) syncBadge.className = 'sync-live-badge error';
-    if (syncText) syncText.textContent = 'Koneksi Sheets terhambat, mencoba ulang...';
-    elementsToAnimate.forEach(id => {
-      document.getElementById(id)?.classList.remove('shimmer-loading');
-    });
-    const progressBar = document.getElementById('syncProgressBar');
-    if (progressBar) progressBar.style.opacity = '0';
+    dashboardState.hasData = true;
+    dashboardState.lastSyncedAt = new Date();
+    setSyncStatus('success', `Diperbarui ${syncTimestamp()}`);
+    showDashboardNotice();
+    return true;
+  } catch (error) {
+    if (requestId !== dashboardState.requestId) return false;
+    setSyncStatus('error', dashboardState.hasData ? `Data terakhir ${syncTimestamp()}` : 'Belum terhubung');
+    showDashboardNotice(options.dayChange
+      ? `Gagal membuka ${target}. Tampilan tetap di ${previousSheet}. Coba pilih hari lagi.`
+      : dashboardState.hasData
+        ? 'Pembaruan terhenti. Data terakhir masih ditampilkan. Tekan Sinkronkan untuk mencoba lagi.'
+        : 'Data Google Sheets belum berhasil dimuat. Periksa koneksi, lalu tekan Sinkronkan.');
+    if (!dashboardState.hasData) {
+      renderTableEmpty('Data produk belum dimuat. Tekan Sinkronkan untuk mencoba lagi.');
+      setText('trendEmpty', 'Grafik belum dimuat. Coba perbarui data.');
+      setText('productEmpty', 'Data penjualan belum dimuat.');
+      setHidden('trendEmpty', false);
+      setHidden('productEmpty', false);
+    }
+    setDaySelects(previousSheet, false);
+    return false;
+  } finally {
+    clearTimeout(timeout);
+    if (requestId === dashboardState.requestId) {
+      dashboardState.changingDay = false;
+      dashboardState.controller = null;
+      setLoadingState(false, options.background);
+    }
   }
 }
 
 function updateUI(data) {
   const kpis = data.kpis || {};
   const daily = data.daily || {};
-  const activeSheet = data.active_sheet || "Hari 47";
-  currentSelectedSheet = activeSheet;
-
-  // Top KPI Global Cards (Tab Dashboard Usaha 60 Hari)
-  document.getElementById('kpiTotalOmzet').textContent = formatRupiah(kpis.total_omzet);
-  document.getElementById('kpiSurplusKas').textContent = formatRupiah(kpis.surplus_kas);
-  document.getElementById('kpiSoldBerbayar').textContent = `${kpis.sold_berbayar || 0} Akun`;
-  document.getElementById('kpiAvgSold').textContent = `${kpis.sold_per_hari_aktif || 0} / Hari`;
-  document.getElementById('kpiKlaimGaransi').textContent = `${kpis.klaim_garansi || 0} Akun`;
-  document.getElementById('kpiRasioKlaim').textContent = kpis.rasio_klaim || "0%";
-  document.getElementById('kpiTotalModal').textContent = formatRupiah(kpis.total_modal);
-  document.getElementById('kpiHariAktif').textContent = `${kpis.hari_aktif || 0} Hari`;
-
-  // Daily Section (Berdasarkan Sheet Hari yang Dipilih)
-  const currentBadge = document.getElementById('currentDayBadge');
-  if (currentBadge) currentBadge.textContent = activeSheet;
-  
-  document.getElementById('chipReady').textContent = `${daily.akun_ready || 0} Ready`;
-  document.getElementById('chipSold').textContent = `${daily.sold_berbayar || 0} Sold`;
-  document.getElementById('chipClaim').textContent = `${daily.klaim_garansi || 0} Klaim`;
-
-  document.getElementById('dayOmzet').textContent = formatRupiah(daily.total_omzet);
-  document.getElementById('dayModal').textContent = formatRupiah(daily.total_modal);
-  document.getElementById('daySurplus').textContent = formatRupiah(daily.surplus_kas);
-  document.getElementById('dayMargin').textContent = daily.margin_kas || "0%";
-  document.getElementById('dayThreads').textContent = daily.dari_threads || 0;
-  document.getElementById('dayReseller').textContent = daily.dari_reseller || 0;
-
-  // Populate Dropdown Sheet Desktop & Mobile
-  const selectDesktop = document.getElementById('activeDaySelect');
-  const selectMobile = document.getElementById('mobileDaySelect');
-  
-  [selectDesktop, selectMobile].forEach(sel => {
-    if (sel && data.available_sheets && data.available_sheets.length > 0) {
-      if (sel.children.length <= 1 || sel.dataset.populated !== "true") {
-        sel.innerHTML = '';
-        data.available_sheets.forEach(sheet => {
-          const opt = document.createElement('option');
-          opt.value = sheet;
-          opt.textContent = sheet;
-          if (sheet.trim().toLowerCase() === activeSheet.trim().toLowerCase()) {
-            opt.selected = true;
-          }
-          sel.appendChild(opt);
-        });
-        sel.dataset.populated = "true";
-      }
-      sel.value = activeSheet;
+  currentSelectedSheet = data.active_sheet || currentSelectedSheet;
+  const textValues = {
+    kpiTotalOmzet: formatRupiah(kpis.total_omzet), kpiSurplusKas: formatRupiah(kpis.surplus_kas),
+    kpiSoldBerbayar: numberFormatter.format(numeric(kpis.sold_berbayar)),
+    kpiAvgSold: `${numberFormatter.format(numeric(kpis.sold_per_hari_aktif))} akun / hari aktif`,
+    kpiKlaimGaransi: numberFormatter.format(numeric(kpis.klaim_garansi)),
+    kpiRasioKlaim: kpis.rasio_klaim || '0%', kpiTotalModal: formatRupiah(kpis.total_modal),
+    kpiHariAktif: numberFormatter.format(numeric(kpis.hari_aktif)),
+    currentDayBadge: currentSelectedSheet, sidebarDay: currentSelectedSheet,
+    chipReady: `${numberFormatter.format(numeric(daily.akun_ready))} ready`,
+    chipSold: `${numberFormatter.format(numeric(daily.sold_berbayar))} terjual`,
+    chipClaim: `${numberFormatter.format(numeric(daily.klaim_garansi))} klaim`,
+    dayOmzet: formatRupiah(daily.total_omzet), dayModal: formatRupiah(daily.total_modal),
+    daySurplus: formatRupiah(daily.surplus_kas), dayMargin: daily.margin_kas || '0%',
+    dayThreads: numberFormatter.format(numeric(daily.dari_threads)),
+    dayReseller: numberFormatter.format(numeric(daily.dari_reseller))
+  };
+  Object.entries(textValues).forEach(([id, value]) => setText(id, value));
+  const sheets = Array.isArray(data.available_sheets) ? data.available_sheets : [];
+  const signature = JSON.stringify(sheets);
+  ['activeDaySelect', 'mobileDaySelect'].forEach(id => {
+    const select = document.getElementById(id);
+    if (!select) return;
+    if (select.dataset.sheets !== signature) {
+      const fragment = document.createDocumentFragment();
+      sheets.forEach(sheet => {
+        const option = document.createElement('option');
+        option.value = sheet;
+        option.textContent = sheet;
+        fragment.appendChild(option);
+      });
+      select.replaceChildren(fragment);
+      select.dataset.sheets = signature;
     }
+    select.value = currentSelectedSheet;
   });
-
-  // Gabungkan produk global Rekap Jenis Akun + produk harian aktif (misal Apple Music, Canva, dll)
-  const combinedProducts = Object.assign({}, kpis.rekap_produk || {});
-  if (daily.daily_produk) {
-    for (const [pName, pStats] of Object.entries(daily.daily_produk)) {
-      if (!combinedProducts[pName]) {
-        combinedProducts[pName] = { sold: 0, klaim: 0, ready: 0, omzet: 0 };
-      }
-      // Jika produk belum ada di rekap global (seperti Apple Music), gunakan statistik harian aktif
-      if (combinedProducts[pName].sold === 0 && combinedProducts[pName].ready === 0) {
-        combinedProducts[pName].sold = pStats.sold;
-        combinedProducts[pName].klaim = pStats.klaim;
-        combinedProducts[pName].ready = pStats.ready;
-        combinedProducts[pName].omzet = pStats.omzet;
-      } else {
-        // Update jumlah ready dari sheet hari aktif
-        combinedProducts[pName].ready = pStats.ready;
-      }
-    }
+  const products = new Map(Object.entries(kpis.rekap_produk || {}).map(([name, stats]) => [name, { ...stats }]));
+  for (const [name, stats] of Object.entries(daily.daily_produk || {})) {
+    const existing = products.get(name);
+    if (!existing || (!numeric(existing.sold) && !numeric(existing.ready))) products.set(name, { ...stats });
+    else existing.ready = stats.ready;
   }
+  dashboardState.products = Array.from(products, ([product, stats]) => ({
+    product, sold: numeric(stats.sold), klaim: numeric(stats.klaim), ready: numeric(stats.ready), omzet: numeric(stats.omzet),
+    claimRate: numeric(stats.sold) > 0 ? numeric(stats.klaim) / numeric(stats.sold) * 100 : 0
+  }));
+  dashboardState.trend = Array.isArray(kpis.trend_harian) ? kpis.trend_harian : [];
 
-  // Render Visual Charts
-  renderTrendChart(kpis.trend_harian || []);
-  renderProductChart(combinedProducts);
-  renderProductTable(combinedProducts);
+  // Mini summary metrics for dedicated produk view
+  const totalProductsCount = dashboardState.products.length;
+  const totalSoldAll = dashboardState.products.reduce((acc, p) => acc + numeric(p.sold), 0);
+  const totalReadyAll = dashboardState.products.reduce((acc, p) => acc + numeric(p.ready), 0);
+  const totalClaimAll = dashboardState.products.reduce((acc, p) => acc + numeric(p.klaim), 0);
+  const avgClaimRate = totalSoldAll > 0 ? (totalClaimAll / totalSoldAll * 100).toFixed(1) : '0';
+
+  setText('miniTotalProducts', `${totalProductsCount} produk`);
+  setText('miniTotalSold', `${numberFormatter.format(totalSoldAll)} akun`);
+  setText('miniTotalReady', `${numberFormatter.format(totalReadyAll)} stok`);
+  setText('miniAvgClaim', `${avgClaimRate}%`);
+
+  // Sidebar executive live pulse
+  setText('sidebarOmzetVal', formatRupiah(kpis.total_omzet));
+  setText('sidebarSurplusVal', formatRupiah(kpis.surplus_kas));
+  setText('sidebarSoldVal', numberFormatter.format(numeric(kpis.sold_berbayar)));
+  setText('sidebarReadyVal', numberFormatter.format(numeric(daily.akun_ready)));
+
+  renderTrendChart();
+  renderProductChart();
+  renderProductTable();
 }
 
-function renderTrendChart(trendData) {
-  const canvas = document.getElementById('trendChart');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  
-  // Format labels cleaner: "H01", "H02", etc.
-  const labels = trendData.map(d => {
-    const raw = d.hari || "";
-    return raw.replace("Hari ", "H");
-  });
-  
-  const omzet = trendData.map(d => d.omzet || 0);
-  const surplus = trendData.map(d => d.surplus || 0);
-  const modal = trendData.map(d => d.modal || 0);
-
-  if (trendChartInstance) {
-    trendChartInstance.destroy();
+function getProductLogo(productName) {
+  const norm = String(productName || '').toLowerCase().trim();
+  if (norm.includes('chatgpt') || norm.includes('gpt') || norm.includes('openai')) {
+    return { src: '/assets/chatgptlogo.png', alt: 'ChatGPT' };
   }
+  if (norm.includes('gemini') || norm.includes('google')) {
+    return { src: '/assets/geminilogo.png', alt: 'Gemini' };
+  }
+  if (norm.includes('claude') || norm.includes('anthropic')) {
+    return { src: '/assets/claudelogocard.jpg', alt: 'Claude' };
+  }
+  if (norm.includes('apple') || norm.includes('music')) {
+    return { src: '/assets/apple%20music.jpg', alt: 'Apple Music' };
+  }
+  return null;
+}
 
-  // Stacked bar chart matching reference image 3 with Frosted Aura color harmony
-  trendChartInstance = new Chart(ctx, {
-    type: 'bar',
+function createFallbackAvatar(productName) {
+  const avatar = document.createElement('span');
+  avatar.className = 'product-avatar';
+  avatar.textContent = productName.split(/\s+/).map(word => Array.from(word)[0] || '').join('').slice(0, 2).toUpperCase();
+  avatar.setAttribute('aria-hidden', 'true');
+  return avatar;
+}
+
+function getSortedTrendRows() {
+  const rows = dashboardState.trend.map((row, index) => ({
+    ...row, day: numeric(String(row.hari || '').match(/\d+/)?.[0]) || index + 1
+  })).sort((a, b) => a.day - b.day);
+  const activeRows = rows.filter(row => ['omzet', 'modal', 'surplus', 'sold'].some(key => numeric(row[key]) !== 0));
+  if (!activeRows.length) return rows;
+  const latestDay = activeRows[activeRows.length - 1].day;
+  return rows.filter(row => row.day <= latestDay);
+}
+
+function trendWindow() {
+  const allRows = getSortedTrendRows();
+  if (!allRows.length) return [];
+  const windowSize = Math.max(3, Math.min(allRows.length, dashboardState.zoomRange || 30));
+  const maxOffset = Math.max(0, allRows.length - windowSize);
+  const offset = Math.max(0, Math.min(maxOffset, dashboardState.zoomOffset || 0));
+  const endIndex = allRows.length - offset;
+  const startIndex = Math.max(0, endIndex - windowSize);
+  return allRows.slice(startIndex, endIndex);
+}
+
+function syncRangeButtons() {
+  const activeRange = dashboardState.zoomRange || dashboardState.range || 30;
+  document.querySelectorAll('[data-range]').forEach(button => {
+    const r = Number(button.dataset.range);
+    const active = r === activeRange;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+  });
+}
+
+function zoomIn() {
+  const current = dashboardState.zoomRange || 30;
+  const steps = [7, 14, 30, 90];
+  const smaller = steps.slice().reverse().find(lvl => lvl < current);
+  dashboardState.zoomRange = smaller || 7;
+  dashboardState.range = dashboardState.zoomRange;
+  dashboardState.zoomOffset = Math.max(0, dashboardState.zoomOffset || 0);
+  updateZoomBadges();
+  syncRangeButtons();
+  renderTrendChart(true);
+}
+
+function zoomOut() {
+  const current = dashboardState.zoomRange || 30;
+  const steps = [7, 14, 30, 90];
+  const larger = steps.find(lvl => lvl > current);
+  dashboardState.zoomRange = larger || 90;
+  dashboardState.range = dashboardState.zoomRange;
+  updateZoomBadges();
+  syncRangeButtons();
+  renderTrendChart(true);
+}
+
+function panLeft() {
+  const allRows = getSortedTrendRows();
+  const windowSize = Math.max(3, Math.min(allRows.length, dashboardState.zoomRange || 30));
+  const maxOffset = Math.max(0, allRows.length - windowSize);
+  dashboardState.zoomOffset = Math.min(maxOffset, (dashboardState.zoomOffset || 0) + Math.max(1, Math.floor(windowSize / 3)));
+  updateZoomBadges();
+  renderTrendChart(true);
+}
+
+function panRight() {
+  const windowSize = Math.max(3, dashboardState.zoomRange || 30);
+  dashboardState.zoomOffset = Math.max(0, (dashboardState.zoomOffset || 0) - Math.max(1, Math.floor(windowSize / 3)));
+  updateZoomBadges();
+  renderTrendChart(true);
+}
+
+function resetZoom() {
+  dashboardState.zoomRange = 30;
+  dashboardState.range = 30;
+  dashboardState.zoomOffset = 0;
+  updateZoomBadges();
+  syncRangeButtons();
+  renderTrendChart(true);
+}
+
+function updateZoomBadges() {
+  const rows = trendWindow();
+  const allRows = getSortedTrendRows();
+  if (!rows.length) return;
+  const startDay = rows[0].day;
+  const endDay = rows[rows.length - 1].day;
+  const zoomFactor = (allRows.length > 0 ? (allRows.length / rows.length) : 1).toFixed(1);
+  const text = `Menampilkan H${startDay}–H${endDay} (${rows.length} hari) · Zoom: ${zoomFactor}x`;
+  setText('zoomWindowBadge', text);
+  setText('zoomWindowBadgeTren', text);
+}
+
+function compactCurrency(value) {
+  const amount = numeric(value);
+  if (Math.abs(amount) >= 1000000) return `${numberFormatter.format(amount / 1000000)} jt`;
+  if (Math.abs(amount) >= 1000) return `${numberFormatter.format(amount / 1000)} rb`;
+  return numberFormatter.format(amount);
+}
+
+function chartTooltip() {
+  return {
+    backgroundColor: '#ffffff', titleColor: '#18221C', bodyColor: '#425247', borderColor: '#DCE2DE',
+    borderWidth: 1, padding: 12, cornerRadius: 6, boxPadding: 5, usePointStyle: true,
+    titleFont: { family: 'DM Sans, sans-serif', size: 12, weight: 700 },
+    bodyFont: { family: 'DM Sans, sans-serif', size: 11.5 }
+  };
+}
+
+function buildTrendChartConfig(rows, animate) {
+  const datasets = [
+    {
+      type: 'bar',
+      label: 'Modal',
+      data: rows.map(r => numeric(r.modal)),
+      backgroundColor: '#0284C7',
+      hoverBackgroundColor: '#0369A1',
+      stack: 'keuangan',
+      borderRadius: 0,
+      hidden: !dashboardState.visibleSeries[0],
+      barPercentage: 0.72,
+      categoryPercentage: 0.85
+    },
+    {
+      type: 'bar',
+      label: 'Surplus',
+      data: rows.map(r => numeric(r.surplus)),
+      // If surplus is negative, render RED (#EF4444), if positive render GREEN (#10B981)
+      backgroundColor: rows.map(r => numeric(r.surplus) < 0 ? '#EF4444' : '#10B981'),
+      hoverBackgroundColor: rows.map(r => numeric(r.surplus) < 0 ? '#DC2626' : '#059669'),
+      stack: 'keuangan',
+      borderRadius: rows.map(r => numeric(r.surplus) < 0 
+        ? { topLeft: 0, topRight: 0, bottomLeft: 4, bottomRight: 4 }
+        : { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 }),
+      hidden: !dashboardState.visibleSeries[1],
+      barPercentage: 0.72,
+      categoryPercentage: 0.85
+    }
+  ];
+
+  return {
     data: {
-      labels: labels,
-      datasets: [
-        {
-          label: 'Omzet Penjualan',
-          data: omzet,
-          backgroundColor: '#5C7E8F', // Deep Frosted Slate Blue
-          borderRadius: 0,
-          borderSkipped: false,
-          maxBarThickness: 16
-        },
-        {
-          label: 'Surplus Kas',
-          data: surplus,
-          backgroundColor: '#A2A2A2', // Frosted Neutral Grey
-          borderRadius: 0,
-          borderSkipped: false,
-          maxBarThickness: 16
-        },
-        {
-          label: 'Modal Terpakai',
-          data: modal,
-          backgroundColor: '#D4DDE2', // Frosted Ice Tint
-          borderRadius: {
-            topLeft: 4,
-            topRight: 4,
-            bottomLeft: 0,
-            bottomRight: 0
-          },
-          borderSkipped: false,
-          maxBarThickness: 16
-        }
-      ]
+      labels: rows.map(row => `H${row.day}`),
+      datasets
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      interaction: {
-        mode: 'index',
-        intersect: false
-      },
+      animation: animate && !reducedMotion.matches ? { duration: 220 } : false,
+      interaction: { mode: 'index', intersect: false },
+      layout: { padding: { top: 12, right: 12, bottom: 4, left: 4 } },
       plugins: {
-        legend: {
-          position: 'top',
-          align: 'center',
-          labels: {
-            boxWidth: 12,
-            boxHeight: 12,
-            usePointStyle: false,
-            color: '#475569',
-            font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' }
-          }
-        },
+        legend: { display: false },
         tooltip: {
-          backgroundColor: '#0F172A',
-          titleColor: '#FFFFFF',
-          bodyColor: '#D4DDE2',
-          borderColor: '#D4DDE2',
-          borderWidth: 1,
-          padding: 10,
+          ...chartTooltip(),
           callbacks: {
-            label: function(context) {
-              return ` ${context.dataset.label}: ${formatRupiah(context.raw)}`;
+            title: items => items.length ? `Hari ${items[0].label.slice(1)}` : '',
+            label: context => {
+              const val = numeric(context.raw);
+              const label = context.dataset.label;
+              if (label === 'Surplus') {
+                return val < 0
+                  ? ` Defisit (mines): ${formatRupiah(val)}`
+                  : ` Surplus: ${formatRupiah(val)}`;
+              }
+              return ` ${label}: ${formatRupiah(val)}`;
             }
           }
         }
@@ -281,406 +432,426 @@ function renderTrendChart(trendData) {
       scales: {
         x: {
           stacked: true,
-          grid: {
-            display: false
-          },
+          border: { display: false },
+          grid: { display: false },
           ticks: {
-            color: '#64748B',
-            font: { family: 'Plus Jakarta Sans', size: 10, weight: '500' },
+            color: '#788278',
             maxRotation: 0,
-            autoSkip: true,
-            maxTicksLimit: 15
+            maxTicksLimit: Math.min(15, rows.length),
+            font: { family: 'DM Sans, sans-serif', size: 10.5, weight: '500' }
           }
         },
         y: {
           stacked: true,
-          grid: {
-            color: '#F1F5F9',
-            drawBorder: false
-          },
+          border: { display: false, dash: [3, 4] },
+          grid: { color: '#e9ece5', drawTicks: false },
           ticks: {
-            color: '#64748B',
-            font: { family: 'Plus Jakarta Sans', size: 10, weight: '500' },
-            callback: function(value) {
-              if (value >= 1000000) {
-                return (value / 1000000).toFixed(1) + 'M';
-              }
-              return (value / 1000).toLocaleString('id-ID') + 'k';
-            }
+            color: '#788278',
+            padding: 10,
+            maxTicksLimit: 6,
+            callback: compactCurrency,
+            font: { family: 'DM Sans, sans-serif', size: 10.5 }
           }
         }
       }
     }
-  });
+  };
 }
 
-function renderProductChart(rekap) {
-  const canvas = document.getElementById('productChart');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  
-  const labels = Object.keys(rekap);
-  const data = labels.map(k => rekap[k].sold || 0);
+function renderTrendChart(animate = false) {
+  const rows = trendWindow();
+  const totalOmzet = rows.reduce((sum, row) => sum + numeric(row.omzet), 0);
+  const periodText = rows.length ? `Hari ${rows[0].day}–${rows[rows.length - 1].day} · ${rows.length} hari tercatat` : 'Belum ada transaksi tercatat';
 
-  if (productChartInstance) {
-    productChartInstance.destroy();
-  }
+  ['trendTotal', 'trendTotalTren'].forEach(id => setText(id, formatRupiah(totalOmzet)));
+  ['trendPeriod', 'trendPeriodTren'].forEach(id => setText(id, periodText));
+  ['trendEmpty', 'trendEmptyTren'].forEach(id => {
+    setText(id, 'Belum ada transaksi untuk ditampilkan. Grafik akan terisi dari Google Sheets.');
+    setHidden(id, rows.length > 0);
+  });
 
-  const frostedPalette = ['#5C7E8F', '#8FA8B5', '#A2A2A2', '#C0CBD2', '#334E5E'];
-  
-  productChartInstance = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: labels,
-      datasets: [{
-        data: data,
-        backgroundColor: frostedPalette.slice(0, labels.length),
-        borderColor: '#FFFFFF',
-        borderWidth: 3,
-        hoverOffset: 6
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: {
-            boxWidth: 10,
-            boxHeight: 10,
-            color: '#475569',
-            font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' },
-            padding: 12
-          }
-        },
-        tooltip: {
-          backgroundColor: '#0F172A',
-          titleColor: '#FFFFFF',
-          bodyColor: '#D4DDE2',
-          padding: 8
-        }
-      },
-      cutout: '65%'
+  syncRangeButtons();
+  updateZoomBadges();
+
+  if (!rows.length || typeof Chart === 'undefined') return;
+
+  const config = buildTrendChartConfig(rows, animate);
+
+  // 1. Overview Canvas
+  const canvas1 = document.getElementById('trendChart');
+  if (canvas1) {
+    if (trendChartInstance) {
+      trendChartInstance.data = config.data;
+      trendChartInstance.options = config.options;
+      trendChartInstance.update(animate && !reducedMotion.matches ? undefined : 'none');
+    } else {
+      trendChartInstance = new Chart(canvas1.getContext('2d'), {
+        type: 'bar',
+        data: config.data,
+        options: config.options
+      });
+      attachChartZoomListeners(canvas1);
     }
-  });
-}
+  }
 
-function renderProductTable(rekap) {
-  const tbody = document.getElementById('productTableBody');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-
-  for (const [prod, info] of Object.entries(rekap)) {
-    const rateNum = info.sold > 0 ? ((info.klaim / info.sold) * 100) : 0;
-    const rateStr = rateNum > 0 ? `${rateNum.toFixed(1)}%` : '0%';
-    const tagClass = rateNum > 10 ? 'tag-claim' : 'tag-ready';
-
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><strong>${prod}</strong></td>
-      <td>${info.sold} Akun</td>
-      <td><span class="val-caution">${info.klaim} Akun</span></td>
-      <td><span class="val-positive">${info.ready} Ready</span></td>
-      <td>${formatRupiah(info.omzet)}</td>
-      <td><span class="tag-badge ${tagClass}">${rateStr}</span></td>
-    `;
-    tbody.appendChild(tr);
+  // 2. Tren Deep Dive Canvas
+  const canvas2 = document.getElementById('trendChartTren');
+  if (canvas2) {
+    if (trendChartTrenInstance) {
+      trendChartTrenInstance.data = config.data;
+      trendChartTrenInstance.options = config.options;
+      trendChartTrenInstance.update(animate && !reducedMotion.matches ? undefined : 'none');
+    } else {
+      trendChartTrenInstance = new Chart(canvas2.getContext('2d'), {
+        type: 'bar',
+        data: config.data,
+        options: config.options
+      });
+      attachChartZoomListeners(canvas2);
+    }
   }
 }
 
-// Event Listeners
-document.getElementById('refreshBtn')?.addEventListener('click', () => {
-  fetchDashboardData(currentSelectedSheet);
-});
+let wheelDeltaAccumulator = 0;
+let wheelCooldownTimer = null;
+const WHEEL_THRESHOLD = 180; // Requires clear, intentional wheel/trackpad motion
 
-function handleSheetChange(e) {
-  const newSheet = e.target.value;
-  currentSelectedSheet = newSheet;
+function attachChartZoomListeners(canvas) {
+  if (!canvas || canvas.dataset.zoomAttached) return;
+  canvas.dataset.zoomAttached = 'true';
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    wheelDeltaAccumulator += e.deltaY;
 
-  fetch('/api/set-active-day', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ sheet_name: newSheet })
-  }).catch(err => console.error("Error setting active day:", err));
+    clearTimeout(wheelCooldownTimer);
+    wheelCooldownTimer = setTimeout(() => {
+      wheelDeltaAccumulator = 0;
+    }, 280);
 
-  fetchDashboardData(newSheet);
+    if (Math.abs(wheelDeltaAccumulator) >= WHEEL_THRESHOLD) {
+      if (wheelDeltaAccumulator < 0) {
+        zoomIn();
+      } else {
+        zoomOut();
+      }
+      wheelDeltaAccumulator = 0;
+    }
+  }, { passive: false });
 }
 
-document.getElementById('activeDaySelect')?.addEventListener('change', handleSheetChange);
-document.getElementById('mobileDaySelect')?.addEventListener('change', handleSheetChange);
-
-// --------------------------------------------------------------------------
-// PIN Verification & Google Sheets View/Edit Modal Controller
-// --------------------------------------------------------------------------
-const pinModal = document.getElementById('pinModal');
-const pinInput = document.getElementById('pinInputField');
-const pinError = document.getElementById('pinErrorMessage');
-const openInputDataBtn = document.getElementById('openInputDataBtn');
-const mobileInputDataBtn = document.getElementById('mobileInputDataBtn');
-const cancelPinBtn = document.getElementById('cancelPinBtn');
-const submitPinBtn = document.getElementById('submitPinBtn');
-
-const sheetEditorModal = document.getElementById('sheetEditorModal');
-const closeSheetEditorBtn = document.getElementById('closeSheetEditorBtn');
-const refreshSheetTableBtn = document.getElementById('refreshSheetTableBtn');
-const addNewRowBtn = document.getElementById('addNewRowBtn');
-const newRowFormContainer = document.getElementById('newRowFormContainer');
-const saveNewRowBtn = document.getElementById('saveNewRowBtn');
-
-let verifiedPin = "";
-
-function triggerOpenInputFlow() {
-  if (verifiedPin) {
-    openSheetEditor();
-  } else {
-    pinInput.value = "";
-    pinError.style.display = "none";
-    pinModal.style.display = "flex";
-    setTimeout(() => pinInput.focus(), 100);
+function renderProductChart() {
+  const canvas = document.getElementById('productChart');
+  const products = dashboardState.products.filter(product => product.sold > 0).sort((a, b) => b.sold - a.sold);
+  const total = products.reduce((sum, product) => sum + product.sold, 0);
+  setText('productTotal', numberFormatter.format(total));
+  setText('productEmpty', 'Belum ada penjualan tercatat.');
+  setHidden('productEmpty', total > 0);
+  if (canvas) {
+    canvas.hidden = !total;
+    const center = canvas.parentElement.querySelector('.donut-center');
+    if (center) center.hidden = !total || typeof Chart === 'undefined';
   }
-}
-
-openInputDataBtn?.addEventListener('click', triggerOpenInputFlow);
-mobileInputDataBtn?.addEventListener('click', triggerOpenInputFlow);
-
-cancelPinBtn?.addEventListener('click', () => {
-  pinModal.style.display = "none";
-});
-
-submitPinBtn?.addEventListener('click', handlePinVerification);
-pinInput?.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') handlePinVerification();
-});
-
-async function handlePinVerification() {
-  const pinVal = pinInput.value.trim();
-  if (pinVal.length < 6) {
-    pinError.textContent = "PIN harus 6 digit angka";
-    pinError.style.display = "block";
+  const signature = JSON.stringify(products);
+  if (signature === dashboardState.productSignature && productChartInstance) return;
+  dashboardState.productSignature = signature;
+  const legend = document.getElementById('productLegend');
+  if (legend) {
+    const fragment = document.createDocumentFragment();
+    products.forEach((product, index) => {
+      const item = document.createElement('div');
+      item.className = 'legend-item';
+      const label = document.createElement('span');
+      label.className = 'legend-label';
+      const dot = document.createElement('span');
+      dot.className = 'legend-dot';
+      dot.style.backgroundColor = productPalette[index % productPalette.length];
+      dot.setAttribute('aria-hidden', 'true');
+      const name = document.createElement('span');
+      name.textContent = product.product;
+      label.append(dot, name);
+      const value = document.createElement('span');
+      value.className = 'legend-value';
+      value.textContent = `${numberFormatter.format(product.sold)} · ${numberFormatter.format(product.sold / total * 100)}%`;
+      item.append(label, value);
+      fragment.appendChild(item);
+    });
+    legend.replaceChildren(fragment);
+  }
+  if (!canvas || !total) return;
+  if (typeof Chart === 'undefined') {
+    canvas.hidden = true;
+    setText('productEmpty', 'Grafik gagal dimuat. Rincian penjualan tersedia di bawah.');
+    setHidden('productEmpty', false);
     return;
   }
-
-  try {
-    const res = await fetch('/api/verify-pin', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pin: pinVal })
-    });
-    const result = await res.json();
-    if (result.success) {
-      verifiedPin = pinVal;
-      pinModal.style.display = "none";
-      openSheetEditor();
-    } else {
-      pinError.textContent = result.error || "PIN salah, coba lagi!";
-      pinError.style.display = "block";
-      pinInput.select();
-    }
-  } catch (err) {
-    pinError.textContent = "Gagal memverifikasi PIN";
-    pinError.style.display = "block";
+  const data = {
+    labels: products.map(product => product.product),
+    datasets: [{
+      data: products.map(product => product.sold),
+      backgroundColor: products.map((_, index) => productPalette[index % productPalette.length]),
+      borderColor: '#ffffff', borderWidth: 4, hoverOffset: reducedMotion.matches ? 0 : 4, borderRadius: 2
+    }]
+  };
+  if (productChartInstance) {
+    productChartInstance.data = data;
+    productChartInstance.update('none');
+    return;
   }
-}
-
-closeSheetEditorBtn?.addEventListener('click', () => {
-  sheetEditorModal.style.display = "none";
-  // Sync dashboard summary again after editing
-  fetchDashboardData(currentSelectedSheet);
-});
-
-refreshSheetTableBtn?.addEventListener('click', () => {
-  loadSheetTableData();
-});
-
-addNewRowBtn?.addEventListener('click', () => {
-  if (newRowFormContainer.style.display === "none" || !newRowFormContainer.style.display) {
-    newRowFormContainer.style.display = "block";
-  } else {
-    newRowFormContainer.style.display = "none";
-  }
-});
-
-function openSheetEditor() {
-  sheetEditorModal.style.display = "flex";
-  document.getElementById('sheetEditorTitle').textContent = `Salinan Usaha Sell acc Prem - ${currentSelectedSheet || "Hari 47"}`;
-  loadSheetTableData();
-}
-
-async function loadSheetTableData() {
-  const tbody = document.getElementById('rawSheetsTbody');
-  if (!tbody) return;
-  tbody.innerHTML = `<tr><td colspan="13" style="text-align: center; padding: 20px; color: #64748B;">Memuat data spreadsheet dari Google Sheets...</td></tr>`;
-
-  try {
-    const res = await fetch(`/api/sheet-table?sheet=${encodeURIComponent(currentSelectedSheet)}&pin=${encodeURIComponent(verifiedPin)}`);
-    const json = await res.json();
-    if (!json.success) {
-      tbody.innerHTML = `<tr><td colspan="13" style="text-align: center; color: #EF4444; padding: 20px;">${json.error || "Gagal memuat sheet"}</td></tr>`;
-      return;
-    }
-
-    const data = json.data || {};
-    document.getElementById('sheetTotalModalVal').textContent = data.total_modal || "Rp 0";
-    renderRawTable(data.rows || []);
-  } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="13" style="text-align: center; color: #EF4444; padding: 20px;">Error koneksi saat mengambil tabel sheet</td></tr>`;
-  }
-}
-
-function renderRawTable(rows) {
-  const tbody = document.getElementById('rawSheetsTbody');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-
-  rows.forEach((row) => {
-    const tr = document.createElement('tr');
-    const rIdx = row.row_idx;
-
-    // Menyesuaikan warna cell mirip di spreadsheet asli
-    const posClass = getPosisiClass(row.posisi);
-    const statusClass = row.status_akun?.toLowerCase().includes("premium") ? "cell-premium" : "";
-    const paketClass = row.paket?.toLowerCase().includes("garansi") ? "cell-garansi" : "";
-
-    tr.innerHTML = `
-      <td class="row-number-cell">${rIdx}</td>
-      <td><input class="sheet-cell-edit" data-row="${rIdx}" data-col="A" value="${escapeHtml(row.no)}"></td>
-      <td><input class="sheet-cell-edit" data-row="${rIdx}" data-col="B" value="${escapeHtml(row.email)}"></td>
-      <td><input class="sheet-cell-edit" data-row="${rIdx}" data-col="C" value="${escapeHtml(row.password_email)}"></td>
-      <td><input class="sheet-cell-edit" data-row="${rIdx}" data-col="D" value="${escapeHtml(row.password_cgpt)}"></td>
-      <td class="${statusClass}"><input class="sheet-cell-edit" data-row="${rIdx}" data-col="E" value="${escapeHtml(row.status_akun)}"></td>
-      <td class="${posClass}"><input class="sheet-cell-edit" data-row="${rIdx}" data-col="F" value="${escapeHtml(row.posisi)}"></td>
-      <td><input class="sheet-cell-edit" data-row="${rIdx}" data-col="G" value="${escapeHtml(row.harga_jual)}"></td>
-      <td><input class="sheet-cell-edit" data-row="${rIdx}" data-col="H" value="${escapeHtml(row.jenis_transaksi)}"></td>
-      <td class="${paketClass}"><input class="sheet-cell-edit" data-row="${rIdx}" data-col="I" value="${escapeHtml(row.paket)}"></td>
-      <td><input class="sheet-cell-edit" data-row="${rIdx}" data-col="J" value="${escapeHtml(row.sumber)}"></td>
-      <td><input class="sheet-cell-edit" data-row="${rIdx}" data-col="K" value="${escapeHtml(row.keterangan)}"></td>
-      <td><input class="sheet-cell-edit" data-row="${rIdx}" data-col="L" value="${escapeHtml(row.jenis_akun)}"></td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  // Attach blur listener to all editable cells
-  tbody.querySelectorAll('.sheet-cell-edit').forEach(input => {
-    let originalValue = input.value;
-    input.addEventListener('focus', () => {
-      originalValue = input.value;
-    });
-    input.addEventListener('blur', async () => {
-      const newVal = input.value.trim();
-      if (newVal !== originalValue) {
-        const row = input.dataset.row;
-        const col = input.dataset.col;
-        await saveCellChange(row, col, newVal, input);
+  productChartInstance = new Chart(canvas.getContext('2d'), {
+    type: 'doughnut', data,
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      cutout: '79%', layout: { padding: 5 },
+      plugins: {
+        legend: { display: false },
+        tooltip: { ...chartTooltip(), callbacks: { label: context => ` ${numberFormatter.format(context.raw)} akun terjual` } }
       }
-    });
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') input.blur();
-    });
+    }
   });
 }
 
-function getPosisiClass(pos) {
-  if (!pos) return "";
-  const p = pos.trim().toLowerCase();
-  if (p === "sold") return "cell-sold";
-  if (p === "stanby" || p === "ready") return "cell-stanby";
-  if (p === "klaim") return "cell-klaim";
-  if (p === "proses") return "cell-proses";
-  return "";
+function filteredProducts() {
+  const query = dashboardState.search.trim().toLocaleLowerCase('id-ID');
+  return dashboardState.products.filter(product => {
+    const matchesSearch = product.product.toLocaleLowerCase('id-ID').includes(query);
+    const matchesFilter = dashboardState.filter === 'ready' ? product.ready > 0
+      : dashboardState.filter === 'claims' ? product.klaim > 0 : true;
+    return matchesSearch && matchesFilter;
+  }).sort((a, b) => {
+    const difference = dashboardState.sort === 'product'
+      ? a.product.localeCompare(b.product, 'id-ID') : a[dashboardState.sort] - b[dashboardState.sort];
+    return (dashboardState.direction === 'asc' ? difference : -difference) || a.product.localeCompare(b.product, 'id-ID');
+  });
 }
 
-function escapeHtml(str) {
-  if (str === null || str === undefined) return "";
-  return String(str).replace(/"/g, '&quot;');
+function renderTableEmpty(message) {
+  const tbody = document.getElementById('productTableBody');
+  if (!tbody) return;
+  const row = document.createElement('tr');
+  const cell = document.createElement('td');
+  cell.colSpan = 6;
+  cell.className = 'table-empty';
+  cell.textContent = message;
+  row.appendChild(cell);
+  tbody.replaceChildren(row);
 }
 
-async function saveCellChange(row, col, val, inputEl) {
-  inputEl.style.backgroundColor = "#FEF3C7"; // Amber saving indicator
-  try {
-    const res = await fetch('/api/update-sheet-cell', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        pin: verifiedPin,
-        sheet_name: currentSelectedSheet,
-        row: row,
-        col: col,
-        val: val
-      })
-    });
-    const result = await res.json();
-    if (result.success) {
-      inputEl.style.backgroundColor = "#D1E7DD"; // Success indicator
-      setTimeout(() => {
-        inputEl.style.backgroundColor = "";
-      }, 1000);
-    } else {
-      inputEl.style.backgroundColor = "#FEE2E2"; // Error
-    }
-  } catch (err) {
-    inputEl.style.backgroundColor = "#FEE2E2";
+function renderProductTable() {
+  const tbody = document.getElementById('productTableBody');
+  if (!tbody) return;
+  const products = filteredProducts();
+  setText('totalProducts', dashboardState.search || dashboardState.filter !== 'all'
+    ? `${products.length} dari ${dashboardState.products.length} produk` : `${products.length} produk`);
+  const exportButton = document.getElementById('exportCsvBtn');
+  if (exportButton) exportButton.disabled = !products.length;
+  const exportButtonProduk = document.getElementById('exportCsvBtnProduk');
+  if (exportButtonProduk) exportButtonProduk.disabled = !products.length;
+  document.querySelectorAll('[data-sort]').forEach(button => {
+    const active = button.dataset.sort === dashboardState.sort;
+    button.closest('th')?.setAttribute('aria-sort', active ? (dashboardState.direction === 'asc' ? 'ascending' : 'descending') : 'none');
+    button.classList.toggle('is-sorted', active);
+  });
+  const signature = JSON.stringify(products);
+  if (signature === dashboardState.tableSignature) return;
+  dashboardState.tableSignature = signature;
+  if (!products.length) {
+    renderTableEmpty(dashboardState.products.length
+      ? 'Tidak ada produk yang cocok. Ubah kata pencarian atau filter.'
+      : 'Belum ada produk tercatat. Tambahkan transaksi melalui Input data.');
+    return;
   }
+  const fragment = document.createDocumentFragment();
+  products.forEach(product => {
+    const row = document.createElement('tr');
+    const nameCell = document.createElement('td');
+    const wrapper = document.createElement('div');
+    wrapper.className = 'product-cell';
+    
+    // Check for brand logo image from assets/
+    const logoInfo = getProductLogo(product.product);
+    if (logoInfo) {
+      const img = document.createElement('img');
+      img.src = logoInfo.src;
+      img.alt = logoInfo.alt;
+      img.className = 'product-logo-img';
+      img.loading = 'lazy';
+      img.onerror = () => {
+        img.replaceWith(createFallbackAvatar(product.product));
+      };
+      wrapper.appendChild(img);
+    } else {
+      wrapper.appendChild(createFallbackAvatar(product.product));
+    }
+
+    const name = document.createElement('span');
+    name.className = 'product-name';
+    name.textContent = product.product;
+    wrapper.appendChild(name);
+    nameCell.appendChild(wrapper);
+    row.appendChild(nameCell);
+    ['sold', 'klaim', 'ready', 'omzet', 'claimRate'].forEach(key => {
+      const cell = document.createElement('td');
+      cell.className = 'numeric';
+      const value = document.createElement('span');
+      if (key === 'omzet') {
+        value.textContent = formatRupiah(product.omzet);
+        value.className = 'table-currency';
+      } else if (key === 'claimRate') {
+        value.className = `tag-badge ${product.claimRate > 10 ? 'tag-claim' : 'tag-ready'}`;
+        value.textContent = `${numberFormatter.format(product.claimRate)}%`;
+      } else {
+        value.textContent = numberFormatter.format(product[key]);
+        if (key === 'klaim' && product.klaim > 0) value.className = 'val-caution';
+        if (key === 'ready') value.className = 'stock-count';
+      }
+      cell.appendChild(value);
+      row.appendChild(cell);
+    });
+    fragment.appendChild(row);
+  });
+  tbody.replaceChildren(fragment);
 }
 
-// Simpan Baris Baru dari Form Cepat
-saveNewRowBtn?.addEventListener('click', async () => {
-  const email = document.getElementById('newRowEmail').value.trim();
-  const passEmail = document.getElementById('newRowPassEmail').value.trim();
-  const passCgpt = document.getElementById('newRowPassCgpt').value.trim();
-  const jenisAkun = document.getElementById('newRowJenisAkun').value;
-  const posisi = document.getElementById('newRowPosisi').value;
-  const harga = document.getElementById('newRowHarga').value;
-  const paket = document.getElementById('newRowPaket').value;
-  const sumber = document.getElementById('newRowSumber').value;
-  const ket = document.getElementById('newRowKeterangan').value.trim();
+function exportProductCsv() {
+  const products = filteredProducts();
+  if (!products.length) return;
+  const escapeCell = value => {
+    const text = String(value);
+    return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+  };
+  const headers = ['Produk', 'Terjual', 'Klaim', 'Ready', 'Omzet', 'Rasio Klaim (%)'];
+  const lines = [
+    headers.join(','),
+    ...products.map(product => [
+      escapeCell(product.product), product.sold, product.klaim, product.ready,
+      product.omzet, product.claimRate.toFixed(1)
+    ].join(','))
+  ];
+  const blob = new Blob([`\uFEFF${lines.join('\r\n')}`], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `finance-auditor-produk-${new Date().toISOString().slice(0, 10)}.csv`;
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 
-  saveNewRowBtn.disabled = true;
-  saveNewRowBtn.textContent = "Menyimpan...";
+document.getElementById('refreshBtn')?.addEventListener('click', () => fetchDashboardData(currentSelectedSheet));
+['activeDaySelect', 'mobileDaySelect'].forEach(id => {
+  document.getElementById(id)?.addEventListener('change', event => {
+    if (event.target.value && event.target.value !== currentSelectedSheet) fetchDashboardData(event.target.value, { dayChange: true });
+  });
+});
 
-  try {
-    const res = await fetch('/api/add-row-data', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        pin: verifiedPin,
-        sheet_name: currentSelectedSheet,
-        email: email,
-        password_email: passEmail,
-        password_cgpt: passCgpt,
-        status_akun: posisi === "Sold" ? "Signed / Premium" : (posisi === "Stanby" ? "Signed / Free" : "Signed / Premium"),
-        posisi: posisi,
-        harga_jual: harga ? parseFloat(harga) : 0,
-        jenis_transaksi: posisi === "Sold" ? "Penjualan" : (posisi === "Klaim" ? "Klaim" : ""),
-        paket: paket,
-        sumber: sumber,
-        jenis_akun: jenisAkun,
-        keterangan: ket
-      })
+// Range buttons
+document.querySelectorAll('[data-range]').forEach(button => {
+  button.addEventListener('click', () => {
+    const range = Number(button.dataset.range);
+    if (![7, 14, 30, 90].includes(range)) return;
+    dashboardState.range = range;
+    dashboardState.zoomRange = range;
+    dashboardState.zoomOffset = 0;
+    renderTrendChart(true);
+  });
+});
+
+// Series toggle buttons
+document.querySelectorAll('[data-series]').forEach(button => {
+  button.setAttribute('aria-pressed', 'true');
+  button.addEventListener('click', () => {
+    const index = Number(button.dataset.series);
+    if (![0, 1, 2].includes(index)) return;
+    dashboardState.visibleSeries[index] = !dashboardState.visibleSeries[index];
+    // Sync all matching data-series buttons across views
+    document.querySelectorAll(`[data-series="${index}"]`).forEach(btn => {
+      btn.setAttribute('aria-pressed', String(dashboardState.visibleSeries[index]));
+      btn.classList.toggle('is-muted', !dashboardState.visibleSeries[index]);
     });
-    const json = await res.json();
-    if (json.success) {
-      // Clear inputs
-      document.getElementById('newRowEmail').value = '';
-      document.getElementById('newRowPassEmail').value = '';
-      document.getElementById('newRowPassCgpt').value = '';
-      document.getElementById('newRowHarga').value = '';
-      document.getElementById('newRowKeterangan').value = '';
-      // Reload table
-      loadSheetTableData();
-    } else {
-      alert(json.error || "Gagal menyimpan baris baru");
-    }
-  } catch (err) {
-    alert("Gagal terhubung ke server");
-  } finally {
-    saveNewRowBtn.disabled = false;
-    saveNewRowBtn.textContent = "Simpan ke Sheets";
+    renderTrendChart(true);
+  });
+});
+
+// Interactive Zoom & Pan Buttons
+['btnZoomIn', 'btnZoomInTren'].forEach(id => {
+  document.getElementById(id)?.addEventListener('click', () => zoomIn());
+});
+['btnZoomOut', 'btnZoomOutTren'].forEach(id => {
+  document.getElementById(id)?.addEventListener('click', () => zoomOut());
+});
+['btnPanLeft', 'btnPanLeftTren'].forEach(id => {
+  document.getElementById(id)?.addEventListener('click', () => panLeft());
+});
+['btnPanRight', 'btnPanRightTren'].forEach(id => {
+  document.getElementById(id)?.addEventListener('click', () => panRight());
+});
+['btnResetZoom', 'btnResetZoomTren', 'btnResetZoomDeep'].forEach(id => {
+  document.getElementById(id)?.addEventListener('click', () => resetZoom());
+});
+
+// Product search and filter
+document.getElementById('productSearch')?.addEventListener('input', event => {
+  dashboardState.search = event.target.value;
+  renderProductTable();
+});
+document.getElementById('productFilter')?.addEventListener('change', event => {
+  dashboardState.filter = event.target.value;
+  renderProductTable();
+});
+
+// Table sorting
+document.querySelectorAll('[data-sort]').forEach(button => {
+  button.addEventListener('click', () => {
+    const key = button.dataset.sort;
+    if (!['product', 'sold', 'klaim', 'ready', 'omzet', 'claimRate'].includes(key)) return;
+    dashboardState.direction = dashboardState.sort === key
+      ? (dashboardState.direction === 'asc' ? 'desc' : 'asc') : key === 'product' ? 'asc' : 'desc';
+    dashboardState.sort = key;
+    renderProductTable();
+  });
+});
+
+// CSV and Input Data buttons
+document.getElementById('exportCsvBtn')?.addEventListener('click', exportProductCsv);
+document.getElementById('exportCsvBtnProduk')?.addEventListener('click', exportProductCsv);
+document.getElementById('openInputDataBtnProduk')?.addEventListener('click', () => {
+  const primaryBtn = document.getElementById('openInputDataBtn');
+  if (primaryBtn) primaryBtn.click();
+});
+document.getElementById('sidebarQuickInputBtn')?.addEventListener('click', () => {
+  const primaryBtn = document.getElementById('openInputDataBtn');
+  if (primaryBtn) primaryBtn.click();
+});
+
+// Handle SPA view change notification
+window.addEventListener('app:viewchanged', (e) => {
+  const view = e.detail?.view;
+  if (view === 'tren' || view === 'overview') {
+    renderTrendChart();
+    if (trendChartInstance) trendChartInstance.resize();
+    if (trendChartTrenInstance) trendChartTrenInstance.resize();
+  } else if (view === 'produk') {
+    renderProductTable();
+    renderProductChart();
+    if (productChartInstance) productChartInstance.resize();
   }
 });
 
-// Initial Fetch & Refresh Polling
+reducedMotion.addEventListener('change', () => {
+  if (trendChartInstance) trendChartInstance.options.animation = false;
+  if (trendChartTrenInstance) trendChartTrenInstance.options.animation = false;
+  if (productChartInstance) {
+    productChartInstance.data.datasets[0].hoverOffset = reducedMotion.matches ? 0 : 4;
+    productChartInstance.update('none');
+  }
+});
+
 fetchDashboardData();
 setInterval(() => {
-  fetchDashboardData(currentSelectedSheet);
+  if (!document.hidden) fetchDashboardData(currentSelectedSheet, { background: true });
 }, 15000);
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && (!dashboardState.lastSyncedAt || Date.now() - dashboardState.lastSyncedAt.getTime() > 15000)) {
+    fetchDashboardData(currentSelectedSheet, { background: true });
+  }
+});

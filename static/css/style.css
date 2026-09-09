@@ -134,14 +134,14 @@ button,a,input,select  {
 }
 
 .sidebar  {
-  flex: 0 0 224px;
+  flex: 0 0 272px;
   position: sticky;
   top: 0;
   height: 100dvh;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  padding: 30px 18px 20px;
+  padding: 28px 20px 20px;
   color: #e4eadf;
   background: var(--bg-sidebar);
 }
@@ -152,9 +152,9 @@ button,a,input,select  {
 
 .brand  {
   display: flex;
-  gap: 13px;
+  gap: 12px;
   align-items: center;
-  padding: 0 8px;
+  padding: 0 4px;
   min-height: 52px;
 }
 
@@ -191,18 +191,19 @@ button,a,input,select  {
 .brand-text-block  {
   display: flex;
   flex-direction: column;
-  gap: 1.5px;
+  gap: 2px;
   min-width: 0;
 }
 
 .brand-title,
 .brand-name  {
-  font-size: 19px;
+  font-size: 18px;
   font-weight: 700;
   line-height: 1.15;
-  letter-spacing: -.4px;
+  letter-spacing: -.35px;
   color: #fff;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .brand-title span,
@@ -213,14 +214,15 @@ button,a,input,select  {
 }
 
 .brand-handle  {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 450;
-  letter-spacing: .15px;
+  letter-spacing: .05px;
   color: #a2bca5;
   text-decoration: none;
   width: fit-content;
   transition: color 150ms ease, opacity 150ms ease;
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .brand-handle:hover  {
@@ -1863,11 +1865,22 @@ select  {
     display: block;
   }
   .sidebar  {
-    position: static;
+    position: sticky;
+    top: 0;
+    z-index: 95;
     height: auto;
-    padding: 14px 20px;
+    padding: max(12px, env(safe-area-inset-top, 12px)) 20px 12px;
     width: 100%;
     overflow: visible;
+    background: var(--bg-sidebar);
+    transition: background 260ms ease, backdrop-filter 260ms ease, -webkit-backdrop-filter 260ms ease, border-bottom 260ms ease, box-shadow 260ms ease;
+  }
+  .sidebar.is-scrolled  {
+    background: rgba(25, 44, 35, 0.78) !important;
+    backdrop-filter: blur(24px) saturate(190%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 10px 30px -4px rgba(10, 24, 15, 0.35) !important;
   }
   .brand  {
     min-height: 48px;
@@ -1896,6 +1909,7 @@ select  {
   .brand-handle  {
     font-size: 12px;
     color: #a2bca5;
+    white-space: nowrap;
   }
   .workspace-label,.sidebar-bottom  {
     display: none;
@@ -2100,7 +2114,7 @@ select  {
 
 @media (max-width: 700px)  {
   .sidebar  {
-    padding: 15px 18px;
+    padding: max(11px, env(safe-area-inset-top, 11px)) 16px 11px;
   }
   .brand  {
     gap: 13px;
@@ -2124,6 +2138,7 @@ select  {
   .brand-handle  {
     font-size: 12px;
     color: #a2bca5;
+    white-space: nowrap;
   }
   .sidebar .side-nav,
   .side-nav  {
@@ -2456,6 +2471,88 @@ select  {
   }
   .sheet-toolbar-actions  {
     flex-wrap: wrap;
+  }
+}
+
+/* Tuing Popup - Spring slide in from left */
+.tuing-badge  {
+  position: fixed;
+  left: 20px;
+  bottom: max(88px, calc(env(safe-area-inset-bottom) + 84px));
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 
+    0 12px 30px -4px rgba(22, 48, 32, 0.16),
+    0 4px 10px rgba(0, 0, 0, 0.05),
+    inset 0 1px 1px #ffffff;
+  border-radius: 9999px;
+  padding: 7px 15px 7px 9px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #1a3325;
+  font-size: 12px;
+  font-weight: 550;
+  z-index: 110;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-50px) scale(0.85);
+  transition: transform 440ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tuing-badge.show  {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+}
+
+.tuing-badge.hide  {
+  opacity: 0;
+  transform: translateX(-25px) scale(0.92);
+  transition: transform 260ms ease, opacity 260ms ease;
+}
+
+.tuing-emoji  {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #e6f4ea;
+  font-size: 13px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.tuing-msg  {
+  letter-spacing: -0.15px;
+  line-height: 1.2;
+}
+
+@keyframes tuingPop  {
+  0%  {
+    opacity: 0.3;
+    transform: scale(0.88);
+  }
+  65%  {
+    transform: scale(1.04);
+  }
+  100%  {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.tuing-pop  {
+  animation: tuingPop 380ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@media (min-width: 901px)  {
+  .tuing-badge  {
+    left: 292px;
+    bottom: 24px;
   }
 }
 

@@ -37,6 +37,7 @@
     const name = link.dataset.targetView || link.getAttribute('href')?.slice(1);
     if (Object.hasOwn(titles, name)) {
       event.preventDefault();
+      if (window.triggerHaptic) window.triggerHaptic('light');
       switchView(name);
     }
   });

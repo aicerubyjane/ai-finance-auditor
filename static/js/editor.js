@@ -153,6 +153,7 @@
     pinModal.setAttribute('aria-busy', String(pending));
   }
   function triggerOpenInputFlow() {
+    if (window.triggerHaptic) window.triggerHaptic('light');
     if (verifiedPin) return openSheetEditor();
     pinInput.value = '';
     pinMessage();
@@ -465,6 +466,7 @@
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.error || 'Transaksi belum tersimpan. Data tetap tersedia, silakan coba lagi.');
       ['newRowEmail', 'newRowPassEmail', 'newRowPassCgpt', 'newRowHarga', 'newRowKeterangan'].forEach(id => { byId(id).value = ''; });
+      if (window.triggerHaptic) window.triggerHaptic('success');
       notify(`Transaksi berhasil ditambahkan ke ${targetSheet || 'sheet aktif'}.`, 'success');
       await loadSheetTableData();
     } catch (error) {

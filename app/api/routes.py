@@ -1,6 +1,40 @@
+import asyncio
+import logging
 from fastapi import APIRouter
 from app.sheets_client import sheets_service
 from app.config import settings
+
+logger = logging.getLogger(__name__)
+
+async def notify_telegram_transaction(email: str, jenis_akun: str, harga_jual: float, posisi: str, sheet_name: str, paket: str, sumber: str):
+    try:
+        import app.main as main_module
+        admin_id = settings.TELEGRAM_ADMIN_ID
+        bot_app = getattr(main_module, "bot_app", None)
+        if not admin_id or not bot_app or not getattr(bot_app, "bot", None):
+            return
+        
+        harga_fmt = f"Rp {int(harga_jual):,}".replace(",", ".")
+        msg = (
+            f"🔔 <b>Transaksi Baru Terinput (Web)</b>\n"
+            f"━━━━━━━━━━━━━━━━━━━\n"
+            f"📦 <b>Produk:</b> {jenis_akun}\n"
+            f"📧 <b>Email:</b> <code>{email}</code>\n"
+            f"🏷️ <b>Posisi:</b> {posisi}\n"
+            f"💰 <b>Harga:</b> {harga_fmt}\n"
+            f"🛡️ <b>Paket:</b> {paket}\n"
+            f"🌐 <b>Sumber:</b> {sumber}\n"
+            f"📑 <b>Sheet:</b> {sheet_name}\n"
+            f"━━━━━━━━━━━━━━━━━━━\n"
+            f"✨ <i>Dicatat via Dashboard Finance Auditor</i>"
+        )
+        await bot_app.bot.send_message(
+            chat_id=admin_id,
+            text=msg,
+            parse_mode="HTML"
+        )
+    except Exception as e:
+        logger.warning(f"Gagal mengirim notifikasi Telegram: {e}")
 
 api_router = APIRouter(prefix="/api")
 
@@ -110,4 +144,16 @@ async def add_row_data(payload: dict):
         posisi=posisi,
         sheet_name=sheet_name
     )
+    if ok:
+        asyncio.create_task(
+            notify_telegram_transaction(
+                email=email,
+                jenis_akun=jenis_akun,
+                harga_jual=harga_jual,
+                posisi=posisi,
+                sheet_name=sheet_name or sheets_service.get_current_operational_sheet(),
+                paket=paket,
+                sumber=sumber
+            )
+        )
     return {"success": ok}

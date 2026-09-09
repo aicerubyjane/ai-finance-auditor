@@ -22,6 +22,44 @@ const metricIds = [
   'dayMargin', 'dayThreads', 'dayReseller'
 ];
 
+function triggerHaptic(type = 'light') {
+  if (typeof navigator !== 'undefined' && navigator.vibrate) {
+    try {
+      if (type === 'light') navigator.vibrate(8);
+      else if (type === 'medium') navigator.vibrate(14);
+      else if (type === 'success') navigator.vibrate([10, 35, 15]);
+      else if (type === 'tuing') navigator.vibrate([8, 28, 12]);
+    } catch {
+      // Ignore vibration errors on unsupporting platforms
+    }
+  }
+}
+window.triggerHaptic = triggerHaptic;
+
+let tuingTimeout = null;
+function showTuingPopup(message = 'Data siap dipantau!') {
+  let badge = document.getElementById('tuingPopup');
+  if (!badge) {
+    badge = document.createElement('div');
+    badge.id = 'tuingPopup';
+    badge.className = 'tuing-badge';
+    badge.setAttribute('role', 'status');
+    badge.innerHTML = '<span class="tuing-emoji" aria-hidden="true">✨</span><span class="tuing-msg"></span>';
+    document.body.appendChild(badge);
+  }
+  badge.querySelector('.tuing-msg').textContent = message;
+  badge.classList.remove('hide');
+  void badge.offsetWidth;
+  badge.classList.add('show');
+  triggerHaptic('tuing');
+
+  clearTimeout(tuingTimeout);
+  tuingTimeout = setTimeout(() => {
+    badge.classList.remove('show');
+    badge.classList.add('hide');
+  }, 2200);
+}
+
 function numeric(value) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
@@ -134,6 +172,17 @@ async function fetchDashboardData(sheetOverride = '', options = {}) {
     dashboardState.lastSyncedAt = new Date();
     setSyncStatus('success', `Diperbarui ${syncTimestamp()}`);
     showDashboardNotice();
+
+    // Cute tuing number pop & floating badge from left
+    metricIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.remove('tuing-pop');
+        void el.offsetWidth;
+        el.classList.add('tuing-pop');
+      }
+    });
+    showTuingPopup('Data siap dipantau!');
     return true;
   } catch (error) {
     if (requestId !== dashboardState.requestId) return false;
@@ -770,16 +819,23 @@ function exportProductCsv() {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-document.getElementById('refreshBtn')?.addEventListener('click', () => fetchDashboardData(currentSelectedSheet));
+document.getElementById('refreshBtn')?.addEventListener('click', () => {
+  triggerHaptic('medium');
+  fetchDashboardData(currentSelectedSheet);
+});
 ['activeDaySelect', 'mobileDaySelect'].forEach(id => {
   document.getElementById(id)?.addEventListener('change', event => {
-    if (event.target.value && event.target.value !== currentSelectedSheet) fetchDashboardData(event.target.value, { dayChange: true });
+    if (event.target.value && event.target.value !== currentSelectedSheet) {
+      triggerHaptic('light');
+      fetchDashboardData(event.target.value, { dayChange: true });
+    }
   });
 });
 
 // Range buttons
 document.querySelectorAll('[data-range]').forEach(button => {
   button.addEventListener('click', () => {
+    triggerHaptic('light');
     const range = Number(button.dataset.range);
     if (![7, 14, 30, 90].includes(range)) return;
     dashboardState.range = range;
@@ -845,9 +901,9 @@ document.querySelectorAll('[data-sort]').forEach(button => {
 });
 
 // CSV and Input Data buttons
-document.getElementById('exportCsvBtn')?.addEventListener('click', exportProductCsv);
-document.getElementById('exportCsvBtnProduk')?.addEventListener('click', exportProductCsv);
-document.getElementById('mobileExportCsvBtn')?.addEventListener('click', exportProductCsv);
+document.getElementById('exportCsvBtn')?.addEventListener('click', () => { triggerHaptic('medium'); exportProductCsv(); });
+document.getElementById('exportCsvBtnProduk')?.addEventListener('click', () => { triggerHaptic('medium'); exportProductCsv(); });
+document.getElementById('mobileExportCsvBtn')?.addEventListener('click', () => { triggerHaptic('medium'); exportProductCsv(); });
 document.getElementById('openInputDataBtnProduk')?.addEventListener('click', () => {
   const primaryBtn = document.getElementById('openInputDataBtn');
   if (primaryBtn) primaryBtn.click();
@@ -886,3 +942,19 @@ document.addEventListener('visibilitychange', () => {
     fetchDashboardData(currentSelectedSheet, { background: true });
   }
 });
+
+// Mobile sticky header frosted glass scroll handler
+const mobileSidebarEl = document.querySelector('.sidebar');
+if (mobileSidebarEl) {
+  let isHeaderScrolled = false;
+  const updateHeaderScroll = () => {
+    const scrolled = window.scrollY > 8;
+    if (scrolled !== isHeaderScrolled) {
+      isHeaderScrolled = scrolled;
+      mobileSidebarEl.classList.toggle('is-scrolled', isHeaderScrolled);
+    }
+  };
+  window.addEventListener('scroll', updateHeaderScroll, { passive: true });
+  updateHeaderScroll();
+}
+

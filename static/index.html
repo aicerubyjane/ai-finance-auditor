@@ -5,11 +5,11 @@
   <title>Ringkasan Usaha · Finance Auditor</title><meta name="description" content="Pantau penjualan, kas, dan persediaan akun dalam satu ruang kerja.">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=ledger-polish-3">
+  <link rel="stylesheet" href="/css/style.css?v=apple-glass-20260910-1">
   <script src="/vendor/chart.umd.js" defer></script>
-  <script src="/js/app.js?v=ledger-polish-2" defer></script>
-  <script src="/js/editor.js?v=ledger-polish-2" defer></script>
-  <script src="/js/navigation.js?v=ledger-polish-2" defer></script>
+  <script src="/js/app.js?v=apple-glass-20260910-1" defer></script>
+  <script src="/js/editor.js?v=apple-glass-20260910-1" defer></script>
+  <script src="/js/navigation.js?v=apple-glass-20260910-1" defer></script>
 </head>
 <body>
   <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display:none">
@@ -66,7 +66,7 @@
               <h1 id="pageTitle">Ringkasan usaha<span class="heading-period">.</span></h1>
               <p class="page-subtitle">Penjualan, perputaran kas, dan stok dalam satu pandangan.</p>
             </div>
-            <div class="page-actions">
+            <div class="page-actions desktop-only">
               <button id="exportCsvBtn" class="btn btn-secondary" disabled><svg class="icon"><use href="#i-download"/></svg>Ekspor CSV</button>
               <button id="openInputDataBtn" class="btn btn-primary"><svg class="icon"><use href="#i-plus"/></svg>Input data</button>
             </div>
@@ -259,8 +259,6 @@
             </div>
             <div class="page-actions">
               <div class="day-picker-container"><label for="mobileDaySelect">Stok hari</label><select id="mobileDaySelect" aria-label="Pilih hari stok produk"><option value="">Memuat…</option></select></div>
-              <button id="exportCsvBtnProduk" class="btn btn-secondary" disabled><svg class="icon"><use href="#i-download"/></svg>Ekspor CSV</button>
-              <button id="openInputDataBtnProduk" class="btn btn-primary"><svg class="icon"><use href="#i-plus"/></svg>Input data</button>
             </div>
           </section>
 <section class="kpi-mini-strip" aria-label="Ringkasan persediaan produk">
@@ -350,29 +348,6 @@
         </footer>
       </main>
     </div>
-    <nav class="mobile-bottom-nav" aria-label="Navigasi mobile">
-      <a class="mobile-nav-link active" href="#overview" data-target-view="overview" aria-current="page">
-        <svg class="icon"><use href="#i-grid"/></svg>
-        <span>Ringkasan</span>
-      </a>
-      <a class="mobile-nav-link" href="#tren" data-target-view="tren">
-        <svg class="icon"><use href="#i-chart"/></svg>
-        <span>Tren</span>
-      </a>
-      <button type="button" class="mobile-nav-action-btn" id="mobileQuickInputBtn" title="Input data transaksi" aria-label="Input transaksi">
-        <span class="action-btn-pill">
-          <svg class="icon"><use href="#i-plus"/></svg>
-        </span>
-      </button>
-      <a class="mobile-nav-link" href="#produk" data-target-view="produk">
-        <svg class="icon"><use href="#i-box"/></svg>
-        <span>Produk</span>
-      </a>
-      <button type="button" class="mobile-nav-link mobile-nav-btn" id="mobileExportCsvBtn" title="Unduh laporan CSV" aria-label="Ekspor CSV">
-        <svg class="icon"><use href="#i-download"/></svg>
-        <span>Ekspor</span>
-      </button>
-    </nav>
   </div>
   <div id="pinModal" class="custom-modal-overlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="pinTitle" aria-describedby="pinDescription" tabindex="-1"><div class="custom-modal-card pin-card"><div class="pin-icon-wrap"><svg class="icon"><use href="#i-lock"/></svg></div><h2 id="pinTitle">Buka pencatatan</h2><p id="pinDescription" class="modal-desc">Masukkan PIN untuk mengakses dan mengubah data Google Sheets.</p><div class="pin-input-wrap"><label for="pinInputField">PIN akses · 6 digit</label><input type="password" id="pinInputField" maxlength="6" inputmode="numeric" pattern="[0-9]{6}" placeholder="••••••" autocomplete="off" aria-describedby="pinErrorMessage"><div id="pinErrorMessage" class="pin-error-text" role="alert" style="display:none"></div></div><div class="modal-btn-row"><button id="cancelPinBtn" type="button" class="btn btn-secondary">Batal</button><button id="submitPinBtn" type="button" class="btn btn-primary">Buka sheet</button></div></div></div>
   <div id="sheetEditorModal" class="custom-modal-overlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="sheetEditorTitle" tabindex="-1"><div class="custom-modal-card full-sheet-card">
@@ -386,5 +361,28 @@
     <div class="spreadsheet-viewport" tabindex="0" role="region" aria-label="Editor spreadsheet, geser untuk melihat seluruh kolom"><table class="google-sheets-grid" id="rawSheetsTable"><thead><tr><th scope="col">Baris</th><th scope="col">No.</th><th scope="col">Email</th><th scope="col">Password email</th><th scope="col">Password akun</th><th scope="col">Status akun</th><th scope="col">Posisi</th><th scope="col">Harga jual</th><th scope="col">Transaksi</th><th scope="col">Paket</th><th scope="col">Sumber</th><th scope="col">Keterangan</th><th scope="col">Produk</th></tr></thead><tbody id="rawSheetsTbody"></tbody></table></div>
   </div></div>
   <div id="toastRegion" class="toast-region" role="status" aria-live="polite" aria-atomic="true"></div>
+  <nav class="mobile-bottom-nav" aria-label="Navigasi mobile">
+    <a class="mobile-nav-link active" href="#overview" data-target-view="overview" aria-current="page">
+      <svg class="icon"><use href="#i-grid"/></svg>
+      <span>Ringkasan</span>
+    </a>
+    <a class="mobile-nav-link" href="#tren" data-target-view="tren">
+      <svg class="icon"><use href="#i-chart"/></svg>
+      <span>Tren</span>
+    </a>
+    <button type="button" class="mobile-nav-action-btn" id="mobileQuickInputBtn" title="Input data transaksi" aria-label="Input transaksi">
+      <span class="action-btn-pill">
+        <svg class="icon"><use href="#i-plus"/></svg>
+      </span>
+    </button>
+    <a class="mobile-nav-link" href="#produk" data-target-view="produk">
+      <svg class="icon"><use href="#i-box"/></svg>
+      <span>Produk</span>
+    </a>
+    <button type="button" class="mobile-nav-link mobile-nav-btn" id="mobileExportCsvBtn" title="Unduh laporan CSV" aria-label="Ekspor CSV">
+      <svg class="icon"><use href="#i-download"/></svg>
+      <span>Ekspor</span>
+    </button>
+  </nav>
 </body>
 </html>

@@ -160,6 +160,7 @@
   }
   byId('openInputDataBtn')?.addEventListener('click', triggerOpenInputFlow);
   byId('mobileInputDataBtn')?.addEventListener('click', triggerOpenInputFlow);
+  byId('mobileQuickInputBtn')?.addEventListener('click', triggerOpenInputFlow);
   submitPinBtn?.addEventListener('click', handlePinVerification);
   pinInput?.addEventListener('input', () => pinMessage());
   pinInput?.addEventListener('keydown', event => {

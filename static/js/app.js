@@ -852,10 +852,6 @@ document.getElementById('openInputDataBtnProduk')?.addEventListener('click', () 
   const primaryBtn = document.getElementById('openInputDataBtn');
   if (primaryBtn) primaryBtn.click();
 });
-document.getElementById('mobileQuickInputBtn')?.addEventListener('click', () => {
-  const primaryBtn = document.getElementById('openInputDataBtn');
-  if (primaryBtn) primaryBtn.click();
-});
 
 // Handle SPA view change notification
 window.addEventListener('app:viewchanged', (e) => {

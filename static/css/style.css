@@ -228,6 +228,12 @@ button,a,input,select  {
   text-decoration: underline;
 }
 
+.brand-bini  {
+  color: #c4dec7;
+  font-weight: 400;
+  opacity: 0.9;
+}
+
 .brand-handle:active  {
   opacity: 0.75;
 }

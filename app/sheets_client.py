@@ -1,4 +1,6 @@
 import os
+import time
+import threading
 import logging
 from typing import List, Dict, Any, Optional
 import gspread
@@ -47,7 +49,40 @@ class GoogleSheetsClient:
         self.client: Optional[gspread.Client] = None
         self.spreadsheet: Optional[gspread.Spreadsheet] = None
         self.is_connected = False
+        self._worksheets: Dict[str, gspread.Worksheet] = {}
+
+        # Cache & Thread safety
+        self._lock = threading.Lock()
+        self._sheet_names_cache: List[str] = []
+        self._sheet_names_time: float = 0.0
+
+        self._kpis_cache: Dict[str, Any] = {}
+        self._kpis_time: float = 0.0
+        self._last_good_kpis: Dict[str, Any] = {}
+
+        self._daily_cache: Dict[str, Dict[str, Any]] = {}
+        self._daily_time: Dict[str, float] = {}
+        self._last_good_daily: Dict[str, Dict[str, Any]] = {}
+
+        self._raw_table_cache: Dict[str, Dict[str, Any]] = {}
+        self._raw_table_time: Dict[str, float] = {}
+
+        self.CACHE_TTL = 45.0  # 45 detik cache TTL untuk respons instan
         self._init_connection()
+
+    def invalidate_cache(self, sheet_name: Optional[str] = None):
+        with self._lock:
+            self._kpis_time = 0.0
+            if sheet_name:
+                norm = normalize_sheet_name(sheet_name)
+                self._daily_time.pop(norm, None)
+                self._daily_time.pop(sheet_name, None)
+                self._raw_table_time.pop(norm, None)
+                self._raw_table_time.pop(sheet_name, None)
+            else:
+                self._daily_time.clear()
+                self._raw_table_time.clear()
+            logger.info(f"Cache invalidated for {sheet_name or 'all'}")
 
     def _init_connection(self):
         if not settings.SPREADSHEET_ID:
@@ -131,10 +166,16 @@ class GoogleSheetsClient:
 
     def get_worksheet(self, sheet_name: str) -> Optional[gspread.Worksheet]:
         if not self.is_connected or not self.spreadsheet:
-            return None
+            self._init_connection()
+            if not self.is_connected or not self.spreadsheet:
+                return None
         norm_name = normalize_sheet_name(sheet_name) if sheet_name else self.get_current_operational_sheet()
+        if norm_name in self._worksheets:
+            return self._worksheets[norm_name]
         try:
-            return self.spreadsheet.worksheet(norm_name)
+            ws = self.spreadsheet.worksheet(norm_name)
+            self._worksheets[norm_name] = ws
+            return ws
         except gspread.exceptions.WorksheetNotFound:
             try:
                 # Coba format alternatif (misal Hari 05 vs Hari 5)
@@ -148,23 +189,38 @@ class GoogleSheetsClient:
                         alt = norm_name
                 else:
                     alt = norm_name
-                return self.spreadsheet.worksheet(alt)
+                ws = self.spreadsheet.worksheet(alt)
+                self._worksheets[norm_name] = ws
+                return ws
             except Exception:
                 logger.error(f"Worksheet {norm_name} tidak ditemukan.")
                 return None
         except Exception as e:
             logger.error(f"Error membuka sheet {norm_name}: {e}")
+            self._worksheets.clear()
             return None
 
-    def list_sheet_names(self) -> List[str]:
+    def list_sheet_names(self, force: bool = False) -> List[str]:
         default_days = [f"Hari {i:02d}" for i in range(1, 91)]
+        now = time.time()
+        with self._lock:
+            if not force and self._sheet_names_cache and (now - self._sheet_names_time < 600):
+                return self._sheet_names_cache
+
         if not self.is_connected or not self.spreadsheet:
-            return default_days + ["Dashboard", "Rekap 90 Hari", "Rekap 60 Hari", "Rekap Jenis Akun"]
+            self._init_connection()
+            if not self.is_connected or not self.spreadsheet:
+                return self._sheet_names_cache or (default_days + ["Dashboard", "Rekap 90 Hari", "Rekap 60 Hari", "Rekap Jenis Akun"])
         try:
             ws_titles = [ws.title for ws in self.spreadsheet.worksheets()]
-            return ws_titles if ws_titles else default_days
-        except Exception:
-            return default_days + ["Dashboard", "Rekap 90 Hari", "Rekap 60 Hari", "Rekap Jenis Akun"]
+            res = ws_titles if ws_titles else default_days
+            with self._lock:
+                self._sheet_names_cache = res
+                self._sheet_names_time = now
+            return res
+        except Exception as e:
+            logger.warning(f"Error fetching sheet names: {e}")
+            return self._sheet_names_cache or (default_days + ["Dashboard", "Rekap 90 Hari", "Rekap 60 Hari", "Rekap Jenis Akun"])
 
     def sell_standby_account(
         self,
@@ -235,10 +291,9 @@ class GoogleSheetsClient:
                 product
             ]
 
-            range_str = f"E{target_row_idx}:L{target_row_idx}"
             ws.update(range_name=range_str, values=[vals_to_update], raw=False)
             logger.info(f"Berhasil mengubah stok Stanby baris {target_row_idx} ({found_email}) menjadi Sold!")
-
+            self.invalidate_cache(target_sheet)
             return {"email": found_email, "row": target_row_idx}
         except Exception as e:
             logger.error(f"Error sell_standby_account: {e}")
@@ -320,6 +375,7 @@ class GoogleSheetsClient:
                 ws.insert_row(["+"] + row_data, index=47)
                 logger.info(f"Berhasil sisipkan baris di {target_sheet}")
 
+            self.invalidate_cache(target_sheet)
             return True
         except Exception as e:
             logger.error(f"Error add_account_transaction: {e}")
@@ -360,22 +416,31 @@ class GoogleSheetsClient:
                 range_str = f"B{target_row_idx}:F{target_row_idx}"
                 ws.update(range_name=range_str, values=[vals])
                 logger.info(f"Berhasil update pengeluaran baris {target_row_idx} di {target_sheet}")
+                self.invalidate_cache(target_sheet)
                 return True
             else:
                 ws.insert_row(["+", kebutuhan, f"Rp {harga_satuan:,.0f}", str(jumlah), satuan, f"Rp {subtotal:,.0f}"], index=12)
+                self.invalidate_cache(target_sheet)
                 return True
         except Exception as e:
             logger.error(f"Error add_expense: {e}")
             return False
 
-    def get_dashboard_kpis(self) -> Dict[str, Any]:
+    def get_dashboard_kpis(self, force: bool = False) -> Dict[str, Any]:
+        now = time.time()
+        with self._lock:
+            if not force and self._kpis_cache and (now - self._kpis_time < self.CACHE_TTL):
+                return self._kpis_cache
+
         if not self.is_connected:
-            return {}
+            self._init_connection()
+            if not self.is_connected:
+                return self._last_good_kpis or {}
 
         try:
             ws_dash = self.get_worksheet("Dashboard")
             if not ws_dash:
-                return {}
+                return self._last_good_kpis or {}
 
             vals = ws_dash.get_all_values()
             
@@ -442,7 +507,7 @@ class GoogleSheetsClient:
 
             total_modal = total_omzet - surplus_kas
 
-            return {
+            result = {
                 "sold_berbayar": sold_berbayar,
                 "klaim_garansi": klaim_garansi,
                 "total_omzet": total_omzet,
@@ -455,20 +520,31 @@ class GoogleSheetsClient:
                 "rekap_produk": rekap_produk,
                 "trend_harian": trend_harian
             }
+            with self._lock:
+                self._kpis_cache = result
+                self._kpis_time = now
+                self._last_good_kpis = result
+            return result
         except Exception as e:
             logger.error(f"Error get_dashboard_kpis: {e}")
-            return {}
+            return self._last_good_kpis or {}
 
-    def get_daily_summary(self, sheet_name: Optional[str] = None) -> Dict[str, Any]:
+    def get_daily_summary(self, sheet_name: Optional[str] = None, force: bool = False) -> Dict[str, Any]:
         target_sheet = normalize_sheet_name(sheet_name) if sheet_name else self.get_current_operational_sheet()
+        now = time.time()
+        with self._lock:
+            if not force and target_sheet in self._daily_cache and (now - self._daily_time.get(target_sheet, 0) < self.CACHE_TTL):
+                return self._daily_cache[target_sheet]
 
         if not self.is_connected:
-            return {}
+            self._init_connection()
+            if not self.is_connected:
+                return self._last_good_daily.get(target_sheet, {})
 
         try:
             ws = self.get_worksheet(target_sheet)
             if not ws:
-                return {}
+                return self._last_good_daily.get(target_sheet, {})
 
             vals = ws.get_all_values()
             
@@ -526,7 +602,7 @@ class GoogleSheetsClient:
                         elif "klaim" in pos:
                             daily_produk[p_name]["klaim"] += 1
 
-                return {
+                result = {
                     "sheet_name": target_sheet,
                     "sold_berbayar": parse_int(sold_str),
                     "klaim_garansi": parse_int(klaim_str),
@@ -539,8 +615,13 @@ class GoogleSheetsClient:
                     "dari_reseller": parse_int(reseller_str),
                     "daily_produk": daily_produk
                 }
+                with self._lock:
+                    self._daily_cache[target_sheet] = result
+                    self._daily_time[target_sheet] = now
+                    self._last_good_daily[target_sheet] = result
+                return result
 
-            return {
+            fallback_res = {
                 "sheet_name": target_sheet,
                 "sold_berbayar": 0,
                 "klaim_garansi": 0,
@@ -553,12 +634,22 @@ class GoogleSheetsClient:
                 "dari_reseller": 0,
                 "daily_produk": {}
             }
+            with self._lock:
+                self._daily_cache[target_sheet] = fallback_res
+                self._daily_time[target_sheet] = now
+                self._last_good_daily[target_sheet] = fallback_res
+            return fallback_res
         except Exception as e:
             logger.error(f"Error get_daily_summary: {e}")
-            return {}
+            return self._last_good_daily.get(target_sheet, {})
 
-    def get_sheet_raw_table(self, sheet_name: Optional[str] = None) -> Dict[str, Any]:
+    def get_sheet_raw_table(self, sheet_name: Optional[str] = None, force: bool = False) -> Dict[str, Any]:
         target_sheet = normalize_sheet_name(sheet_name) if sheet_name else self.get_current_operational_sheet()
+        now = time.time()
+        with self._lock:
+            if not force and target_sheet in self._raw_table_cache and (now - self._raw_table_time.get(target_sheet, 0) < self.CACHE_TTL):
+                return self._raw_table_cache[target_sheet]
+
         if not self.is_connected:
             return {"sheet_name": target_sheet, "headers": [], "rows": [], "modal_rows": [], "total_modal": "Rp 0"}
 
@@ -616,13 +707,17 @@ class GoogleSheetsClient:
                     "jenis_akun": row[11] if len(row) > 11 else ""
                 })
 
-            return {
+            result = {
                 "sheet_name": target_sheet,
                 "headers": headers,
                 "rows": account_rows,
                 "modal_rows": modal_rows,
                 "total_modal": total_modal
             }
+            with self._lock:
+                self._raw_table_cache[target_sheet] = result
+                self._raw_table_time[target_sheet] = now
+            return result
         except Exception as e:
             logger.error(f"Error get_sheet_raw_table: {e}")
             return {"sheet_name": target_sheet, "headers": [], "rows": [], "modal_rows": [], "total_modal": "Rp 0"}
@@ -638,6 +733,7 @@ class GoogleSheetsClient:
             cell_address = f"{col.upper()}{row}"
             ws.update(range_name=cell_address, values=[[value]], raw=False)
             logger.info(f"Berhasil update cell {cell_address} = {value} di {target_sheet}")
+            self.invalidate_cache(target_sheet)
             return True
         except Exception as e:
             logger.error(f"Error update_raw_cell {cell_address}: {e}")
@@ -654,6 +750,7 @@ class GoogleSheetsClient:
             range_str = f"B{row}:L{row}"
             ws.update(range_name=range_str, values=[row_data], raw=False)
             logger.info(f"Berhasil update baris {range_str} di {target_sheet}")
+            self.invalidate_cache(target_sheet)
             return True
         except Exception as e:
             logger.error(f"Error update_raw_row {row}: {e}")

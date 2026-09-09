@@ -11,11 +11,11 @@
   <title>Ringkasan Usaha · Finance Auditor</title><meta name="description" content="Pantau penjualan, kas, dan persediaan akun dalam satu ruang kerja.">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=clean-v1">
+  <link rel="stylesheet" href="/css/style.css?v=perf-turbo-v1">
   <script src="/vendor/chart.umd.js" defer></script>
-  <script src="/js/app.js?v=clean-v1" defer></script>
-  <script src="/js/editor.js?v=clean-v1" defer></script>
-  <script src="/js/navigation.js?v=clean-v1" defer></script>
+  <script src="/js/app.js?v=perf-turbo-v1" defer></script>
+  <script src="/js/editor.js?v=perf-turbo-v1" defer></script>
+  <script src="/js/navigation.js?v=perf-turbo-v1" defer></script>
 </head>
 <body>
   <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display:none">
@@ -36,6 +36,8 @@
     <symbol id="i-zoom-out" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></symbol>
     <symbol id="i-chevron-left" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></symbol>
     <symbol id="i-chevron-right" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></symbol>
   </svg>
   <a class="skip-link" href="#mainContent">Lewati ke ringkasan</a>
   <div class="app-layout">
@@ -66,10 +68,16 @@
       </div>
     </aside>
     <div class="workspace-main">
-      <header class="app-top-header"><div class="breadcrumb"><span id="breadcrumbRoot">Workspace</span><span class="breadcrumb-slash">/</span><strong id="breadcrumbCurrent">Ringkasan usaha</strong></div><div class="header-right-actions"><span class="header-date" id="localDate"></span><div id="syncStatusBadge" class="sync-live-badge loading" role="status">
+      <header class="app-top-header"><div class="breadcrumb"><span id="breadcrumbRoot">Workspace</span><span class="breadcrumb-slash">/</span><strong id="breadcrumbCurrent">Ringkasan usaha</strong></div><div class="header-right-actions"><span class="header-date" id="localDate"></span><button id="privacyToggleBtn" class="btn btn-quiet privacy-btn" title="Mode Privasi (sensor / tampilkan nominal)" aria-label="Toggle mode privasi"><svg class="icon icon-eye"><use href="#i-eye"/></svg><svg class="icon icon-eye-off" style="display:none"><use href="#i-eye-off"/></svg></button><div id="syncStatusBadge" class="sync-live-badge loading" role="status">
               <span class="sync-spinner" aria-hidden="true"></span>
               <span id="syncStatusText">Memuat data…</span>
             </div><button id="refreshBtn" class="btn btn-quiet" title="Ambil data terbaru" aria-label="Sinkronkan data"><svg class="icon"><use href="#i-refresh"/></svg><span>Sinkronkan</span></button></div></header>
+      <div id="pullToRefresh" class="pull-to-refresh" aria-hidden="true">
+        <div class="pull-indicator">
+          <svg class="icon pull-icon"><use href="#i-refresh"/></svg>
+        </div>
+        <span class="pull-label">Tarik untuk sinkronkan</span>
+      </div>
       <div id="syncProgressBar" class="sync-progress-bar" style="width:0%;opacity:0" aria-hidden="true"></div>
       <main class="main-content" id="mainContent" tabindex="-1">
         <div id="dashboardNotice" class="dashboard-notice" role="status" hidden></div>
@@ -97,7 +105,7 @@
             <article class="kpi-banner-card kpi-featured">
               <div class="card-meta-label">Total omzet<span class="metric-symbol" aria-hidden="true">Rp</span></div>
               <div class="card-hero-number shimmer-loading" id="kpiTotalOmzet">—</div>
-              <div class="card-footer-row"><span>Surplus kas</span><strong id="kpiSurplusKas">—</strong></div>
+              <div class="card-footer-row"><span>Surplus kas</span><div class="card-footer-values"><strong id="kpiSurplusKas">—</strong><span id="kpiSurplusMargin" class="kpi-margin-pill" hidden>—</span></div></div>
             </article>
             <article class="kpi-banner-card">
               <div class="card-meta-label">Akun terjual<svg class="icon"><use href="#i-arrow"/></svg></div>

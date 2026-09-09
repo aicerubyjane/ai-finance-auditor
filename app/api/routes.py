@@ -47,13 +47,17 @@ async def health_check():
     }
 
 @api_router.get("/dashboard")
-async def get_dashboard_data(sheet: str = ""):
+async def get_dashboard_data(sheet: str = "", force: bool = False):
     current_sheet = sheet if sheet else sheets_service.get_current_operational_sheet()
-    kpis = sheets_service.get_dashboard_kpis()
-    daily = sheets_service.get_daily_summary(current_sheet)
+    
+    # Run all 3 queries concurrently in background threads for lightning-fast response
+    kpis, daily, all_sheets = await asyncio.gather(
+        asyncio.to_thread(sheets_service.get_dashboard_kpis, force),
+        asyncio.to_thread(sheets_service.get_daily_summary, current_sheet, force),
+        asyncio.to_thread(sheets_service.list_sheet_names, force)
+    )
     
     # Filter dan sortir hanya sheet harian untuk dropdown
-    all_sheets = sheets_service.list_sheet_names()
     day_sheets = [s for s in all_sheets if s.lower().startswith("hari")]
     
     return {
@@ -64,15 +68,16 @@ async def get_dashboard_data(sheet: str = ""):
     }
 
 @api_router.get("/daily-summary")
-async def get_daily(sheet: str = ""):
+async def get_daily(sheet: str = "", force: bool = False):
     target_sheet = sheet if sheet else sheets_service.get_current_operational_sheet()
-    return sheets_service.get_daily_summary(target_sheet)
+    return await asyncio.to_thread(sheets_service.get_daily_summary, target_sheet, force)
 
 @api_router.post("/set-active-day")
 async def set_active_day(payload: dict):
     new_day = payload.get("sheet_name")
     if new_day:
         settings.ACTIVE_SHEET_NAME = new_day
+        sheets_service.invalidate_cache(new_day)
         return {"success": True, "active_sheet": new_day}
     return {"success": False, "error": "Sheet name missing"}
 
@@ -86,12 +91,12 @@ async def verify_pin(payload: dict):
     return {"success": False, "error": "PIN tidak sesuai"}
 
 @api_router.get("/sheet-table")
-async def get_sheet_table(sheet: str = "", pin: str = ""):
+async def get_sheet_table(sheet: str = "", pin: str = "", force: bool = False):
     if pin.strip() != SECURITY_PIN:
         return {"success": False, "error": "Akses ditolak. PIN salah."}
     
     target_sheet = sheet if sheet else sheets_service.get_current_operational_sheet()
-    data = sheets_service.get_sheet_raw_table(target_sheet)
+    data = await asyncio.to_thread(sheets_service.get_sheet_raw_table, target_sheet, force)
     return {"success": True, "data": data}
 
 @api_router.post("/update-sheet-cell")

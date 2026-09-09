@@ -128,7 +128,10 @@ async function fetchDashboardData(sheetOverride = '', options = {}) {
   if (options.dayChange) setDaySelects(target, true);
   const timeout = setTimeout(() => controller.abort(), 25000);
   try {
-    const url = target ? `/api/dashboard?sheet=${encodeURIComponent(target)}` : '/api/dashboard';
+    let url = target ? `/api/dashboard?sheet=${encodeURIComponent(target)}` : '/api/dashboard';
+    if (options.force) {
+      url += (url.includes('?') ? '&force=true' : '?force=true');
+    }
     const response = await fetch(url, { signal: controller.signal, cache: 'no-store' });
     if (!response.ok) throw new Error('Dashboard gagal dimuat.');
     const data = await response.json();
@@ -149,7 +152,12 @@ async function fetchDashboardData(sheetOverride = '', options = {}) {
     setSyncStatus('success', `Diperbarui ${syncTimestamp()}`);
     showDashboardNotice();
 
-    // Cute tuing number pop & floating badge from left
+    // Cache in localStorage for instant 0ms load next visit
+    try {
+      localStorage.setItem('cached_dashboard_data', JSON.stringify(data));
+    } catch {}
+
+    // Number pop animation
     metricIds.forEach(id => {
       const el = document.getElementById(id);
       if (el) {
@@ -213,6 +221,21 @@ function updateUI(data) {
   ['daySurplus', 'kpiSurplusKas'].forEach(id => {
     document.getElementById(id)?.classList.toggle('is-negative', numeric(id === 'daySurplus' ? daily.surplus_kas : kpis.surplus_kas) < 0);
   });
+
+  // Margin laba bersih badge
+  const totalOmzetVal = numeric(kpis.total_omzet);
+  const surplusKasVal = numeric(kpis.surplus_kas);
+  const marginBadge = document.getElementById('kpiSurplusMargin');
+  if (marginBadge) {
+    if (totalOmzetVal > 0) {
+      const marginPct = (surplusKasVal / totalOmzetVal) * 100;
+      marginBadge.textContent = `Marg ${marginPct >= 0 ? '+' : ''}${marginPct.toFixed(1)}%`;
+      marginBadge.classList.toggle('negative', marginPct < 0);
+      marginBadge.hidden = false;
+    } else {
+      marginBadge.hidden = true;
+    }
+  }
   const sheets = Array.isArray(data.available_sheets) ? data.available_sheets : [];
   const signature = JSON.stringify(sheets);
   ['activeDaySelect', 'mobileDaySelect'].forEach(id => {
@@ -796,7 +819,7 @@ function exportProductCsv() {
 
 document.getElementById('refreshBtn')?.addEventListener('click', () => {
   triggerHaptic('medium');
-  fetchDashboardData(currentSelectedSheet);
+  fetchDashboardData(currentSelectedSheet, { force: true });
 });
 ['activeDaySelect', 'mobileDaySelect'].forEach(id => {
   document.getElementById(id)?.addEventListener('change', event => {
@@ -908,12 +931,27 @@ reducedMotion.addEventListener('change', () => {
   }
 });
 
+// Instant stale-while-revalidate from localStorage
+try {
+  const localCached = localStorage.getItem('cached_dashboard_data');
+  if (localCached) {
+    const cachedData = JSON.parse(localCached);
+    if (cachedData && cachedData.kpis) {
+      updateUI(cachedData);
+      dashboardState.hasData = true;
+      setSyncStatus('success', 'Memuat data terbaru…');
+    }
+  }
+} catch {
+  // Ignore localStorage parsing issues
+}
+
 fetchDashboardData();
 setInterval(() => {
   if (!document.hidden) fetchDashboardData(currentSelectedSheet, { background: true });
-}, 15000);
+}, 30000);
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && (!dashboardState.lastSyncedAt || Date.now() - dashboardState.lastSyncedAt.getTime() > 15000)) {
+  if (!document.hidden && (!dashboardState.lastSyncedAt || Date.now() - dashboardState.lastSyncedAt.getTime() > 25000)) {
     fetchDashboardData(currentSelectedSheet, { background: true });
   }
 });
@@ -931,5 +969,75 @@ if (mobileSidebarEl) {
   };
   window.addEventListener('scroll', updateHeaderScroll, { passive: true });
   updateHeaderScroll();
+}
+
+// Mode Privasi (sensor nominal)
+const privacyBtn = document.getElementById('privacyToggleBtn');
+if (localStorage.getItem('privacy_mode') === 'true') {
+  document.body.classList.add('privacy-mode');
+}
+privacyBtn?.addEventListener('click', () => {
+  triggerHaptic('light');
+  const isNowPrivacy = document.body.classList.toggle('privacy-mode');
+  localStorage.setItem('privacy_mode', isNowPrivacy ? 'true' : 'false');
+});
+
+// Pull to refresh on mobile
+const pullEl = document.getElementById('pullToRefresh');
+if (pullEl) {
+  let touchStartY = 0;
+  let isPulling = false;
+  let pullDistance = 0;
+
+  window.addEventListener('touchstart', (e) => {
+    if (window.scrollY <= 2 && e.touches.length === 1) {
+      touchStartY = e.touches[0].clientY;
+      isPulling = true;
+      pullDistance = 0;
+    }
+  }, { passive: true });
+
+  window.addEventListener('touchmove', (e) => {
+    if (!isPulling) return;
+    const touchY = e.touches[0].clientY;
+    const diff = touchY - touchStartY;
+    if (diff > 0 && window.scrollY <= 2) {
+      pullDistance = Math.min(diff * 0.45, 75);
+      pullEl.classList.add('visible');
+      pullEl.style.height = `${pullDistance}px`;
+      pullEl.style.opacity = `${Math.min(pullDistance / 40, 1)}`;
+      pullEl.style.transform = 'translateY(0)';
+      const pullIcon = pullEl.querySelector('.pull-indicator');
+      if (pullIcon) {
+        pullIcon.style.transform = `rotate(${pullDistance * 4}deg)`;
+      }
+    } else {
+      pullEl.style.height = '0px';
+      pullEl.classList.remove('visible');
+    }
+  }, { passive: true });
+
+  window.addEventListener('touchend', () => {
+    if (!isPulling) return;
+    isPulling = false;
+    if (pullDistance >= 48) {
+      triggerHaptic('medium');
+      pullEl.classList.add('refreshing');
+      const label = pullEl.querySelector('.pull-label');
+      if (label) label.textContent = 'Menyinkronkan…';
+      fetchDashboardData(currentSelectedSheet, { force: true }).finally(() => {
+        pullEl.classList.remove('refreshing');
+        if (label) label.textContent = 'Tarik untuk sinkronkan';
+        pullEl.style.height = '0px';
+        pullEl.style.opacity = '0';
+        setTimeout(() => pullEl.classList.remove('visible'), 240);
+      });
+    } else {
+      pullEl.style.height = '0px';
+      pullEl.style.opacity = '0';
+      setTimeout(() => pullEl.classList.remove('visible'), 240);
+    }
+    pullDistance = 0;
+  }, { passive: true });
 }
 

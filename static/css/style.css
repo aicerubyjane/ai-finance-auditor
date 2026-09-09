@@ -2492,6 +2492,125 @@ select  {
   animation: tuingPop 380ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
+/* Mode Privasi / Blur Nominal */
+.privacy-btn  {
+  position: relative;
+  transition: all 180ms ease;
+}
+
+body.privacy-mode .privacy-btn  {
+  background: rgba(35, 92, 70, 0.15) !important;
+  color: var(--accent-brand) !important;
+}
+
+body.privacy-mode .privacy-btn .icon-eye  {
+  display: none !important;
+}
+
+body.privacy-mode .privacy-btn .icon-eye-off  {
+  display: inline-block !important;
+}
+
+body.privacy-mode #kpiTotalOmzet,
+body.privacy-mode #kpiSurplusKas,
+body.privacy-mode #kpiTotalModal,
+body.privacy-mode #dayOmzet,
+body.privacy-mode #dayModal,
+body.privacy-mode #daySurplus,
+body.privacy-mode .chart-total,
+body.privacy-mode .table-card td:nth-child(5),
+body.privacy-mode .privacy-blur  {
+  filter: blur(8.5px);
+  user-select: none;
+  transition: filter 220ms ease;
+}
+
+body.privacy-mode #kpiTotalOmzet:hover,
+body.privacy-mode #kpiSurplusKas:hover,
+body.privacy-mode #kpiTotalModal:hover,
+body.privacy-mode #dayOmzet:hover,
+body.privacy-mode #dayModal:hover,
+body.privacy-mode #daySurplus:hover,
+body.privacy-mode .chart-total:hover,
+body.privacy-mode .table-card td:nth-child(5):hover  {
+  filter: blur(0px);
+}
+
+/* Margin Badge Pill */
+.card-footer-values  {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.kpi-margin-pill  {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1.5px 6.5px;
+  border-radius: 9999px;
+  letter-spacing: 0.15px;
+  line-height: 1.25;
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.16);
+  color: #ebf5ee;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.kpi-margin-pill.negative  {
+  background: rgba(255, 99, 71, 0.22);
+  color: #ffd2cc;
+  border-color: rgba(255, 99, 71, 0.35);
+}
+
+/* Pull to Refresh */
+.pull-to-refresh  {
+  display: none;
+  overflow: hidden;
+  height: 0px;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: height 200ms cubic-bezier(0.2, 0.9, 0.3, 1), opacity 200ms ease, transform 200ms ease;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 5px;
+  padding-top: 6px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  pointer-events: none;
+}
+
+.pull-to-refresh.visible  {
+  display: flex;
+}
+
+.pull-to-refresh .pull-indicator  {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(25, 44, 35, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 160ms ease;
+}
+
+.pull-to-refresh .pull-icon  {
+  width: 15px;
+  height: 15px;
+  color: var(--accent-brand);
+}
+
+.pull-to-refresh.refreshing .pull-icon  {
+  animation: pullSpin 650ms linear infinite;
+}
+
+@keyframes pullSpin  {
+  to { transform: rotate(360deg); }
+}
+
 @media (prefers-reduced-motion: reduce)  {
   *,*::before,*::after  {
     animation: none !important;

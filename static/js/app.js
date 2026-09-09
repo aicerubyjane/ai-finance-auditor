@@ -36,30 +36,6 @@ function triggerHaptic(type = 'light') {
 }
 window.triggerHaptic = triggerHaptic;
 
-let tuingTimeout = null;
-function showTuingPopup(message = 'Data siap dipantau!') {
-  let badge = document.getElementById('tuingPopup');
-  if (!badge) {
-    badge = document.createElement('div');
-    badge.id = 'tuingPopup';
-    badge.className = 'tuing-badge';
-    badge.setAttribute('role', 'status');
-    badge.innerHTML = '<span class="tuing-emoji" aria-hidden="true">✨</span><span class="tuing-msg"></span>';
-    document.body.appendChild(badge);
-  }
-  badge.querySelector('.tuing-msg').textContent = message;
-  badge.classList.remove('hide');
-  void badge.offsetWidth;
-  badge.classList.add('show');
-  triggerHaptic('tuing');
-
-  clearTimeout(tuingTimeout);
-  tuingTimeout = setTimeout(() => {
-    badge.classList.remove('show');
-    badge.classList.add('hide');
-  }, 2200);
-}
-
 function numeric(value) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
@@ -182,7 +158,6 @@ async function fetchDashboardData(sheetOverride = '', options = {}) {
         el.classList.add('tuing-pop');
       }
     });
-    showTuingPopup('Data siap dipantau!');
     return true;
   } catch (error) {
     if (requestId !== dashboardState.requestId) return false;

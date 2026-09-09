@@ -152,59 +152,39 @@ button,a,input,select  {
 
 .brand  {
   display: flex;
-  gap: 11px;
+  gap: 13px;
   align-items: center;
-  padding: 0 9px;
+  padding: 0 8px;
   color: #fff;
   text-decoration: none;
-  min-height: 44px;
+  min-height: 52px;
 }
 
-.brand-mark  {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 3px;
-  width: 34px;
-  height: 36px;
-  padding: 9px;
-  border-radius: 7px;
-  background: #d7e6bc;
+.brand-avatar  {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  object-fit: cover;
+  object-position: center 20%;
+  border: 1.5px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   flex-shrink: 0;
-}
-
-.brand-mark span  {
-  width: 4px;
-  background: #234b36;
-  border-radius: 1px;
-}
-
-.brand-mark span:nth-child(1)  {
-  height: 11px;
-}
-
-.brand-mark span:nth-child(2)  {
-  height: 18px;
-}
-
-.brand-mark span:nth-child(3)  {
-  height: 14px;
+  display: block;
 }
 
 .brand-name  {
-  font-size: 18px;
-  font-weight: 650;
-  line-height: 1.18;
-  letter-spacing: -.45px;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -.4px;
 }
 
 .brand-name span  {
   display: block;
-  font-size: 12px;
+  font-size: 13px;
   letter-spacing: .2px;
   color: #bbcdbd;
   font-weight: 400;
-  margin-top: 3px;
 }
 
 .workspace-label  {
@@ -1839,21 +1819,26 @@ select  {
     overflow: visible;
   }
   .brand  {
-    min-height: 40px;
+    min-height: 48px;
     width: fit-content;
+    gap: 13px;
+    padding: 0;
+  }
+  .brand-avatar  {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
   }
   .brand-name  {
-    font-size: 16px;
+    font-size: 20px;
+    font-weight: 700;
   }
   .brand-name span  {
     display: inline;
-    margin-left: 4px;
-    font-size: 16px;
-  }
-  .brand-mark  {
-    width: 29px;
-    height: 30px;
-    padding: 7px;
+    margin-left: 5px;
+    font-size: 20px;
+    font-weight: 400;
+    color: #e4efe5;
   }
   .workspace-label,.sidebar-bottom  {
     display: none;
@@ -2058,7 +2043,24 @@ select  {
 
 @media (max-width: 700px)  {
   .sidebar  {
-    padding: 14px 16px 0;
+    padding: 15px 18px;
+  }
+  .brand  {
+    gap: 13px;
+    min-height: 48px;
+  }
+  .brand-avatar  {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+  }
+  .brand-name  {
+    font-size: 20px;
+    font-weight: 700;
+  }
+  .brand-name span  {
+    font-size: 20px;
+    font-weight: 400;
   }
   .sidebar .side-nav,
   .side-nav  {

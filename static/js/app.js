@@ -62,6 +62,9 @@ function setSyncStatus(status, message) {
     badge.classList.add(status);
   }
   setText('syncStatusText', message);
+  setText('sidebarConnectionText', { loading: 'Memuat', success: 'Terhubung', error: 'Terputus' }[status]);
+  const connection = document.getElementById('sidebarConnection');
+  if (connection) connection.dataset.state = status;
 }
 
 function setDaySelects(value = currentSelectedSheet, disabled = dashboardState.changingDay) {
@@ -149,6 +152,9 @@ async function fetchDashboardData(sheetOverride = '', options = {}) {
       setText('productEmpty', 'Data penjualan belum dimuat.');
       setHidden('trendEmpty', false);
       setHidden('productEmpty', false);
+      setText('trendEmptyTren', 'Grafik belum dimuat. Tekan Sinkronkan untuk mencoba lagi.');
+      setHidden('trendEmptyTren', false);
+      document.querySelector('.donut-center')?.setAttribute('hidden', '');
     }
     setDaySelects(previousSheet, false);
     return false;
@@ -183,6 +189,9 @@ function updateUI(data) {
     dayReseller: numberFormatter.format(numeric(daily.dari_reseller))
   };
   Object.entries(textValues).forEach(([id, value]) => setText(id, value));
+  ['daySurplus', 'kpiSurplusKas', 'sidebarSurplusVal'].forEach(id => {
+    document.getElementById(id)?.classList.toggle('is-negative', numeric(id === 'daySurplus' ? daily.surplus_kas : kpis.surplus_kas) < 0);
+  });
   const sheets = Array.isArray(data.available_sheets) ? data.available_sheets : [];
   const signature = JSON.stringify(sheets);
   ['activeDaySelect', 'mobileDaySelect'].forEach(id => {
@@ -343,11 +352,28 @@ function resetZoom() {
 function updateZoomBadges() {
   const rows = trendWindow();
   const allRows = getSortedTrendRows();
-  if (!rows.length) return;
+  const maxOffset = Math.max(0, allRows.length - rows.length);
+  dashboardState.zoomOffset = Math.min(maxOffset, dashboardState.zoomOffset || 0);
+  const disabled = {
+    btnZoomIn: !rows.length || dashboardState.zoomRange <= 7,
+    btnZoomOut: !rows.length || dashboardState.zoomRange >= 90,
+    btnPanLeft: !rows.length || dashboardState.zoomOffset >= maxOffset,
+    btnPanRight: !rows.length || dashboardState.zoomOffset <= 0
+  };
+  Object.entries(disabled).forEach(([id, value]) => {
+    [id, `${id}Tren`].forEach(buttonId => {
+      const button = document.getElementById(buttonId);
+      if (button) button.disabled = value;
+    });
+  });
+  if (!rows.length) {
+    setText('zoomWindowBadge', 'Belum ada riwayat');
+    setText('zoomWindowBadgeTren', 'Belum ada riwayat');
+    return;
+  }
   const startDay = rows[0].day;
   const endDay = rows[rows.length - 1].day;
-  const zoomFactor = (allRows.length > 0 ? (allRows.length / rows.length) : 1).toFixed(1);
-  const text = `Menampilkan H${startDay}–H${endDay} (${rows.length} hari) · Zoom: ${zoomFactor}x`;
+  const text = `Hari ${startDay}–${endDay} · ${rows.length} hari tercatat`;
   setText('zoomWindowBadge', text);
   setText('zoomWindowBadgeTren', text);
 }
@@ -374,8 +400,8 @@ function buildTrendChartConfig(rows, animate) {
       type: 'bar',
       label: 'Modal',
       data: rows.map(r => numeric(r.modal)),
-      backgroundColor: '#0284C7',
-      hoverBackgroundColor: '#0369A1',
+      backgroundColor: '#849677',
+      hoverBackgroundColor: '#92a484',
       stack: 'keuangan',
       borderRadius: 0,
       hidden: !dashboardState.visibleSeries[0],
@@ -386,9 +412,8 @@ function buildTrendChartConfig(rows, animate) {
       type: 'bar',
       label: 'Surplus',
       data: rows.map(r => numeric(r.surplus)),
-      // If surplus is negative, render RED (#EF4444), if positive render GREEN (#10B981)
-      backgroundColor: rows.map(r => numeric(r.surplus) < 0 ? '#EF4444' : '#10B981'),
-      hoverBackgroundColor: rows.map(r => numeric(r.surplus) < 0 ? '#DC2626' : '#059669'),
+      backgroundColor: rows.map(r => numeric(r.surplus) < 0 ? '#b95c48' : '#377455'),
+      hoverBackgroundColor: rows.map(r => numeric(r.surplus) < 0 ? '#a04b3a' : '#235c46'),
       stack: 'keuangan',
       borderRadius: rows.map(r => numeric(r.surplus) < 0 
         ? { topLeft: 0, topRight: 0, bottomLeft: 4, bottomRight: 4 }
@@ -421,11 +446,12 @@ function buildTrendChartConfig(rows, animate) {
               const label = context.dataset.label;
               if (label === 'Surplus') {
                 return val < 0
-                  ? ` Defisit (mines): ${formatRupiah(val)}`
+                  ? ` Defisit: ${formatRupiah(val)}`
                   : ` Surplus: ${formatRupiah(val)}`;
               }
               return ` ${label}: ${formatRupiah(val)}`;
-            }
+            },
+            footer: items => items.length ? `Omzet: ${formatRupiah(rows[items[0].dataIndex].omzet)}` : ''
           }
         }
       },
@@ -435,7 +461,7 @@ function buildTrendChartConfig(rows, animate) {
           border: { display: false },
           grid: { display: false },
           ticks: {
-            color: '#788278',
+            color: '#647160',
             maxRotation: 0,
             maxTicksLimit: Math.min(15, rows.length),
             font: { family: 'DM Sans, sans-serif', size: 10.5, weight: '500' }
@@ -446,7 +472,7 @@ function buildTrendChartConfig(rows, animate) {
           border: { display: false, dash: [3, 4] },
           grid: { color: '#e9ece5', drawTicks: false },
           ticks: {
-            color: '#788278',
+            color: '#647160',
             padding: 10,
             maxTicksLimit: 6,
             callback: compactCurrency,
@@ -461,7 +487,7 @@ function buildTrendChartConfig(rows, animate) {
 function renderTrendChart(animate = false) {
   const rows = trendWindow();
   const totalOmzet = rows.reduce((sum, row) => sum + numeric(row.omzet), 0);
-  const periodText = rows.length ? `Hari ${rows[0].day}–${rows[rows.length - 1].day} · ${rows.length} hari tercatat` : 'Belum ada transaksi tercatat';
+  const periodText = rows.length ? `Total omzet · Hari ${rows[0].day}–${rows[rows.length - 1].day}` : 'Belum ada transaksi tercatat';
 
   ['trendTotal', 'trendTotalTren'].forEach(id => setText(id, formatRupiah(totalOmzet)));
   ['trendPeriod', 'trendPeriodTren'].forEach(id => setText(id, periodText));
@@ -473,7 +499,19 @@ function renderTrendChart(animate = false) {
   syncRangeButtons();
   updateZoomBadges();
 
-  if (!rows.length || typeof Chart === 'undefined') return;
+  if (!rows.length || typeof Chart === 'undefined') {
+    trendChartInstance?.destroy();
+    trendChartTrenInstance?.destroy();
+    trendChartInstance = null;
+    trendChartTrenInstance = null;
+    if (typeof Chart === 'undefined') {
+      ['trendEmpty', 'trendEmptyTren'].forEach(id => {
+        setText(id, 'Grafik gagal dimuat. Muat ulang halaman untuk mencoba lagi.');
+        setHidden(id, false);
+      });
+    }
+    return;
+  }
 
   const config = buildTrendChartConfig(rows, animate);
 
@@ -520,6 +558,8 @@ function attachChartZoomListeners(canvas) {
   if (!canvas || canvas.dataset.zoomAttached) return;
   canvas.dataset.zoomAttached = 'true';
   canvas.addEventListener('wheel', (e) => {
+    // Scrolling the page should work even when the pointer is over a chart.
+    if (!e.altKey) return;
     e.preventDefault();
     wheelDeltaAccumulator += e.deltaY;
 
@@ -825,6 +865,7 @@ document.getElementById('sidebarQuickInputBtn')?.addEventListener('click', () =>
 
 // Handle SPA view change notification
 window.addEventListener('app:viewchanged', (e) => {
+  if (!dashboardState.hasData) return;
   const view = e.detail?.view;
   if (view === 'tren' || view === 'overview') {
     renderTrendChart();

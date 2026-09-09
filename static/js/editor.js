@@ -407,7 +407,9 @@
       rowForm.prepend(error);
     }
     error.textContent = message;
+    error.hidden = !message;
     error.style.display = message ? 'block' : 'none';
+    rowForm.querySelector('h3')?.after(error);
     ['newRowEmail', 'newRowHarga'].forEach(id => byId(id)?.setAttribute('aria-invalid', id === invalidId ? 'true' : 'false'));
     if (invalidId) byId(invalidId)?.focus();
   }

@@ -5,16 +5,11 @@
   <title>Ringkasan Usaha · Finance Auditor</title><meta name="description" content="Pantau penjualan, kas, dan persediaan akun dalam satu ruang kerja.">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=v2026_fix5">
-  <style>
-    .icon-definitions { display: none !important; width: 0 !important; height: 0 !important; position: absolute !important; }
-    .icon { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: inline-block; vertical-align: middle; flex-shrink: 0; }
-    .icon * { fill: none; stroke: currentColor; }
-  </style>
+  <link rel="stylesheet" href="/css/style.css?v=ledger-polish-3">
   <script src="/vendor/chart.umd.js" defer></script>
-  <script src="/js/app.js?v=v2026_fix5" defer></script>
-  <script src="/js/editor.js?v=v2026_fix5" defer></script>
-  <script src="/js/navigation.js?v=v2026_fix5" defer></script>
+  <script src="/js/app.js?v=ledger-polish-2" defer></script>
+  <script src="/js/editor.js?v=ledger-polish-2" defer></script>
+  <script src="/js/navigation.js?v=ledger-polish-2" defer></script>
 </head>
 <body>
   <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display:none">
@@ -36,7 +31,7 @@
     <symbol id="i-chevron-left" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></symbol>
     <symbol id="i-chevron-right" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></symbol>
   </svg>
-  <a class="skip-link" href="#overview">Lewati ke ringkasan</a>
+  <a class="skip-link" href="#mainContent">Lewati ke ringkasan</a>
   <div class="app-layout">
     <aside class="sidebar">
       <a class="brand" href="#overview" aria-label="Finance Auditor, ringkasan"><span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span><span class="brand-name">Finance<span>Auditor</span></span></a>
@@ -46,12 +41,10 @@
         <a class="nav-link" href="#tren" data-target-view="tren"><svg class="icon"><use href="#i-chart"/></svg><span>Tren keuangan</span></a>
         <a class="nav-link" href="#produk" data-target-view="produk"><svg class="icon"><use href="#i-box"/></svg><span>Produk &amp; stok</span></a>
       </nav>
-
-      <!-- Sidebar Executive Info Panel (Fills the sidebar meaningfully) -->
-      <div class="sidebar-center-panel">
+<div class="sidebar-center-panel">
         <div class="sidebar-section-header">
           <span>Ringkasan sistem</span>
-          <span class="sidebar-live-pill"><span class="live-dot"></span>Online</span>
+          <span class="sidebar-live-pill" id="sidebarConnection" data-state="loading"><span class="live-dot" aria-hidden="true"></span><span id="sidebarConnectionText">Memuat</span></span>
         </div>
         <div class="sidebar-kpi-compact">
           <div class="sidebar-kpi-item">
@@ -95,15 +88,17 @@
       </div>
     </aside>
     <div class="workspace-main">
-      <header class="app-top-header"><div class="breadcrumb"><span id="breadcrumbRoot">Workspace</span><span class="breadcrumb-slash">/</span><strong id="breadcrumbCurrent">Ringkasan usaha</strong></div><div class="header-right-actions"><span class="header-date" id="localDate"></span><button id="refreshBtn" class="btn btn-quiet" title="Ambil data terbaru"><svg class="icon"><use href="#i-refresh"/></svg><span>Sinkronkan</span></button></div></header>
+      <header class="app-top-header"><div class="breadcrumb"><span id="breadcrumbRoot">Workspace</span><span class="breadcrumb-slash">/</span><strong id="breadcrumbCurrent">Ringkasan usaha</strong></div><div class="header-right-actions"><span class="header-date" id="localDate"></span><div id="syncStatusBadge" class="sync-live-badge loading" role="status">
+              <span class="sync-spinner" aria-hidden="true"></span>
+              <span id="syncStatusText">Memuat data…</span>
+            </div><button id="refreshBtn" class="btn btn-quiet" title="Ambil data terbaru" aria-label="Sinkronkan data"><svg class="icon"><use href="#i-refresh"/></svg><span>Sinkronkan</span></button></div></header>
       <div id="syncProgressBar" class="sync-progress-bar" style="width:0%;opacity:0" aria-hidden="true"></div>
       <main class="main-content" id="mainContent" tabindex="-1">
-        
-        <!-- VIEW 1: OVERVIEW / RINGKASAN -->
-        <div class="spa-view active" id="viewOverview" data-view="overview">
+        <div id="dashboardNotice" class="dashboard-notice" role="status" hidden></div>
+<div class="spa-view active" id="viewOverview" data-view="overview">
           <section class="page-intro" aria-labelledby="pageTitle">
             <div>
-              <div class="eyebrow">Pantau usaha, lebih jelas.</div>
+              <div class="eyebrow">Keuangan &amp; persediaan</div>
               <h1 id="pageTitle">Ringkasan usaha<span class="heading-period">.</span></h1>
               <p class="page-subtitle">Penjualan, perputaran kas, dan stok dalam satu pandangan.</p>
             </div>
@@ -112,17 +107,14 @@
               <button id="openInputDataBtn" class="btn btn-primary"><svg class="icon"><use href="#i-plus"/></svg>Input data</button>
             </div>
           </section>
-          
+
           <div class="section-meta">
             <span>Akumulasi usaha <span class="meta-divider">/</span> Rekap seluruh periode</span>
-            <div id="syncStatusBadge" class="sync-live-badge loading" role="status">
-              <span class="sync-spinner" aria-hidden="true"></span>
-              <span id="syncStatusText">Memuat data…</span>
-            </div>
+
           </div>
-          
-          <div id="dashboardNotice" class="dashboard-notice" role="status" hidden></div>
-          
+
+
+
           <section class="kpi-banner-grid" aria-label="Ringkasan seluruh periode">
             <article class="kpi-banner-card kpi-featured">
               <div class="card-meta-label">Total omzet<span class="metric-symbol" aria-hidden="true">Rp</span></div>
@@ -151,16 +143,10 @@
               <div class="card-header-bar">
                 <div>
                   <h2 id="trendHeading">Arus keuangan</h2>
-                  <p class="card-subheading">Stacked Bar: Modal &amp; Surplus (merah jika minus)</p>
+                  <p class="card-subheading">Perbandingan modal dan surplus harian</p>
                 </div>
                 <div class="chart-header-controls">
-                  <div class="zoom-btn-group" role="group" aria-label="Kontrol zoom dan geser grafik">
-                    <button id="btnZoomOut" class="btn btn-zoom" title="Perkecil (lihat lebih banyak hari)"><svg class="icon"><use href="#i-zoom-out"/></svg></button>
-                    <button id="btnZoomIn" class="btn btn-zoom" title="Perbesar (detail per hari)"><svg class="icon"><use href="#i-zoom-in"/></svg></button>
-                    <button id="btnPanLeft" class="btn btn-zoom" title="Geser ke hari sebelumnya"><svg class="icon"><use href="#i-chevron-left"/></svg></button>
-                    <button id="btnPanRight" class="btn btn-zoom" title="Geser ke hari berikutnya"><svg class="icon"><use href="#i-chevron-right"/></svg></button>
-                    <button id="btnResetZoom" class="btn btn-zoom btn-zoom-reset" title="Kembalikan zoom"><svg class="icon"><use href="#i-refresh"/></svg></button>
-                  </div>
+
                   <div class="range-control" role="group" aria-label="Rentang grafik">
                     <button data-range="7" aria-pressed="false">7 hari</button>
                     <button data-range="14" aria-pressed="false">14 hari</button>
@@ -177,7 +163,7 @@
                 <div class="chart-series" role="group" aria-label="Seri grafik">
                   <button data-series="0" aria-pressed="true"><span class="series-dot series-modal"></span>Modal</button>
                   <button data-series="1" aria-pressed="true"><span class="series-dot series-surplus"></span>Surplus</button>
-                  <span class="series-legend-note"><span class="series-dot series-deficit"></span>Mines (merah)</span>
+                  <span class="series-legend-note"><span class="series-dot series-deficit"></span>Defisit</span>
                 </div>
               </div>
               <div class="chart-container-fluid">
@@ -185,6 +171,13 @@
                 <p id="trendEmpty" class="chart-empty" hidden>Belum ada aktivitas pada periode ini.</p>
               </div>
               <div class="chart-footnote">
+                <div class="zoom-btn-group" role="group" aria-label="Kontrol zoom dan geser grafik">
+                    <button id="btnZoomOut" class="btn btn-zoom" title="Perkecil (lihat lebih banyak hari)"><svg class="icon"><use href="#i-zoom-out"/></svg></button>
+                    <button id="btnZoomIn" class="btn btn-zoom" title="Perbesar (detail per hari)"><svg class="icon"><use href="#i-zoom-in"/></svg></button>
+                    <button id="btnPanLeft" class="btn btn-zoom" title="Geser ke hari sebelumnya"><svg class="icon"><use href="#i-chevron-left"/></svg></button>
+                    <button id="btnPanRight" class="btn btn-zoom" title="Geser ke hari berikutnya"><svg class="icon"><use href="#i-chevron-right"/></svg></button>
+                    <button id="btnResetZoom" class="btn btn-zoom btn-zoom-reset" title="Kembalikan zoom"><svg class="icon"><use href="#i-refresh"/></svg></button>
+                  </div>
                 <span id="zoomWindowBadge" class="zoom-badge-info">Gunakan tombol zoom / geser untuk melihat detail harian</span>
                 <span>Arahkan ke grafik untuk rincian harian</span>
               </div>
@@ -227,12 +220,10 @@
               </div>
             </article>
           </section>
-
-          <!-- Quick Navigation Link to Dedicated Products Page -->
-          <div class="quick-nav-card">
+<div class="quick-nav-card">
             <div class="quick-nav-text">
-              <strong>Katalog Produk &amp; Persediaan Stok</strong>
-              <span>Kelola rincian stok ready, rasio klaim garansi, dan komposisi penjualan per produk.</span>
+              <strong>Lihat kondisi setiap produk</strong>
+              <span>Periksa stok tersedia, penjualan, dan klaim garansi.</span>
             </div>
             <a href="#produk" class="btn btn-secondary quick-nav-action-btn">
               <span>Buka Produk &amp; Stok</span>
@@ -240,14 +231,12 @@
             </a>
           </div>
         </div>
-
-        <!-- VIEW 2: TREN KEUANGAN -->
-        <div class="spa-view" id="viewTren" data-view="tren">
+<div class="spa-view" id="viewTren" data-view="tren">
           <section class="page-intro" aria-labelledby="trenPageTitle">
             <div>
-              <div class="eyebrow">Analisis Arus Kas</div>
+              <div class="eyebrow">Riwayat usaha</div>
               <h1 id="trenPageTitle">Tren keuangan<span class="heading-period">.</span></h1>
-              <p class="page-subtitle">Visualisasi stacked vertical bar modal terpakai dan surplus kas harian.</p>
+              <p class="page-subtitle">Telusuri perputaran kas dan bandingkan aktivitas antarhari.</p>
             </div>
             <div class="page-actions">
               <button id="btnResetZoomDeep" class="btn btn-secondary"><svg class="icon"><use href="#i-refresh"/></svg>Reset tampilan</button>
@@ -257,8 +246,8 @@
           <article class="saas-card large-chart-card full-width-chart-card">
             <div class="card-header-bar">
               <div>
-                <h2>Detail Arus Keuangan (Stacked Vertical Bar)</h2>
-                <p class="card-subheading">Modal (dasar) + Surplus kas = Total Omzet harian</p>
+                <h2>Pergerakan kas harian</h2>
+                <p class="card-subheading">Omzet = modal + surplus. Defisit ditampilkan di bawah nol.</p>
               </div>
               <div class="chart-header-controls">
                 <div class="zoom-btn-group" role="group" aria-label="Kontrol zoom dan geser grafik">
@@ -284,7 +273,7 @@
               <div class="chart-series" role="group" aria-label="Seri grafik">
                 <button data-series="0" aria-pressed="true"><span class="series-dot series-modal"></span>Modal</button>
                 <button data-series="1" aria-pressed="true"><span class="series-dot series-surplus"></span>Surplus</button>
-                <span class="series-legend-note"><span class="series-dot series-deficit"></span>Mines (merah)</span>
+                <span class="series-legend-note"><span class="series-dot series-deficit"></span>Defisit</span>
               </div>
             </div>
             <div class="chart-container-fluid chart-container-large">
@@ -297,23 +286,20 @@
             </div>
           </article>
         </div>
-
-        <!-- VIEW 3: PRODUK & STOK -->
-        <div class="spa-view" id="viewProduk" data-view="produk">
+<div class="spa-view" id="viewProduk" data-view="produk">
           <section class="page-intro" aria-labelledby="produkPageTitle">
             <div>
-              <div class="eyebrow">Manajemen Persediaan</div>
+              <div class="eyebrow">Katalog &amp; penjualan</div>
               <h1 id="produkPageTitle">Produk &amp; persediaan<span class="heading-period">.</span></h1>
               <p class="page-subtitle">Pantau stok akun ready, total terjual, dan rasio klaim garansi.</p>
             </div>
             <div class="page-actions">
-              <button id="exportCsvBtnProduk" class="btn btn-secondary"><svg class="icon"><use href="#i-download"/></svg>Ekspor CSV</button>
+              <div class="day-picker-container"><label for="mobileDaySelect">Stok hari</label><select id="mobileDaySelect" aria-label="Pilih hari stok produk"><option value="">Memuat…</option></select></div>
+              <button id="exportCsvBtnProduk" class="btn btn-secondary" disabled><svg class="icon"><use href="#i-download"/></svg>Ekspor CSV</button>
               <button id="openInputDataBtnProduk" class="btn btn-primary"><svg class="icon"><use href="#i-plus"/></svg>Input data</button>
             </div>
           </section>
-
-          <!-- Mini KPI Row for Products -->
-          <section class="kpi-mini-strip" aria-label="Ringkasan persediaan produk">
+<section class="kpi-mini-strip" aria-label="Ringkasan persediaan produk">
             <div class="mini-kpi-card">
               <span class="mini-kpi-label">Total produk terdaftar</span>
               <strong class="mini-kpi-val" id="miniTotalProducts">—</strong>
@@ -323,11 +309,11 @@
               <strong class="mini-kpi-val" id="miniTotalSold">—</strong>
             </div>
             <div class="mini-kpi-card">
-              <span class="mini-kpi-label">Stok ready saat ini</span>
+              <span class="mini-kpi-label">Stok ready hari dipilih</span>
               <strong class="mini-kpi-val" id="miniTotalReady">—</strong>
             </div>
             <div class="mini-kpi-card">
-              <span class="mini-kpi-label">Rata-rata klaim garansi</span>
+              <span class="mini-kpi-label">Rasio klaim keseluruhan</span>
               <strong class="mini-kpi-val" id="miniAvgClaim">—</strong>
             </div>
           </section>
@@ -370,7 +356,7 @@
                 </table>
               </div>
               <div class="table-footnote">
-                Penjualan mengikuti rekap usaha. Stok ready mengikuti hari yang dipilih.
+                Penjualan memakai rekap usaha; produk di luar rekap memakai data harian. Stok ready mengikuti hari yang dipilih.
               </div>
             </article>
 

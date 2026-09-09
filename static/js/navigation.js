@@ -1,121 +1,62 @@
-/**
- * Navigation & Interactive Enhancements
- * Handles active section tracking, smooth scroll, local date formatting, and keyboard shortcuts.
- */
 (() => {
   'use strict';
+  const titles = { overview: 'Ringkasan usaha', tren: 'Tren keuangan', produk: 'Produk & stok' };
+  const main = document.getElementById('mainContent');
 
-  // Format and display current local date
-  function updateLocalDate() {
-    const dateEl = document.getElementById('localDate');
-    if (!dateEl) return;
-    const now = new Date();
-    const formatted = new Intl.DateTimeFormat('id-ID', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    }).format(now);
-    dateEl.textContent = formatted;
-  }
-
-  const VIEW_TITLES = {
-    overview: 'Ringkasan usaha',
-    tren: 'Tren keuangan',
-    produk: 'Produk & stok'
-  };
-
-  // Switch between SPA views: 'overview', 'tren', 'produk'
-  function switchView(viewName, pushState = true) {
-    const validViews = ['overview', 'tren', 'produk'];
-    const target = validViews.includes(viewName) ? viewName : 'overview';
-
-    // Show only the target view container
+  function switchView(name, pushState = true, focus = true) {
+    const target = Object.hasOwn(titles, name) ? name : 'overview';
     document.querySelectorAll('.spa-view').forEach(view => {
-      const isTarget = view.getAttribute('data-view') === target;
-      view.classList.toggle('active', isTarget);
+      const active = view.dataset.view === target;
+      view.classList.toggle('active', active);
+      view.hidden = !active;
     });
-
-    // Update sidebar navigation active indicator
     document.querySelectorAll('.side-nav .nav-link').forEach(link => {
-      const href = link.getAttribute('href') || '';
-      const matches = href === `#${target}` || link.getAttribute('data-target-view') === target;
-      link.classList.toggle('active', matches);
-      if (matches) link.setAttribute('aria-current', 'location');
+      const active = link.dataset.targetView === target;
+      link.classList.toggle('active', active);
+      if (active) link.setAttribute('aria-current', 'page');
       else link.removeAttribute('aria-current');
     });
-
-    // Update breadcrumb title
-    const breadcrumb = document.getElementById('breadcrumbCurrent');
-    if (breadcrumb && VIEW_TITLES[target]) {
-      breadcrumb.textContent = VIEW_TITLES[target];
-    }
-
-    // Update URL hash without jitter
-    if (pushState && window.location.hash !== `#${target}`) {
-      history.pushState(null, '', `#${target}`);
-    }
-
-    // Scroll workspace to top cleanly
+    document.getElementById('breadcrumbCurrent').textContent = titles[target];
+    document.title = `${titles[target]} · Finance Auditor`;
+    if (pushState && location.hash !== `#${target}`) history.pushState(null, '', `#${target}`);
     window.scrollTo({ top: 0, behavior: 'instant' });
-
-    // Notify listeners (charts, tables) to redraw/resize
+    if (focus) main?.focus({ preventScroll: true });
     window.dispatchEvent(new CustomEvent('app:viewchanged', { detail: { view: target } }));
   }
-
-  // Setup navigation link handlers and hash routing
-  function setupNavLinks() {
-    // Intercept clicks on any internal view navigation link
-    document.addEventListener('click', (e) => {
-      const link = e.target.closest('a[href^="#"], [data-target-view]');
-      if (!link) return;
-      const targetView = link.getAttribute('data-target-view') || (link.getAttribute('href') || '').replace('#', '');
-      if (['overview', 'tren', 'produk'].includes(targetView)) {
-        e.preventDefault();
-        switchView(targetView);
-      }
-    });
-
-    // Handle browser back/forward buttons
-    window.addEventListener('hashchange', () => {
-      const hash = (window.location.hash || '').replace('#', '');
-      if (['overview', 'tren', 'produk'].includes(hash)) {
-        switchView(hash, false);
-      }
-    });
-
-    // Initial view from URL hash if present
-    const initialHash = (window.location.hash || '').replace('#', '');
-    if (['overview', 'tren', 'produk'].includes(initialHash)) {
-      switchView(initialHash, false);
-    }
-  }
-
-  // Expose switchView globally for other scripts
   window.switchView = switchView;
 
-  // Global keyboard shortcuts
-  function setupShortcuts() {
-    window.addEventListener('keydown', (e) => {
-      // '/' or 'Ctrl+K' / 'Cmd+K' to focus product search input (if not in an input already)
-      if (
-        (e.key === '/' || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k')) &&
-        !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)
-      ) {
-        e.preventDefault();
-        const search = document.getElementById('productSearch');
-        if (search) {
-          search.focus();
-          search.select();
-        }
-      }
-    });
+  function updateDate() {
+    document.getElementById('localDate').textContent = new Intl.DateTimeFormat('id-ID', {
+      day: 'numeric', month: 'short', year: 'numeric'
+    }).format(new Date());
   }
 
-  // Initialize
-  document.addEventListener('DOMContentLoaded', () => {
-    updateLocalDate();
-    setupNavLinks();
-    setupShortcuts();
+  document.addEventListener('click', event => {
+    const link = event.target.closest('a[href^="#"], [data-target-view]');
+    if (!link || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    const name = link.dataset.targetView || link.getAttribute('href')?.slice(1);
+    if (Object.hasOwn(titles, name)) {
+      event.preventDefault();
+      switchView(name);
+    }
   });
+  window.addEventListener('popstate', () => switchView(location.hash.slice(1), false));
+  window.addEventListener('hashchange', () => {
+    if (location.hash === '#mainContent') return;
+    switchView(location.hash.slice(1), false);
+  });
+  document.addEventListener('keydown', event => {
+    const editing = event.target.closest('input, textarea, select, [contenteditable="true"], [role="dialog"]');
+    if (editing || event.altKey || document.querySelector('[role="dialog"][aria-hidden="false"]')) return;
+    if (event.key === '/' || ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k')) {
+      event.preventDefault();
+      switchView('produk');
+      const input = document.getElementById('productSearch');
+      input.focus();
+      input.select();
+    }
+  });
+  updateDate();
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) updateDate(); });
+  switchView(location.hash.slice(1), false, false);
 })();

@@ -1,38 +1,44 @@
-# DESIGN.md - AI Finance & Stock Auditor
+# Finance Auditor — UI
 
-Arah desain profesional, utilitarian, dan natural (mengikuti kaidah `antislop`, `antislop-ui`, dan `antislop-layoutmobile`).
+Dashboard untuk membaca penjualan, kas, dan persediaan sehari-hari. Tiga halaman yang sudah ada tetap dipakai: Ringkasan, Tren keuangan, dan Produk & stok.
 
----
+## Arah visual
 
-## 1. Identity & Mood
-* **Konsep:** *High-Density Financial & Inventory Workbench*.
-* **Karakter:** Tegas, presisi, cepat, mudah dibaca di bawah terik matahari atau ruangan redup. Bukan website pameran SaaS generik, melainkan alat kerja harian (daily ops tool).
-* **Prinsip Anti-Slop:**
-  * ❌ TIDAK ADA gradien ungu-biru neon (*no generic AI glow*).
-  * ❌ TIDAK ADA radial blur / background orbs mengambang.
-  * ❌ TIDAK ADA glassmorphism berlebihan di seluruh card.
-  * ❌ TIDAK ADA border-radius pil di semua elemen.
-  * ✅ Permukaan solid terstruktur dengan kontras tajam (WCAG AA).
-  * ✅ Aksen warna fungsional: Emerald untuk kas surplus/profit, Muted Amber untuk klaim garansi, Slate untuk struktur.
-  * ✅ Tipografi modular berbobot data (*tabular numbers, clear hierarchy*).
+- Sidebar hijau gelap memberi batas yang jelas antara navigasi dan data. Canvas putih hangat membuat tabel mudah dibaca.
+- Omzet mendapat satu permukaan hijau solid sebagai angka utama. Metrik lain memakai permukaan putih dengan pembatas tipis.
+- DM Sans dengan angka tabular; judul menggunakan bobot sedang. Label memakai huruf biasa agar mudah dipindai.
+- Kartu data tetap diam saat hover. Transisi singkat dipakai untuk perpindahan halaman, kontrol, dan dialog. Preferensi reduced motion mematikan animasi.
 
----
+## Warna
 
-## 2. Palette System (Restraint: 2 Cores + 2 Functional Accents)
-* **Canvas Neutral:** `#0e1117` (Deep Obsidian Grey)
-* **Surface Card:** `#161b22` (Charcoal Surface)
-* **Border Lines:** `#30363d` (Precise Structural Dividers)
-* **Text High:** `#f0f6fc` (Clean White)
-* **Text Muted:** `#8b949e` (Readable Mid-tone Grey)
-* **Functional Accent Positive (Surplus/Ready):** `#238636` / `#2ea043`
-* **Functional Accent Caution (Claim/Warranty):** `#d29922`
-* **Functional Accent Neutral Tech:** `#58a6ff` (Hanya untuk link interaksi & filter aktif)
+| Peran | Nilai |
+| --- | --- |
+| Canvas | `#f6f7f3` |
+| Permukaan | `#ffffff` |
+| Sidebar | `#192c23` |
+| Teks utama | `#202b23` |
+| Teks sekunder | `#526052` |
+| Teks pendukung | `#647160` |
+| Aksi utama | `#235c46` |
+| Grafik modal | `#849677` |
+| Grafik surplus | `#377455` |
+| Grafik defisit | `#b95c48` |
+| Klaim/perhatian | `#886326` |
 
----
+## Data dan interaksi
 
-## 3. Mobile Layout Strategy (`antislop-layoutmobile`)
-* Breakpoint natural pada `768px` dan `480px`.
-* Layout sidebar berubah menjadi compact top navigation / bottom quick bar di mobile.
-* Tap targets minimal 44x44px untuk kenyamanan jempol.
-* KPI cards beralih dari 4-kolom lebar menjadi 2x2 grid compact di tablet dan 2-kolom responsif di ponsel.
-* Tabel produk & performa dilengkapi horizontal containment terisolasi dengan scroll indicator jelas (zero full-page horizontal leak).
+- Ringkasan usaha adalah akumulasi; catatan harian dan stok mengikuti sheet yang dipilih.
+- Rincian produk mempertahankan perilaku data yang ada: rekap global ditambah produk harian yang belum ada di rekap. Tabel menjelaskan cakupan tersebut.
+- Grafik mempertahankan dua batang bertumpuk, modal dan surplus. Nilai negatif berada di bawah nol. Tooltip juga menyebut omzet agar nilai bersih tetap jelas.
+- Rentang 7/14/30/90 hari, zoom, geser periode, dan toggle seri berfungsi di kedua halaman grafik. Scroll biasa tetap menggulir halaman; Alt + scroll mengubah zoom.
+- Pencarian, filter, sortir, dan ekspor bekerja pada produk yang ditampilkan. Tombol ekspor dinonaktifkan jika hasil kosong.
+- Status sinkronisasi menunjukkan waktu respons terakhir yang berhasil. Saat gagal, data terakhir dan pesan kegagalan tampil di semua halaman.
+- Dialog PIN/editor mengelola fokus, Escape, dan pengembalian fokus. Sel gagal simpan memiliki pesan serta tombol coba lagi.
+
+## Responsif
+
+- Pada lebar 900 px ke bawah, sidebar berubah menjadi tiga tab navigasi di atas.
+- Pada lebar 700 px ke bawah, KPI menjadi dua kolom dan panel data satu kolom. Grafik tetap memiliki tinggi yang cukup untuk label.
+- Tabel lebar menggulir di dalam kontainernya; halaman tidak menyembunyikan overflow untuk menutupi masalah layout.
+- Kontrol utama pada perangkat kecil memiliki area sentuh minimal 44 px. Form memakai label nyata, status invalid, dan ukuran teks input 16 px.
+- Tata letak diverifikasi pada 320, 375, 768, 1024, dan 1440 px. Uji interaksi menggunakan server fixture lokal tanpa menjalankan bot atau menulis Google Sheets.

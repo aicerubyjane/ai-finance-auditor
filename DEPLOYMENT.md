@@ -30,7 +30,7 @@ Railway adalah platform hosting cloud modern yang paling mudah untuk Python & Do
 ### 3. Masukkan Environment Variables (Kunci Rahasia)
 1. Di halaman project Railway Anda, klik menu **"Variables"**.
 2. Tambahkan variable berikut:
-   * `TELEGRAM_BOT_TOKEN`: `8970416011:AAHbx1scyEEHcCCrnnuWi_5wqI-aXMnDjt4`
+   * `TELEGRAM_BOT_TOKEN`: `<token_bot_telegram>`
    * `TELEGRAM_ADMIN_ID`: `6413728861`
    * `SPREADSHEET_ID`: `197bjyWRktBJk5JKrYNj7GW3autB2n4as8xLRQW4Dqzc`
    * `ACTIVE_SHEET_NAME`: `Hari 47`

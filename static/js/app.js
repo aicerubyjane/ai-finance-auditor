@@ -50,6 +50,47 @@ function setText(id, value) {
   if (element && element.textContent !== String(value)) element.textContent = value;
 }
 
+function getRealtimeDateInfo() {
+  const now = new Date();
+  const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  const monthsShort = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+  const monthsFull = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+  
+  const dayName = days[now.getDay()];
+  const dayNum = now.getDate();
+  const monthShort = monthsShort[now.getMonth()];
+  const monthFull = monthsFull[now.getMonth()];
+  const year = now.getFullYear();
+  
+  return {
+    dayNum,
+    monthShort,
+    monthFull,
+    year,
+    full: `${dayName}, ${dayNum} ${monthShort} ${year}`,
+    short: `${dayNum} ${monthShort}`,
+    standard: `${dayNum} ${monthFull} ${year}`
+  };
+}
+
+function findSheetByDate(map, realDate) {
+  if (!map || typeof map !== 'object') return null;
+  const padDay = String(realDate.dayNum).padStart(2, '0');
+  const rawDay = String(realDate.dayNum);
+  const mShort = String(realDate.monthShort).toLowerCase();
+  
+  const target1 = `${padDay} ${mShort}`;
+  const target2 = `${rawDay} ${mShort}`;
+
+  for (const [sheetName, dateVal] of Object.entries(map)) {
+    const dLower = String(dateVal).toLowerCase();
+    if (dLower.includes(target1) || dLower.includes(target2)) {
+      return sheetName;
+    }
+  }
+  return null;
+}
+
 function setHidden(id, hidden) {
   const element = document.getElementById(id);
   if (element) element.hidden = hidden;
@@ -200,7 +241,47 @@ async function fetchDashboardData(sheetOverride = '', options = {}) {
 function updateUI(data) {
   const kpis = data.kpis || {};
   const daily = data.daily || {};
+  dashboardState.hariTanggalMap = kpis.hari_tanggal_map || {};
   currentSelectedSheet = data.active_sheet || currentSelectedSheet;
+
+  // Realtime date calculation and display
+  const realDate = getRealtimeDateInfo();
+  setText('brandLiveDateTextFull', realDate.full);
+  setText('brandLiveDateTextShort', realDate.short);
+  setText('localDate', realDate.full);
+
+  // Auto-sync current sheet with today's real-world date if available and not manually changed
+  if (!dashboardState.userChangedDay && !dashboardState.syncedWithToday) {
+    const todaySheet = findSheetByDate(dashboardState.hariTanggalMap, realDate);
+    if (todaySheet && currentSelectedSheet !== todaySheet) {
+      dashboardState.syncedWithToday = true;
+      currentSelectedSheet = todaySheet;
+      fetchDashboardData(todaySheet, { dayChange: true });
+      return;
+    }
+    dashboardState.syncedWithToday = true;
+  }
+
+  // Header day badge and tooltip
+  setText('brandDayBadge', currentSelectedSheet || '—');
+  const brandPill = document.getElementById('brandDatePill');
+  if (brandPill) {
+    const mappedDate = dashboardState.hariTanggalMap[currentSelectedSheet] || '';
+    brandPill.title = `Tanggal Realtime: ${realDate.full} · Sheet: ${currentSelectedSheet}${mappedDate ? ` (${mappedDate})` : ''} (Klik untuk sinkronkan)`;
+  }
+
+  // Current day date in Catatan Harian card
+  const sheetTanggal = daily.tanggal || (dashboardState.hariTanggalMap[currentSelectedSheet]) || '';
+  const dayDateEl = document.getElementById('currentDayDate');
+  if (dayDateEl) {
+    if (sheetTanggal) {
+      dayDateEl.textContent = sheetTanggal;
+      dayDateEl.style.display = 'inline-flex';
+    } else {
+      dayDateEl.style.display = 'none';
+    }
+  }
+
   const textValues = {
     kpiTotalOmzet: formatRupiah(kpis.total_omzet), kpiSurplusKas: formatRupiah(kpis.surplus_kas),
     kpiSoldBerbayar: numberFormatter.format(numeric(kpis.sold_berbayar)),
@@ -246,7 +327,8 @@ function updateUI(data) {
       sheets.forEach(sheet => {
         const option = document.createElement('option');
         option.value = sheet;
-        option.textContent = sheet;
+        const mappedDate = dashboardState.hariTanggalMap ? (dashboardState.hariTanggalMap[sheet] || '') : '';
+        option.textContent = mappedDate ? `${sheet} (${mappedDate})` : sheet;
         fragment.appendChild(option);
       });
       select.replaceChildren(fragment);
@@ -825,6 +907,7 @@ document.getElementById('refreshBtn')?.addEventListener('click', () => {
   document.getElementById(id)?.addEventListener('change', event => {
     if (event.target.value && event.target.value !== currentSelectedSheet) {
       triggerHaptic('light');
+      dashboardState.userChangedDay = true;
       fetchDashboardData(event.target.value, { dayChange: true });
     }
   });
@@ -971,6 +1054,12 @@ if (mobileSidebarEl) {
   updateHeaderScroll();
 }
 
+// Immediate initial date population
+const initRealDate = getRealtimeDateInfo();
+setText('brandLiveDateTextFull', initRealDate.full);
+setText('brandLiveDateTextShort', initRealDate.short);
+setText('localDate', initRealDate.full);
+
 // Mode Privasi (sensor nominal)
 const privacyBtn = document.getElementById('privacyToggleBtn');
 if (localStorage.getItem('privacy_mode') === 'true') {
@@ -980,6 +1069,18 @@ privacyBtn?.addEventListener('click', () => {
   triggerHaptic('light');
   const isNowPrivacy = document.body.classList.toggle('privacy-mode');
   localStorage.setItem('privacy_mode', isNowPrivacy ? 'true' : 'false');
+});
+
+// Click date pill to sync with today's sheet
+const datePill = document.getElementById('brandDatePill');
+datePill?.addEventListener('click', () => {
+  triggerHaptic('light');
+  const realDate = getRealtimeDateInfo();
+  const todaySheet = findSheetByDate(dashboardState.hariTanggalMap, realDate);
+  if (todaySheet && todaySheet !== currentSelectedSheet) {
+    dashboardState.userChangedDay = true;
+    fetchDashboardData(todaySheet, { dayChange: true });
+  }
 });
 
 // Pull to refresh on mobile

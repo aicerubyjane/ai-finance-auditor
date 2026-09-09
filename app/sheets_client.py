@@ -507,6 +507,13 @@ class GoogleSheetsClient:
 
             total_modal = total_omzet - surplus_kas
 
+            hari_tanggal_map = {}
+            for row in vals[16:]:
+                if len(row) >= 2 and row[0].strip().isdigit() and row[1].strip():
+                    h_num = int(row[0].strip())
+                    hari_tanggal_map[f"Hari {h_num:02d}"] = row[1].strip()
+                    hari_tanggal_map[f"Hari {h_num}"] = row[1].strip()
+
             result = {
                 "sold_berbayar": sold_berbayar,
                 "klaim_garansi": klaim_garansi,
@@ -518,7 +525,8 @@ class GoogleSheetsClient:
                 "sold_per_hari_aktif": sold_per_hari,
                 "hari_aktif": hari_aktif,
                 "rekap_produk": rekap_produk,
-                "trend_harian": trend_harian
+                "trend_harian": trend_harian,
+                "hari_tanggal_map": hari_tanggal_map
             }
             with self._lock:
                 self._kpis_cache = result
@@ -548,6 +556,19 @@ class GoogleSheetsClient:
 
             vals = ws.get_all_values()
             
+            # Ambil tanggal sheet dari Baris 3 (Row 3)
+            sheet_tanggal = ""
+            if len(vals) >= 3:
+                for c in vals[2]:
+                    c_str = str(c).strip()
+                    if "tanggal" in c_str.lower():
+                        parts = c_str.split(":", 1)
+                        sheet_tanggal = parts[1].strip() if len(parts) > 1 else c_str
+                        break
+                    elif c_str and any(m in c_str.lower() for m in ["jan", "feb", "mar", "apr", "mei", "may", "jun", "jul", "agu", "aug", "sep", "okt", "oct", "nov", "des", "dec"]):
+                        sheet_tanggal = c_str
+                        break
+
             # Cari baris RINGKASAN HARIAN
             summary_row_idx = None
             for idx, r in enumerate(vals):
@@ -604,6 +625,7 @@ class GoogleSheetsClient:
 
                 result = {
                     "sheet_name": target_sheet,
+                    "tanggal": sheet_tanggal,
                     "sold_berbayar": parse_int(sold_str),
                     "klaim_garansi": parse_int(klaim_str),
                     "akun_ready": parse_int(ready_str),
@@ -623,6 +645,7 @@ class GoogleSheetsClient:
 
             fallback_res = {
                 "sheet_name": target_sheet,
+                "tanggal": sheet_tanggal,
                 "sold_berbayar": 0,
                 "klaim_garansi": 0,
                 "akun_ready": 0,

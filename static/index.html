@@ -11,11 +11,11 @@
   <title>Ringkasan Usaha · Finance Auditor</title><meta name="description" content="Pantau penjualan, kas, dan persediaan akun dalam satu ruang kerja.">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=perf-turbo-v1">
+  <link rel="stylesheet" href="/css/style.css?v=sync-date-v1">
   <script src="/vendor/chart.umd.js" defer></script>
-  <script src="/js/app.js?v=perf-turbo-v1" defer></script>
-  <script src="/js/editor.js?v=perf-turbo-v1" defer></script>
-  <script src="/js/navigation.js?v=perf-turbo-v1" defer></script>
+  <script src="/js/app.js?v=sync-date-v1" defer></script>
+  <script src="/js/editor.js?v=sync-date-v1" defer></script>
+  <script src="/js/navigation.js?v=sync-date-v1" defer></script>
 </head>
 <body>
   <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display:none">
@@ -43,12 +43,26 @@
   <div class="app-layout">
     <aside class="sidebar">
       <div class="brand">
-        <a class="brand-avatar-link" href="https://www.instagram.com/jennierubyjane/" target="_blank" rel="noopener noreferrer" aria-label="Instagram @jennierubyjane">
-          <img class="brand-avatar" src="/assets/kiriatasicon.png" alt="jennierubyjane" width="46" height="46">
-        </a>
-        <div class="brand-text-block">
-          <a class="brand-title" href="#overview" aria-label="Finance Auditor, ringkasan">Finance<span>Auditor</span></a>
-          <a class="brand-handle" href="https://www.instagram.com/jennierubyjane/" target="_blank" rel="noopener noreferrer">jennierubyjane <span class="brand-bini">- my bini gwe</span></a>
+        <div class="brand-left">
+          <a class="brand-avatar-link" href="https://www.instagram.com/jennierubyjane/" target="_blank" rel="noopener noreferrer" aria-label="Instagram @jennierubyjane">
+            <img class="brand-avatar" src="/assets/kiriatasicon.png" alt="jennierubyjane" width="46" height="46">
+          </a>
+          <div class="brand-text-block">
+            <a class="brand-title" href="#overview" aria-label="Finance Auditor, ringkasan">Finance<span>Auditor</span></a>
+            <a class="brand-handle" href="https://www.instagram.com/jennierubyjane/" target="_blank" rel="noopener noreferrer">jennierubyjane <span class="brand-bini">- my bini gwe</span></a>
+          </div>
+        </div>
+        <div class="brand-top-tools">
+          <div class="brand-date-pill" id="brandDatePill" title="Sinkronisasi tanggal realtime & data sheet">
+            <span class="date-live-dot" aria-hidden="true"></span>
+            <span class="date-text date-full" id="brandLiveDateTextFull">10 Sep 2026</span>
+            <span class="date-text date-short" id="brandLiveDateTextShort">10 Sep</span>
+            <span class="date-badge-pill" id="brandDayBadge">Hari 52</span>
+          </div>
+          <button id="privacyToggleBtn" class="btn btn-quiet privacy-btn" title="Mode Privasi (sensor / tampilkan nominal)" aria-label="Toggle mode privasi">
+            <svg class="icon icon-eye"><use href="#i-eye"/></svg>
+            <svg class="icon icon-eye-off" style="display:none"><use href="#i-eye-off"/></svg>
+          </button>
         </div>
       </div>
       <div class="workspace-label">Ruang kerja</div>
@@ -68,7 +82,7 @@
       </div>
     </aside>
     <div class="workspace-main">
-      <header class="app-top-header"><div class="breadcrumb"><span id="breadcrumbRoot">Workspace</span><span class="breadcrumb-slash">/</span><strong id="breadcrumbCurrent">Ringkasan usaha</strong></div><div class="header-right-actions"><span class="header-date" id="localDate"></span><button id="privacyToggleBtn" class="btn btn-quiet privacy-btn" title="Mode Privasi (sensor / tampilkan nominal)" aria-label="Toggle mode privasi"><svg class="icon icon-eye"><use href="#i-eye"/></svg><svg class="icon icon-eye-off" style="display:none"><use href="#i-eye-off"/></svg></button><div id="syncStatusBadge" class="sync-live-badge loading" role="status">
+      <header class="app-top-header"><div class="breadcrumb"><span id="breadcrumbRoot">Workspace</span><span class="breadcrumb-slash">/</span><strong id="breadcrumbCurrent">Ringkasan usaha</strong></div><div class="header-right-actions"><span class="header-date" id="localDate"></span><div id="syncStatusBadge" class="sync-live-badge loading" role="status">
               <span class="sync-spinner" aria-hidden="true"></span>
               <span id="syncStatusText">Memuat data…</span>
             </div><button id="refreshBtn" class="btn btn-quiet" title="Ambil data terbaru" aria-label="Sinkronkan data"><svg class="icon"><use href="#i-refresh"/></svg><span>Sinkronkan</span></button></div></header>
@@ -182,7 +196,7 @@
                 <select id="activeDaySelect" aria-label="Pilih hari aktif"><option value="">Memuat…</option></select>
               </div>
               <div class="daily-surplus">
-                <div class="surplus-label">Surplus kas<span id="currentDayBadge">—</span></div>
+                <div class="surplus-label">Surplus kas<span id="currentDayBadge">—</span><span id="currentDayDate" class="day-date-tag">—</span></div>
                 <strong id="daySurplus">—</strong>
                 <div class="surplus-caption">
                   <span>Margin kas</span><span id="dayMargin">—</span>

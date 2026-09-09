@@ -152,10 +152,124 @@ button,a,input,select  {
 
 .brand  {
   display: flex;
+  flex-direction: column;
   gap: 12px;
-  align-items: center;
   padding: 0 4px;
   min-height: 52px;
+}
+
+.brand-left  {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+}
+
+.brand-top-tools  {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.brand-date-pill  {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #d6e2d8;
+  letter-spacing: 0.1px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.brand-date-pill .date-full  {
+  display: inline;
+}
+
+.brand-date-pill .date-short  {
+  display: none;
+}
+
+.date-live-dot  {
+  width: 6.5px;
+  height: 6.5px;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 8px rgba(52, 211, 153, 0.7);
+  flex-shrink: 0;
+  animation: livePulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes livePulse  {
+  0%, 100%  { opacity: 1; transform: scale(1); }
+  50%  { opacity: 0.4; transform: scale(0.8); }
+}
+
+.date-badge-pill  {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  background: rgba(52, 211, 153, 0.16);
+  color: #86efac;
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  white-space: nowrap;
+}
+
+.brand-top-tools .privacy-btn  {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #e4eadf;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 160ms ease, transform 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.brand-top-tools .privacy-btn:hover  {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.28);
+  transform: scale(1.05);
+}
+
+.brand-top-tools .privacy-btn:active  {
+  transform: scale(0.95);
+}
+
+.brand-top-tools .privacy-btn svg  {
+  width: 17px;
+  height: 17px;
+}
+
+.day-date-tag  {
+  font-size: 11px;
+  font-weight: 500;
+  color: #426053;
+  background: rgba(25, 44, 35, 0.08);
+  border: 1px solid rgba(25, 44, 35, 0.12);
+  padding: 1.5px 8px;
+  border-radius: 6px;
+  margin-left: 6px;
+  display: inline-flex;
+  align-items: center;
+  letter-spacing: 0.1px;
 }
 
 .brand-avatar-link  {
@@ -1884,32 +1998,67 @@ select  {
   }
   .brand  {
     min-height: 48px;
-    width: fit-content;
-    gap: 13px;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
     padding: 0;
   }
+  .brand-left  {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
   .brand-avatar  {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
   }
   .brand-title,
   .brand-name  {
-    font-size: 19px;
+    font-size: 17px;
     font-weight: 700;
   }
   .brand-title span,
   .brand-name span  {
     display: inline;
     margin-left: 4px;
-    font-size: 19px;
+    font-size: 17px;
     font-weight: 400;
     color: #e4efe5;
   }
   .brand-handle  {
-    font-size: 12px;
+    font-size: 11px;
     color: #a2bca5;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .brand-top-tools  {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 7px;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 9px;
+  }
+  .brand-top-tools .privacy-btn  {
+    width: 34px;
+    height: 34px;
+  }
+  .brand-date-pill  {
+    font-size: 11px;
+    gap: 5px;
+  }
+  .date-badge-pill  {
+    font-size: 10px;
+    padding: 1px 5px;
   }
   .workspace-label,.sidebar-bottom  {
     display: none;
@@ -2501,6 +2650,24 @@ select  {
 body.privacy-mode .privacy-btn  {
   background: rgba(35, 92, 70, 0.15) !important;
   color: var(--accent-brand) !important;
+}
+
+body.privacy-mode .brand-top-tools .privacy-btn  {
+  background: rgba(52, 211, 153, 0.22) !important;
+  color: #86efac !important;
+  border-color: rgba(52, 211, 153, 0.4) !important;
+}
+
+@media (max-width: 440px)  {
+  .brand-date-pill .date-full  {
+    display: none !important;
+  }
+  .brand-date-pill .date-short  {
+    display: inline !important;
+  }
+  .brand-handle  {
+    max-width: 130px;
+  }
 }
 
 body.privacy-mode .privacy-btn .icon-eye  {

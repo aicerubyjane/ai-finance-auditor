@@ -166,30 +166,42 @@ button,a,input,select  {
 }
 
 .brand-top-tools  {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
-  padding: 6px 10px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 9px;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  flex-shrink: 0;
 }
 
 .brand-date-pill  {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 11.5px;
+  gap: 5px;
+  font-size: 11px;
   font-weight: 500;
-  color: #d6e2d8;
+  color: #a4bea8;
   letter-spacing: 0.1px;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.brand-date-pill:hover  {
+  color: #ffffff;
+}
+
+.date-sep  {
+  opacity: 0.45;
+  font-size: 10px;
+  margin: 0 1px;
+  color: #a4bea8;
 }
 
 .brand-date-pill .date-full  {
@@ -201,11 +213,11 @@ button,a,input,select  {
 }
 
 .date-live-dot  {
-  width: 6.5px;
-  height: 6.5px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background: #34d399;
-  box-shadow: 0 0 8px rgba(52, 211, 153, 0.7);
+  box-shadow: 0 0 6px rgba(52, 211, 153, 0.8);
   flex-shrink: 0;
   animation: livePulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
@@ -216,46 +228,44 @@ button,a,input,select  {
 }
 
 .date-badge-pill  {
-  font-size: 10px;
-  font-weight: 600;
-  padding: 1px 6px;
-  border-radius: 9999px;
-  background: rgba(52, 211, 153, 0.16);
-  color: #86efac;
-  border: 1px solid rgba(52, 211, 153, 0.3);
+  font-size: 11px;
+  font-weight: 500;
+  color: #bde4c3;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
   white-space: nowrap;
 }
 
 .brand-top-tools .privacy-btn  {
-  width: 32px;
-  height: 32px;
+  width: 22px;
+  height: 22px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: #e4eadf;
+  padding: 0 !important;
+  border-radius: 4px;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #a4bea8;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background-color 160ms ease, transform 160ms ease, color 160ms ease, border-color 160ms ease;
+  transition: color 150ms ease, transform 150ms ease;
 }
 
 .brand-top-tools .privacy-btn:hover  {
-  background: rgba(255, 255, 255, 0.18);
   color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.28);
-  transform: scale(1.05);
+  transform: scale(1.1);
 }
 
 .brand-top-tools .privacy-btn:active  {
-  transform: scale(0.95);
+  transform: scale(0.9);
 }
 
 .brand-top-tools .privacy-btn svg  {
-  width: 17px;
-  height: 17px;
+  width: 14.5px;
+  height: 14.5px;
 }
 
 .day-date-tag  {
@@ -333,10 +343,14 @@ button,a,input,select  {
   letter-spacing: .05px;
   color: #a2bca5;
   text-decoration: none;
-  width: fit-content;
+  width: max-content;
+  max-width: none !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
   transition: color 150ms ease, opacity 150ms ease;
   line-height: 1.2;
-  white-space: nowrap;
 }
 
 .brand-handle:hover  {
@@ -348,6 +362,8 @@ button,a,input,select  {
   color: #c4dec7;
   font-weight: 400;
   opacity: 0.9;
+  display: inline !important;
+  white-space: nowrap !important;
 }
 
 .brand-handle:active  {
@@ -1997,68 +2013,88 @@ select  {
     box-shadow: 0 10px 30px -4px rgba(10, 24, 15, 0.35) !important;
   }
   .brand  {
-    min-height: 48px;
+    min-height: 44px;
     width: 100%;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     padding: 0;
   }
   .brand-left  {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
+    flex: 0 0 auto !important;
     min-width: 0;
-    flex: 1 1 auto;
+    white-space: nowrap;
   }
   .brand-avatar  {
-    width: 40px;
-    height: 40px;
-    border-radius: 11px;
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
   }
   .brand-title,
   .brand-name  {
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 700;
   }
   .brand-title span,
   .brand-name span  {
     display: inline;
-    margin-left: 4px;
-    font-size: 17px;
+    margin-left: 3px;
+    font-size: 16px;
     font-weight: 400;
     color: #e4efe5;
   }
   .brand-handle  {
     font-size: 11px;
     color: #a2bca5;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    max-width: none !important;
+    display: inline-block;
+  }
+  .brand-bini  {
+    display: inline !important;
+    white-space: nowrap !important;
   }
   .brand-top-tools  {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 4px 7px;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
     flex-shrink: 0;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 9px;
   }
   .brand-top-tools .privacy-btn  {
-    width: 34px;
-    height: 34px;
+    width: 22px;
+    height: 22px;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  .brand-top-tools .privacy-btn svg  {
+    width: 14.5px;
+    height: 14.5px;
   }
   .brand-date-pill  {
-    font-size: 11px;
-    gap: 5px;
+    font-size: 10.5px;
+    gap: 4px;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
   }
   .date-badge-pill  {
-    font-size: 10px;
-    padding: 1px 5px;
+    font-size: 10.5px;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
   }
   .workspace-label,.sidebar-bottom  {
     display: none;
@@ -2653,9 +2689,10 @@ body.privacy-mode .privacy-btn  {
 }
 
 body.privacy-mode .brand-top-tools .privacy-btn  {
-  background: rgba(52, 211, 153, 0.22) !important;
-  color: #86efac !important;
-  border-color: rgba(52, 211, 153, 0.4) !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #34d399 !important;
 }
 
 @media (max-width: 440px)  {
@@ -2664,9 +2701,6 @@ body.privacy-mode .brand-top-tools .privacy-btn  {
   }
   .brand-date-pill .date-short  {
     display: inline !important;
-  }
-  .brand-handle  {
-    max-width: 130px;
   }
 }
 

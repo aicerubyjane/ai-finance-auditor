@@ -10,7 +10,7 @@
       view.classList.toggle('active', active);
       view.hidden = !active;
     });
-    document.querySelectorAll('.side-nav .nav-link').forEach(link => {
+    document.querySelectorAll('.side-nav .nav-link, .mobile-nav-link').forEach(link => {
       const active = link.dataset.targetView === target;
       link.classList.toggle('active', active);
       if (active) link.setAttribute('aria-current', 'page');

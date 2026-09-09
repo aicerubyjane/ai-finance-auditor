@@ -62,9 +62,6 @@ function setSyncStatus(status, message) {
     badge.classList.add(status);
   }
   setText('syncStatusText', message);
-  setText('sidebarConnectionText', { loading: 'Memuat', success: 'Terhubung', error: 'Terputus' }[status]);
-  const connection = document.getElementById('sidebarConnection');
-  if (connection) connection.dataset.state = status;
 }
 
 function setDaySelects(value = currentSelectedSheet, disabled = dashboardState.changingDay) {
@@ -189,7 +186,7 @@ function updateUI(data) {
     dayReseller: numberFormatter.format(numeric(daily.dari_reseller))
   };
   Object.entries(textValues).forEach(([id, value]) => setText(id, value));
-  ['daySurplus', 'kpiSurplusKas', 'sidebarSurplusVal'].forEach(id => {
+  ['daySurplus', 'kpiSurplusKas'].forEach(id => {
     document.getElementById(id)?.classList.toggle('is-negative', numeric(id === 'daySurplus' ? daily.surplus_kas : kpis.surplus_kas) < 0);
   });
   const sheets = Array.isArray(data.available_sheets) ? data.available_sheets : [];
@@ -233,12 +230,6 @@ function updateUI(data) {
   setText('miniTotalSold', `${numberFormatter.format(totalSoldAll)} akun`);
   setText('miniTotalReady', `${numberFormatter.format(totalReadyAll)} stok`);
   setText('miniAvgClaim', `${avgClaimRate}%`);
-
-  // Sidebar executive live pulse
-  setText('sidebarOmzetVal', formatRupiah(kpis.total_omzet));
-  setText('sidebarSurplusVal', formatRupiah(kpis.surplus_kas));
-  setText('sidebarSoldVal', numberFormatter.format(numeric(kpis.sold_berbayar)));
-  setText('sidebarReadyVal', numberFormatter.format(numeric(daily.akun_ready)));
 
   renderTrendChart();
   renderProductChart();
@@ -686,6 +677,8 @@ function renderProductTable() {
   if (exportButton) exportButton.disabled = !products.length;
   const exportButtonProduk = document.getElementById('exportCsvBtnProduk');
   if (exportButtonProduk) exportButtonProduk.disabled = !products.length;
+  const mobileExport = document.getElementById('mobileExportCsvBtn');
+  if (mobileExport) mobileExport.disabled = !products.length;
   document.querySelectorAll('[data-sort]').forEach(button => {
     const active = button.dataset.sort === dashboardState.sort;
     button.closest('th')?.setAttribute('aria-sort', active ? (dashboardState.direction === 'asc' ? 'ascending' : 'descending') : 'none');
@@ -854,11 +847,12 @@ document.querySelectorAll('[data-sort]').forEach(button => {
 // CSV and Input Data buttons
 document.getElementById('exportCsvBtn')?.addEventListener('click', exportProductCsv);
 document.getElementById('exportCsvBtnProduk')?.addEventListener('click', exportProductCsv);
+document.getElementById('mobileExportCsvBtn')?.addEventListener('click', exportProductCsv);
 document.getElementById('openInputDataBtnProduk')?.addEventListener('click', () => {
   const primaryBtn = document.getElementById('openInputDataBtn');
   if (primaryBtn) primaryBtn.click();
 });
-document.getElementById('sidebarQuickInputBtn')?.addEventListener('click', () => {
+document.getElementById('mobileQuickInputBtn')?.addEventListener('click', () => {
   const primaryBtn = document.getElementById('openInputDataBtn');
   if (primaryBtn) primaryBtn.click();
 });

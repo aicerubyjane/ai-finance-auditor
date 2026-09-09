@@ -41,42 +41,6 @@
         <a class="nav-link" href="#tren" data-target-view="tren"><svg class="icon"><use href="#i-chart"/></svg><span>Tren keuangan</span></a>
         <a class="nav-link" href="#produk" data-target-view="produk"><svg class="icon"><use href="#i-box"/></svg><span>Produk &amp; stok</span></a>
       </nav>
-<div class="sidebar-center-panel">
-        <div class="sidebar-section-header">
-          <span>Ringkasan sistem</span>
-          <span class="sidebar-live-pill" id="sidebarConnection" data-state="loading"><span class="live-dot" aria-hidden="true"></span><span id="sidebarConnectionText">Memuat</span></span>
-        </div>
-        <div class="sidebar-kpi-compact">
-          <div class="sidebar-kpi-item">
-            <span class="sidebar-kpi-sub">Total omzet tercatat</span>
-            <strong class="sidebar-kpi-val" id="sidebarOmzetVal">—</strong>
-          </div>
-          <div class="sidebar-kpi-item">
-            <span class="sidebar-kpi-sub">Surplus kas bersih</span>
-            <strong class="sidebar-kpi-val surplus-val" id="sidebarSurplusVal">—</strong>
-          </div>
-          <div class="sidebar-kpi-split">
-            <div>
-              <small>Akun terjual</small>
-              <b id="sidebarSoldVal">—</b>
-            </div>
-            <div>
-              <small>Stok ready</small>
-              <b id="sidebarReadyVal">—</b>
-            </div>
-          </div>
-        </div>
-
-        <div class="sidebar-section-header" style="margin-top:12px;">
-          <span>Pintasan</span>
-        </div>
-        <div class="sidebar-actions-compact">
-          <button id="sidebarQuickInputBtn" type="button" class="sidebar-action-pill">
-            <svg class="icon"><use href="#i-plus"/></svg>
-            <span>Input transaksi</span>
-          </button>
-        </div>
-      </div>
 
       <div class="sidebar-bottom">
         <div class="sheet-source"><svg class="icon"><use href="#i-sheet"/></svg><div><strong>Google Sheets</strong><span>Sumber pencatatan</span></div></div>
@@ -386,6 +350,29 @@
         </footer>
       </main>
     </div>
+    <nav class="mobile-bottom-nav" aria-label="Navigasi mobile">
+      <a class="mobile-nav-link active" href="#overview" data-target-view="overview" aria-current="page">
+        <svg class="icon"><use href="#i-grid"/></svg>
+        <span>Ringkasan</span>
+      </a>
+      <a class="mobile-nav-link" href="#tren" data-target-view="tren">
+        <svg class="icon"><use href="#i-chart"/></svg>
+        <span>Tren</span>
+      </a>
+      <button type="button" class="mobile-nav-action-btn" id="mobileQuickInputBtn" title="Input data transaksi" aria-label="Input transaksi">
+        <span class="action-btn-pill">
+          <svg class="icon"><use href="#i-plus"/></svg>
+        </span>
+      </button>
+      <a class="mobile-nav-link" href="#produk" data-target-view="produk">
+        <svg class="icon"><use href="#i-box"/></svg>
+        <span>Produk</span>
+      </a>
+      <button type="button" class="mobile-nav-link mobile-nav-btn" id="mobileExportCsvBtn" title="Unduh laporan CSV" aria-label="Ekspor CSV">
+        <svg class="icon"><use href="#i-download"/></svg>
+        <span>Ekspor</span>
+      </button>
+    </nav>
   </div>
   <div id="pinModal" class="custom-modal-overlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="pinTitle" aria-describedby="pinDescription" tabindex="-1"><div class="custom-modal-card pin-card"><div class="pin-icon-wrap"><svg class="icon"><use href="#i-lock"/></svg></div><h2 id="pinTitle">Buka pencatatan</h2><p id="pinDescription" class="modal-desc">Masukkan PIN untuk mengakses dan mengubah data Google Sheets.</p><div class="pin-input-wrap"><label for="pinInputField">PIN akses · 6 digit</label><input type="password" id="pinInputField" maxlength="6" inputmode="numeric" pattern="[0-9]{6}" placeholder="••••••" autocomplete="off" aria-describedby="pinErrorMessage"><div id="pinErrorMessage" class="pin-error-text" role="alert" style="display:none"></div></div><div class="modal-btn-row"><button id="cancelPinBtn" type="button" class="btn btn-secondary">Batal</button><button id="submitPinBtn" type="button" class="btn btn-primary">Buka sheet</button></div></div></div>
   <div id="sheetEditorModal" class="custom-modal-overlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="sheetEditorTitle" tabindex="-1"><div class="custom-modal-card full-sheet-card">

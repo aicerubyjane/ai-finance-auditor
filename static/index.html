@@ -11,11 +11,11 @@
   <title>Ringkasan Usaha · Finance Auditor</title><meta name="description" content="Pantau penjualan, kas, dan persediaan akun dalam satu ruang kerja.">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=v3.1-clean">
+  <link rel="stylesheet" href="/css/style.css?v=v3.2-monthly">
   <script src="/vendor/chart.umd.js" defer></script>
-  <script src="/js/app.js?v=v3.1-clean" defer></script>
-  <script src="/js/editor.js?v=v3.1-clean" defer></script>
-  <script src="/js/navigation.js?v=v3.1-clean" defer></script>
+  <script src="/js/app.js?v=v3.2-monthly" defer></script>
+  <script src="/js/editor.js?v=v3.2-monthly" defer></script>
+  <script src="/js/navigation.js?v=v3.2-monthly" defer></script>
 </head>
 <body>
   <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display:none">
@@ -148,11 +148,15 @@
                 </div>
                 <div class="chart-header-controls">
 
-                  <div class="range-control" role="group" aria-label="Rentang grafik">
-                    <button data-range="7" aria-pressed="false">7 hari</button>
-                    <button data-range="14" aria-pressed="false">14 hari</button>
-                    <button data-range="30" aria-pressed="true" class="active">30 hari</button>
-                    <button data-range="90" aria-pressed="false">90 hari</button>
+                  <div class="range-control" role="group" aria-label="Rentang dan filter bulan grafik">
+                    <div class="range-presets" role="group" aria-label="Rentang hari">
+                      <button data-range="7" aria-pressed="false">7 hari</button>
+                      <button data-range="14" aria-pressed="false">14 hari</button>
+                      <button data-range="30" aria-pressed="true" class="active">30 hari</button>
+                      <button data-range="90" aria-pressed="false">90 hari</button>
+                    </div>
+                    <span class="range-divider" aria-hidden="true"></span>
+                    <div class="range-months" id="rangeMonthsOverview" role="group" aria-label="Filter bulan"></div>
                   </div>
                 </div>
               </div>
@@ -268,11 +272,15 @@
                   <button id="btnPanRightTren" class="btn btn-zoom" title="Geser ke hari berikutnya"><svg class="icon"><use href="#i-chevron-right"/></svg></button>
                   <button id="btnResetZoomTren" class="btn btn-zoom btn-zoom-reset" title="Kembalikan zoom"><svg class="icon"><use href="#i-refresh"/></svg></button>
                 </div>
-                <div class="range-control" role="group" aria-label="Rentang grafik">
-                  <button data-range="7" aria-pressed="false">7 hari</button>
-                  <button data-range="14" aria-pressed="false">14 hari</button>
-                  <button data-range="30" aria-pressed="true" class="active">30 hari</button>
-                  <button data-range="90" aria-pressed="false">90 hari</button>
+                <div class="range-control" role="group" aria-label="Rentang dan filter bulan grafik tren">
+                  <div class="range-presets" role="group" aria-label="Rentang hari">
+                    <button data-range="7" aria-pressed="false">7 hari</button>
+                    <button data-range="14" aria-pressed="false">14 hari</button>
+                    <button data-range="30" aria-pressed="true" class="active">30 hari</button>
+                    <button data-range="90" aria-pressed="false">90 hari</button>
+                  </div>
+                  <span class="range-divider" aria-hidden="true"></span>
+                  <div class="range-months" id="rangeMonthsTren" role="group" aria-label="Filter bulan"></div>
                 </div>
               </div>
             </div>

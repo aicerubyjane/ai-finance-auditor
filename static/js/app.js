@@ -8,7 +8,7 @@ const dashboardState = {
   changingDay: false, loading: false, range: 30, trend: [], products: [],
   search: '', filter: 'all', sort: 'sold', direction: 'desc',
   visibleSeries: [true, true, true], trendSignature: '', productSignature: '', tableSignature: '',
-  zoomRange: 30, zoomOffset: 0
+  zoomRange: 30, zoomOffset: 0, selectedMonth: null
 };
 const rupiahFormatter = new Intl.NumberFormat('id-ID', {
   style: 'currency', currency: 'IDR', maximumFractionDigits: 0
@@ -405,6 +405,7 @@ function updateUI(data) {
     claimRate: numeric(stats.sold) > 0 ? numeric(stats.klaim) / numeric(stats.sold) * 100 : 0
   }));
   dashboardState.trend = Array.isArray(kpis.trend_harian) ? kpis.trend_harian : [];
+  renderMonthButtons();
 
   // Mini summary metrics for dedicated produk view
   const totalProductsCount = dashboardState.products.length;
@@ -458,9 +459,131 @@ function getSortedTrendRows() {
   return rows.filter(row => row.day <= latestDay);
 }
 
+const MONTH_CONFIG = [
+  { key: 'sep', name: 'September', short: 'Sep', patterns: ['sep', 'september'] },
+  { key: 'aug', name: 'Agustus', short: 'Agu', patterns: ['aug', 'agu', 'agustus', 'august'] },
+  { key: 'jul', name: 'Juli', short: 'Jul', patterns: ['jul', 'juli', 'july'] },
+  { key: 'oct', name: 'Oktober', short: 'Okt', patterns: ['oct', 'okt', 'oktober', 'october'] },
+  { key: 'nov', name: 'November', short: 'Nov', patterns: ['nov', 'november'] },
+  { key: 'dec', name: 'Desember', short: 'Des', patterns: ['dec', 'des', 'desember', 'december'] },
+  { key: 'jun', name: 'Juni', short: 'Jun', patterns: ['jun', 'juni', 'june'] },
+  { key: 'may', name: 'Mei', short: 'Mei', patterns: ['may', 'mei'] },
+  { key: 'apr', name: 'April', short: 'Apr', patterns: ['apr', 'april'] },
+  { key: 'mar', name: 'Maret', short: 'Mar', patterns: ['mar', 'maret', 'march'] },
+  { key: 'feb', name: 'Februari', short: 'Feb', patterns: ['feb', 'februari', 'february'] },
+  { key: 'jan', name: 'Januari', short: 'Jan', patterns: ['jan', 'januari', 'january'] }
+];
+
+function getMonthKeyFromRow(row) {
+  const dayStr = String(row.hari || '');
+  const tgl = String(row.tanggal || (dashboardState.hariTanggalMap && dashboardState.hariTanggalMap[dayStr]) || '').toLowerCase();
+  
+  for (const item of MONTH_CONFIG) {
+    if (item.patterns.some(p => tgl.includes(p))) {
+      return item.key;
+    }
+  }
+
+  // Fallback berdasarkan rentang hari di sheet jika kolom tanggal belum terisi
+  const dayNum = numeric(row.day || dayStr.match(/\d+/)?.[0]);
+  if (dayNum >= 43 && dayNum <= 72) return 'sep';
+  if (dayNum >= 12 && dayNum <= 42) return 'aug';
+  if (dayNum >= 1 && dayNum <= 11) return 'jul';
+  return '';
+}
+
+function getAvailableMonths() {
+  const allRows = getSortedTrendRows();
+  const foundMap = new Map();
+  
+  allRows.forEach(row => {
+    const key = getMonthKeyFromRow(row);
+    if (!key) return;
+    if (!foundMap.has(key)) {
+      const cfg = MONTH_CONFIG.find(c => c.key === key) || { key, name: key, short: key };
+      foundMap.set(key, { ...cfg, count: 0, rows: [] });
+    }
+    const item = foundMap.get(key);
+    item.count += 1;
+    item.rows.push(row);
+  });
+
+  const order = ['sep', 'aug', 'jul', 'oct', 'nov', 'dec', 'jun', 'may', 'apr', 'mar', 'feb', 'jan'];
+  return Array.from(foundMap.values()).sort((a, b) => {
+    const idxA = order.indexOf(a.key);
+    const idxB = order.indexOf(b.key);
+    return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
+  });
+}
+
+function renderMonthButtons() {
+  const months = getAvailableMonths();
+  const containers = ['rangeMonthsOverview', 'rangeMonthsTren'].map(id => document.getElementById(id)).filter(Boolean);
+  
+  containers.forEach(container => {
+    container.innerHTML = '';
+    months.forEach(m => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.dataset.month = m.key;
+      btn.title = `Lihat transaksi bulan ${m.name}`;
+      btn.setAttribute('aria-pressed', String(dashboardState.selectedMonth === m.key));
+      if (dashboardState.selectedMonth === m.key) {
+        btn.classList.add('active');
+      }
+      btn.innerHTML = `<span class="month-label-full">${m.name}</span><span class="month-label-short">${m.short}</span>`;
+      btn.addEventListener('click', () => {
+        selectMonth(m.key);
+      });
+      container.appendChild(btn);
+    });
+  });
+}
+
+function selectMonth(monthKey) {
+  triggerHaptic('light');
+  dashboardState.selectedMonth = monthKey;
+  dashboardState.zoomOffset = 0;
+  
+  const allRows = getSortedTrendRows();
+  const monthRows = allRows.filter(r => getMonthKeyFromRow(r) === monthKey);
+  dashboardState.zoomRange = Math.max(3, monthRows.length || 30);
+  
+  syncRangeButtons();
+  updateZoomBadges();
+  renderTrendChart(true);
+}
+
+function selectRange(range) {
+  triggerHaptic('light');
+  dashboardState.selectedMonth = null;
+  dashboardState.range = range;
+  dashboardState.zoomRange = range;
+  dashboardState.zoomOffset = 0;
+  
+  syncRangeButtons();
+  updateZoomBadges();
+  renderTrendChart(true);
+}
+
 function trendWindow() {
   const allRows = getSortedTrendRows();
   if (!allRows.length) return [];
+
+  // Jika sedang melihat per-bulan spesifik
+  if (dashboardState.selectedMonth) {
+    const monthKey = dashboardState.selectedMonth;
+    const monthRows = allRows.filter(r => getMonthKeyFromRow(r) === monthKey);
+    if (monthRows.length > 0) {
+      const windowSize = Math.max(3, Math.min(monthRows.length, dashboardState.zoomRange || monthRows.length));
+      const maxOffset = Math.max(0, monthRows.length - windowSize);
+      const offset = Math.max(0, Math.min(maxOffset, dashboardState.zoomOffset || 0));
+      const endIndex = monthRows.length - offset;
+      const startIndex = Math.max(0, endIndex - windowSize);
+      return monthRows.slice(startIndex, endIndex);
+    }
+  }
+
   const windowSize = Math.max(3, Math.min(allRows.length, dashboardState.zoomRange || 30));
   const maxOffset = Math.max(0, allRows.length - windowSize);
   const offset = Math.max(0, Math.min(maxOffset, dashboardState.zoomOffset || 0));
@@ -470,10 +593,19 @@ function trendWindow() {
 }
 
 function syncRangeButtons() {
+  const isMonth = Boolean(dashboardState.selectedMonth);
   const activeRange = dashboardState.zoomRange || dashboardState.range || 30;
+
   document.querySelectorAll('[data-range]').forEach(button => {
     const r = Number(button.dataset.range);
-    const active = r === activeRange;
+    const active = !isMonth && (r === activeRange);
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+  });
+
+  document.querySelectorAll('[data-month]').forEach(button => {
+    const m = button.dataset.month;
+    const active = isMonth && (m === dashboardState.selectedMonth);
     button.classList.toggle('active', active);
     button.setAttribute('aria-pressed', String(active));
   });
@@ -481,10 +613,9 @@ function syncRangeButtons() {
 
 function zoomIn() {
   const current = dashboardState.zoomRange || 30;
-  const steps = [7, 14, 30, 90];
+  const steps = [5, 7, 14, 21, 30, 60, 90];
   const smaller = steps.slice().reverse().find(lvl => lvl < current);
-  dashboardState.zoomRange = smaller || 7;
-  dashboardState.range = dashboardState.zoomRange;
+  dashboardState.zoomRange = smaller || 5;
   dashboardState.zoomOffset = Math.max(0, dashboardState.zoomOffset || 0);
   updateZoomBadges();
   syncRangeButtons();
@@ -493,10 +624,9 @@ function zoomIn() {
 
 function zoomOut() {
   const current = dashboardState.zoomRange || 30;
-  const steps = [7, 14, 30, 90];
+  const steps = [5, 7, 14, 21, 30, 60, 90];
   const larger = steps.find(lvl => lvl > current);
   dashboardState.zoomRange = larger || 90;
-  dashboardState.range = dashboardState.zoomRange;
   updateZoomBadges();
   syncRangeButtons();
   renderTrendChart(true);
@@ -504,24 +634,38 @@ function zoomOut() {
 
 function panLeft() {
   const allRows = getSortedTrendRows();
-  const windowSize = Math.max(3, Math.min(allRows.length, dashboardState.zoomRange || 30));
-  const maxOffset = Math.max(0, allRows.length - windowSize);
+  const currentTotal = dashboardState.selectedMonth 
+    ? allRows.filter(r => getMonthKeyFromRow(r) === dashboardState.selectedMonth).length 
+    : allRows.length;
+  const windowSize = Math.max(3, Math.min(currentTotal, dashboardState.zoomRange || 30));
+  const maxOffset = Math.max(0, currentTotal - windowSize);
   dashboardState.zoomOffset = Math.min(maxOffset, (dashboardState.zoomOffset || 0) + Math.max(1, Math.floor(windowSize / 3)));
   updateZoomBadges();
   renderTrendChart(true);
 }
 
 function panRight() {
-  const windowSize = Math.max(3, dashboardState.zoomRange || 30);
+  const allRows = getSortedTrendRows();
+  const currentTotal = dashboardState.selectedMonth 
+    ? allRows.filter(r => getMonthKeyFromRow(r) === dashboardState.selectedMonth).length 
+    : allRows.length;
+  const windowSize = Math.max(3, Math.min(currentTotal, dashboardState.zoomRange || 30));
   dashboardState.zoomOffset = Math.max(0, (dashboardState.zoomOffset || 0) - Math.max(1, Math.floor(windowSize / 3)));
   updateZoomBadges();
   renderTrendChart(true);
 }
 
 function resetZoom() {
-  dashboardState.zoomRange = 30;
-  dashboardState.range = 30;
-  dashboardState.zoomOffset = 0;
+  if (dashboardState.selectedMonth) {
+    const allRows = getSortedTrendRows();
+    const monthRows = allRows.filter(r => getMonthKeyFromRow(r) === dashboardState.selectedMonth);
+    dashboardState.zoomRange = Math.max(3, monthRows.length || 30);
+    dashboardState.zoomOffset = 0;
+  } else {
+    dashboardState.zoomRange = 30;
+    dashboardState.range = 30;
+    dashboardState.zoomOffset = 0;
+  }
   updateZoomBadges();
   syncRangeButtons();
   renderTrendChart(true);
@@ -530,11 +674,15 @@ function resetZoom() {
 function updateZoomBadges() {
   const rows = trendWindow();
   const allRows = getSortedTrendRows();
-  const maxOffset = Math.max(0, allRows.length - rows.length);
+  const currentTotalRows = dashboardState.selectedMonth 
+    ? allRows.filter(r => getMonthKeyFromRow(r) === dashboardState.selectedMonth).length
+    : allRows.length;
+
+  const maxOffset = Math.max(0, currentTotalRows - rows.length);
   dashboardState.zoomOffset = Math.min(maxOffset, dashboardState.zoomOffset || 0);
   const disabled = {
-    btnZoomIn: !rows.length || dashboardState.zoomRange <= 7,
-    btnZoomOut: !rows.length || dashboardState.zoomRange >= 90,
+    btnZoomIn: !rows.length || (rows.length <= 4),
+    btnZoomOut: !rows.length || (rows.length >= currentTotalRows),
     btnPanLeft: !rows.length || dashboardState.zoomOffset >= maxOffset,
     btnPanRight: !rows.length || dashboardState.zoomOffset <= 0
   };
@@ -551,7 +699,12 @@ function updateZoomBadges() {
   }
   const startDay = rows[0].day;
   const endDay = rows[rows.length - 1].day;
-  const text = `Hari ${startDay}–${endDay} · ${rows.length} hari tercatat`;
+  let text = `Hari ${startDay}–${endDay} · ${rows.length} hari tercatat`;
+  if (dashboardState.selectedMonth) {
+    const mCfg = MONTH_CONFIG.find(c => c.key === dashboardState.selectedMonth);
+    const mName = mCfg ? mCfg.name : dashboardState.selectedMonth;
+    text = `${mName} · Hari ${startDay}–${endDay} · ${rows.length} hari`;
+  }
   setText('zoomWindowBadge', text);
   setText('zoomWindowBadgeTren', text);
 }
@@ -666,8 +819,20 @@ function renderTrendChart(animate = false) {
   const rows = trendWindow();
   const totalOmzet = rows.reduce((sum, row) => sum + numeric(row.omzet), 0);
   const totalSurplus = rows.reduce((sum, row) => sum + numeric(row.surplus), 0);
-  const periodText = rows.length ? `Total omzet · Hari ${rows[0].day}–${rows[rows.length - 1].day}` : 'Belum ada transaksi tercatat';
-  const surplusPeriodText = rows.length ? `Total surplus · Hari ${rows[0].day}–${rows[rows.length - 1].day}` : 'Total surplus kas';
+  let periodText = 'Belum ada transaksi tercatat';
+  let surplusPeriodText = 'Total surplus kas';
+
+  if (rows.length) {
+    if (dashboardState.selectedMonth) {
+      const mCfg = MONTH_CONFIG.find(c => c.key === dashboardState.selectedMonth);
+      const mName = mCfg ? mCfg.name : dashboardState.selectedMonth;
+      periodText = `Total omzet · ${mName} (Hari ${rows[0].day}–${rows[rows.length - 1].day})`;
+      surplusPeriodText = `Total surplus · ${mName} (Hari ${rows[0].day}–${rows[rows.length - 1].day})`;
+    } else {
+      periodText = `Total omzet · Hari ${rows[0].day}–${rows[rows.length - 1].day}`;
+      surplusPeriodText = `Total surplus · Hari ${rows[0].day}–${rows[rows.length - 1].day}`;
+    }
+  }
 
   ['trendTotal', 'trendTotalTren'].forEach(id => setText(id, formatRupiah(totalOmzet)));
   ['trendPeriod', 'trendPeriodTren'].forEach(id => setText(id, periodText));
@@ -990,13 +1155,9 @@ document.getElementById('refreshBtn')?.addEventListener('click', () => {
 // Range buttons
 document.querySelectorAll('[data-range]').forEach(button => {
   button.addEventListener('click', () => {
-    triggerHaptic('light');
     const range = Number(button.dataset.range);
     if (![7, 14, 30, 90].includes(range)) return;
-    dashboardState.range = range;
-    dashboardState.zoomRange = range;
-    dashboardState.zoomOffset = 0;
-    renderTrendChart(true);
+    selectRange(range);
   });
 });
 

@@ -461,12 +461,14 @@ class GoogleSheetsClient:
             for row in vals[16:]:
                 if len(row) >= 8 and row[0].strip() and row[0].isdigit():
                     hari_label = f"Hari {row[0].strip()}"
+                    tgl_str = row[1].strip() if len(row) > 1 else ""
                     sold = parse_int(row[2])
                     omzet = parse_currency(row[5])
                     modal = parse_currency(row[6])
                     surplus = parse_currency(row[7])
                     trend_harian.append({
                         "hari": hari_label,
+                        "tanggal": tgl_str,
                         "sold": sold,
                         "omzet": omzet,
                         "modal": modal,

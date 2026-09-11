@@ -870,21 +870,47 @@ button,a,input,select  {
 }
 
 .range-control  {
-  display: flex;
+  display: inline-flex;
+  align-items: center;
   background: #f3f5ef;
   border-radius: 6px;
   padding: 3px;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.range-control::-webkit-scrollbar  {
+  display: none;
+}
+
+.range-presets,
+.range-months  {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.range-divider  {
+  width: 1px;
+  height: 18px;
+  background: #d8ded2;
+  margin: 0 4px;
+  flex-shrink: 0;
 }
 
 .range-control button  {
   min-height: 34px;
-  min-width: 44px;
-  padding: 6px 11px;
+  min-width: 40px;
+  padding: 6px 10px;
   background: transparent;
   border: 1px solid transparent;
   border-radius: 4px;
   font-size: 11px;
   color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
 }
 
 .range-control button.active  {
@@ -892,11 +918,30 @@ button,a,input,select  {
   color: var(--accent-brand);
   border-color: var(--border-subtle);
   font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.range-control button:hover  {
+.range-control button:hover:not(.active)  {
   color: var(--accent-brand);
   background: #e9eddf;
+}
+
+.month-label-short  {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .month-label-full  {
+    display: none;
+  }
+  .month-label-short  {
+    display: inline;
+  }
+  .range-control button  {
+    padding: 6px 8px;
+    font-size: 10.5px;
+    min-width: 34px;
+  }
 }
 
 .zoom-btn-group  {

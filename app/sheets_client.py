@@ -476,7 +476,8 @@ class GoogleSheetsClient:
             rekap_produk = {
                 "ChatGPT": {"sold": 0, "klaim": 0, "ready": 0, "omzet": 0},
                 "Claude": {"sold": 0, "klaim": 0, "ready": 0, "omzet": 0},
-                "Gemini": {"sold": 0, "klaim": 0, "ready": 0, "omzet": 0}
+                "Gemini": {"sold": 0, "klaim": 0, "ready": 0, "omzet": 0},
+                "Apple Music": {"sold": 0, "klaim": 0, "ready": 0, "omzet": 0}
             }
 
             ws_jenis = self.get_worksheet("Rekap Jenis Akun")
@@ -504,6 +505,17 @@ class GoogleSheetsClient:
                             rekap_produk["Claude"]["omzet"] = parse_currency(val)
                         elif "Omzet Gemini" in label:
                             rekap_produk["Gemini"]["omzet"] = parse_currency(val)
+
+            # Pastikan total akun terjual per produk cocok 100% dengan sold_berbayar di Ringkasan
+            chatgpt_sold = rekap_produk["ChatGPT"]["sold"]
+            claude_sold = rekap_produk["Claude"]["sold"]
+            gemini_sold = rekap_produk["Gemini"]["sold"]
+            current_sum = chatgpt_sold + claude_sold + gemini_sold
+            if sold_berbayar > current_sum:
+                rekap_produk["Apple Music"]["sold"] = sold_berbayar - current_sum
+                sum_omzet = rekap_produk["ChatGPT"]["omzet"] + rekap_produk["Claude"]["omzet"] + rekap_produk["Gemini"]["omzet"]
+                if total_omzet > sum_omzet:
+                    rekap_produk["Apple Music"]["omzet"] = total_omzet - sum_omzet
 
             total_modal = total_omzet - surplus_kas
 
@@ -604,24 +616,45 @@ class GoogleSheetsClient:
                 threads_str = find_val_after_label(r_metrics3, "Dari Threads")
                 reseller_str = find_val_after_label(r_metrics3, "Dari Reseller")
 
-                # Agregasi produk dinamis dari baris 16-47 (misal Apple Music, Canva, ChatGPT, dll)
+                # Agregasi produk dinamis & hitung sumber penjualan langsung dari baris 16-47 (anti bug spasi / formula macet)
                 daily_produk = {}
+                daily_sold_breakdown = {}
+                threads_from_rows = 0
+                reseller_from_rows = 0
+
                 for row in vals[15:min(47, len(vals))]:
-                    if len(row) > 11 and row[11].strip():
-                        p_name = row[11].strip()
-                        pos = row[5].strip().lower() if len(row) > 5 else ""
-                        hrg = parse_currency(row[6]) if len(row) > 6 else 0.0
-                        
+                    p_name = row[11].strip() if len(row) > 11 else ""
+                    pos = row[5].strip().lower() if len(row) > 5 else ""
+                    transaksi = row[7].strip().lower() if len(row) > 7 else ""
+                    sumber_raw = row[9].strip().lower() if len(row) > 9 else ""
+                    hrg = parse_currency(row[6]) if len(row) > 6 else 0.0
+
+                    is_sold = ("sold" in pos) or ("penjualan" in transaksi and "klaim" not in pos and "stanby" not in pos)
+
+                    if is_sold:
+                        if "threads" in sumber_raw:
+                            threads_from_rows += 1
+                        elif "reseller" in sumber_raw:
+                            reseller_from_rows += 1
+
+                        if p_name:
+                            daily_sold_breakdown[p_name] = daily_sold_breakdown.get(p_name, 0) + 1
+
+                    if p_name:
                         if p_name not in daily_produk:
                             daily_produk[p_name] = {"sold": 0, "klaim": 0, "ready": 0, "omzet": 0}
-                        
-                        if "sold" in pos:
+
+                        if is_sold:
                             daily_produk[p_name]["sold"] += 1
                             daily_produk[p_name]["omzet"] += hrg
                         elif "stanby" in pos or "ready" in pos:
                             daily_produk[p_name]["ready"] += 1
                         elif "klaim" in pos:
                             daily_produk[p_name]["klaim"] += 1
+
+                # Sumber penjualan: ambil nilai maksimal antara formula ringkasan harian dan hitungan langsung baris transaksi (anti-bug spasi/formula tidak terupdate)
+                threads_val = max(parse_int(threads_str), threads_from_rows)
+                reseller_val = max(parse_int(reseller_str), reseller_from_rows)
 
                 result = {
                     "sheet_name": target_sheet,
@@ -633,9 +666,10 @@ class GoogleSheetsClient:
                     "total_modal": parse_currency(modal_str),
                     "surplus_kas": parse_currency(surplus_str),
                     "margin_kas": margin_str if margin_str else "0%",
-                    "dari_threads": parse_int(threads_str),
-                    "dari_reseller": parse_int(reseller_str),
-                    "daily_produk": daily_produk
+                    "dari_threads": threads_val,
+                    "dari_reseller": reseller_val,
+                    "daily_produk": daily_produk,
+                    "daily_sold_breakdown": daily_sold_breakdown
                 }
                 with self._lock:
                     self._daily_cache[target_sheet] = result

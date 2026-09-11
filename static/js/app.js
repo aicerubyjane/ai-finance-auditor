@@ -15,7 +15,7 @@ const rupiahFormatter = new Intl.NumberFormat('id-ID', {
 });
 const numberFormatter = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 });
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-const productPalette = ['#235c46', '#7a947e', '#b98c51', '#b8c5b5', '#525e54', '#d2ba94'];
+const productPalette = ['#235c46', '#7a947e', '#b98c51', '#e0607e', '#525e54', '#d2ba94'];
 const metricIds = [
   'kpiTotalOmzet', 'kpiSurplusKas', 'kpiSoldBerbayar', 'kpiAvgSold', 'kpiKlaimGaransi',
   'kpiRasioKlaim', 'kpiTotalModal', 'kpiHariAktif', 'dayOmzet', 'dayModal', 'daySurplus',
@@ -303,6 +303,28 @@ function updateUI(data) {
     document.getElementById(id)?.classList.toggle('is-negative', numeric(id === 'daySurplus' ? daily.surplus_kas : kpis.surplus_kas) < 0);
   });
 
+  // Rincian jenis akun terjual pada hari dipilih
+  const soldBox = document.getElementById('dailySoldAccountsBox');
+  const soldTags = document.getElementById('dailySoldTags');
+  if (soldBox && soldTags) {
+    const breakdown = daily.daily_sold_breakdown || {};
+    const entries = Object.entries(breakdown).filter(([_, qty]) => numeric(qty) > 0);
+    if (entries.length > 0) {
+      soldTags.innerHTML = entries.map(([name, qty]) => {
+        return `<span class="sold-type-tag"><span class="sold-qty">${qty}</span> ${name}</span>`;
+      }).join('');
+      soldBox.hidden = false;
+    } else {
+      const soldCount = numeric(daily.sold_berbayar);
+      if (soldCount > 0) {
+        soldTags.innerHTML = `<span class="sold-type-tag"><span class="sold-qty">${soldCount}</span> akun terjual</span>`;
+        soldBox.hidden = false;
+      } else {
+        soldBox.hidden = true;
+      }
+    }
+  }
+
   // Margin laba bersih badge
   const totalOmzetVal = numeric(kpis.total_omzet);
   const surplusKasVal = numeric(kpis.surplus_kas);
@@ -336,12 +358,36 @@ function updateUI(data) {
     }
     select.value = currentSelectedSheet;
   });
+
   const products = new Map(Object.entries(kpis.rekap_produk || {}).map(([name, stats]) => [name, { ...stats }]));
+  
+  // Pastikan produk utama (ChatGPT, Gemini, Claude, Apple Music) selalu stay
+  ['ChatGPT', 'Gemini', 'Claude', 'Apple Music'].forEach(name => {
+    if (!products.has(name)) {
+      products.set(name, { sold: 0, klaim: 0, ready: 0, omzet: 0 });
+    }
+  });
+
   for (const [name, stats] of Object.entries(daily.daily_produk || {})) {
     const existing = products.get(name);
-    if (!existing || (!numeric(existing.sold) && !numeric(existing.ready))) products.set(name, { ...stats });
-    else existing.ready = stats.ready;
+    if (!existing) {
+      products.set(name, { ...stats });
+    } else {
+      existing.ready = stats.ready;
+      if (!numeric(existing.sold) && numeric(stats.sold)) existing.sold = stats.sold;
+      if (!numeric(existing.klaim) && numeric(stats.klaim)) existing.klaim = stats.klaim;
+      if (!numeric(existing.omzet) && numeric(stats.omzet)) existing.omzet = stats.omzet;
+    }
   }
+
+  // Sinkronkan akumulasi akun terjual agar sama persis dengan total di ringkasan (sold_berbayar)
+  const currentTotalSold = Array.from(products.values()).reduce((sum, p) => sum + numeric(p.sold), 0);
+  const targetSold = numeric(kpis.sold_berbayar);
+  if (targetSold > currentTotalSold && products.has('Apple Music')) {
+    const apple = products.get('Apple Music');
+    apple.sold = numeric(apple.sold) + (targetSold - currentTotalSold);
+  }
+
   dashboardState.products = Array.from(products, ([product, stats]) => ({
     product, sold: numeric(stats.sold), klaim: numeric(stats.klaim), ready: numeric(stats.ready), omzet: numeric(stats.omzet),
     claimRate: numeric(stats.sold) > 0 ? numeric(stats.klaim) / numeric(stats.sold) * 100 : 0
@@ -607,10 +653,26 @@ function buildTrendChartConfig(rows, animate) {
 function renderTrendChart(animate = false) {
   const rows = trendWindow();
   const totalOmzet = rows.reduce((sum, row) => sum + numeric(row.omzet), 0);
+  const totalSurplus = rows.reduce((sum, row) => sum + numeric(row.surplus), 0);
   const periodText = rows.length ? `Total omzet · Hari ${rows[0].day}–${rows[rows.length - 1].day}` : 'Belum ada transaksi tercatat';
+  const surplusPeriodText = rows.length ? `Total surplus · Hari ${rows[0].day}–${rows[rows.length - 1].day}` : 'Total surplus kas';
 
   ['trendTotal', 'trendTotalTren'].forEach(id => setText(id, formatRupiah(totalOmzet)));
   ['trendPeriod', 'trendPeriodTren'].forEach(id => setText(id, periodText));
+
+  ['trendSurplus', 'trendSurplusTren'].forEach(id => {
+    setText(id, formatRupiah(totalSurplus));
+    const el = document.getElementById(id);
+    if (el) {
+      if (totalSurplus < 0) {
+        el.classList.add('is-negative');
+      } else {
+        el.classList.remove('is-negative');
+      }
+    }
+  });
+  ['trendSurplusPeriod', 'trendSurplusPeriodTren'].forEach(id => setText(id, surplusPeriodText));
+
   ['trendEmpty', 'trendEmptyTren'].forEach(id => {
     setText(id, 'Belum ada transaksi untuk ditampilkan. Grafik akan terisi dari Google Sheets.');
     setHidden(id, rows.length > 0);

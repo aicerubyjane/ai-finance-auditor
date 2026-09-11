@@ -11,11 +11,11 @@
   <title>Ringkasan Usaha · Finance Auditor</title><meta name="description" content="Pantau penjualan, kas, dan persediaan akun dalam satu ruang kerja.">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=clean-header-v2">
+  <link rel="stylesheet" href="/css/style.css?v=v3-features">
   <script src="/vendor/chart.umd.js" defer></script>
-  <script src="/js/app.js?v=clean-header-v2" defer></script>
-  <script src="/js/editor.js?v=clean-header-v2" defer></script>
-  <script src="/js/navigation.js?v=clean-header-v2" defer></script>
+  <script src="/js/app.js?v=v3-features" defer></script>
+  <script src="/js/editor.js?v=v3-features" defer></script>
+  <script src="/js/navigation.js?v=v3-features" defer></script>
 </head>
 <body>
   <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display:none">
@@ -157,9 +157,15 @@
                 </div>
               </div>
               <div class="chart-meta">
-                <div>
-                  <span class="chart-total" id="trendTotal">—</span>
-                  <span class="chart-period" id="trendPeriod">Omzet dalam periode terpilih</span>
+                <div class="chart-totals-group">
+                  <div class="chart-stat-block">
+                    <span class="chart-total" id="trendTotal">—</span>
+                    <span class="chart-period" id="trendPeriod">Omzet dalam periode terpilih</span>
+                  </div>
+                  <div class="chart-stat-block chart-surplus-block">
+                    <span class="chart-total chart-surplus-val" id="trendSurplus">—</span>
+                    <span class="chart-period" id="trendSurplusPeriod">Total surplus kas</span>
+                  </div>
                 </div>
                 <div class="chart-series" role="group" aria-label="Seri grafik">
                   <button data-series="0" aria-pressed="true"><span class="series-dot series-modal"></span>Modal</button>
@@ -211,6 +217,10 @@
                 <span class="pill-badge pill-ready" id="chipReady">— Ready</span>
                 <span class="pill-badge pill-sold" id="chipSold">— Terjual</span>
                 <span class="pill-badge pill-claim" id="chipClaim">— Klaim</span>
+              </div>
+              <div class="daily-sold-accounts-box" id="dailySoldAccountsBox" hidden>
+                <span class="daily-sold-label">Akun terjual:</span>
+                <div class="daily-sold-tags" id="dailySoldTags"></div>
               </div>
               <div class="daily-channel-chips">
                 <span>Sumber penjualan</span>
@@ -267,9 +277,15 @@
               </div>
             </div>
             <div class="chart-meta">
-              <div>
-                <span class="chart-total" id="trendTotalTren">—</span>
-                <span class="chart-period" id="trendPeriodTren">Omzet dalam periode terpilih</span>
+              <div class="chart-totals-group">
+                <div class="chart-stat-block">
+                  <span class="chart-total" id="trendTotalTren">—</span>
+                  <span class="chart-period" id="trendPeriodTren">Omzet dalam periode terpilih</span>
+                </div>
+                <div class="chart-stat-block chart-surplus-block">
+                  <span class="chart-total chart-surplus-val" id="trendSurplusTren">—</span>
+                  <span class="chart-period" id="trendSurplusPeriodTren">Total surplus kas</span>
+                </div>
               </div>
               <div class="chart-series" role="group" aria-label="Seri grafik">
                 <button data-series="0" aria-pressed="true"><span class="series-dot series-modal"></span>Modal</button>

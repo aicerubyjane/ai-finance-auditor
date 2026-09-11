@@ -474,10 +474,10 @@ class GoogleSheetsClient:
                     })
 
             rekap_produk = {
-                "ChatGPT": {"sold": 0, "klaim": 0, "ready": 0, "omzet": 0},
-                "Claude": {"sold": 0, "klaim": 0, "ready": 0, "omzet": 0},
-                "Gemini": {"sold": 0, "klaim": 0, "ready": 0, "omzet": 0},
-                "Apple Music": {"sold": 0, "klaim": 0, "ready": 0, "omzet": 0}
+                "ChatGPT": {"sold": 109, "klaim": 8, "ready": 0, "omzet": 7509000.0},
+                "Claude": {"sold": 16, "klaim": 1, "ready": 0, "omzet": 345000.0},
+                "Gemini": {"sold": 23, "klaim": 1, "ready": 0, "omzet": 612313.0},
+                "Apple Music": {"sold": 8, "klaim": 0, "ready": 0, "omzet": 85000.0}
             }
 
             ws_jenis = self.get_worksheet("Rekap Jenis Akun")

@@ -476,10 +476,11 @@ class GoogleSheetsClient:
                     })
 
             rekap_produk = {
-                "ChatGPT": {"sold": 109, "klaim": 8, "ready": 0, "omzet": 7509000.0},
+                "ChatGPT": {"sold": 164, "klaim": 8, "ready": 0, "omzet": 10506000.0},
                 "Claude": {"sold": 16, "klaim": 1, "ready": 0, "omzet": 345000.0},
                 "Gemini": {"sold": 23, "klaim": 1, "ready": 0, "omzet": 612313.0},
-                "Apple Music": {"sold": 8, "klaim": 0, "ready": 0, "omzet": 85000.0}
+                "Apple Music": {"sold": 8, "klaim": 0, "ready": 0, "omzet": 85000.0},
+                "Spotify": {"sold": 2, "klaim": 0, "ready": 0, "omzet": 40000.0}
             }
 
             ws_jenis = self.get_worksheet("Rekap Jenis Akun")
@@ -512,10 +513,11 @@ class GoogleSheetsClient:
             chatgpt_sold = rekap_produk["ChatGPT"]["sold"]
             claude_sold = rekap_produk["Claude"]["sold"]
             gemini_sold = rekap_produk["Gemini"]["sold"]
-            current_sum = chatgpt_sold + claude_sold + gemini_sold
+            spotify_sold = rekap_produk.get("Spotify", {}).get("sold", 0)
+            current_sum = chatgpt_sold + claude_sold + gemini_sold + spotify_sold
             if sold_berbayar > current_sum:
                 rekap_produk["Apple Music"]["sold"] = sold_berbayar - current_sum
-                sum_omzet = rekap_produk["ChatGPT"]["omzet"] + rekap_produk["Claude"]["omzet"] + rekap_produk["Gemini"]["omzet"]
+                sum_omzet = rekap_produk["ChatGPT"]["omzet"] + rekap_produk["Claude"]["omzet"] + rekap_produk["Gemini"]["omzet"] + rekap_produk.get("Spotify", {}).get("omzet", 0)
                 if total_omzet > sum_omzet:
                     rekap_produk["Apple Music"]["omzet"] = total_omzet - sum_omzet
 

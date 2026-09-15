@@ -25,6 +25,13 @@ def get_product_keyboard(prefix: str = "prod") -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton("✨ Gemini", callback_data=f"{prefix}_Gemini"),
+            InlineKeyboardButton("🎵 Apple Music", callback_data=f"{prefix}_Apple Music"),
+        ],
+        [
+            InlineKeyboardButton("🎧 Spotify", callback_data=f"{prefix}_Spotify"),
+            InlineKeyboardButton("🎨 Canva", callback_data=f"{prefix}_Canva"),
+        ],
+        [
             InlineKeyboardButton("❌ Batal", callback_data="cancel_action"),
         ]
     ]

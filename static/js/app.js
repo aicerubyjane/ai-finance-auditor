@@ -361,12 +361,13 @@ function updateUI(data) {
 
   const products = new Map(Object.entries(kpis.rekap_produk || {}).map(([name, stats]) => [name, { ...stats }]));
   
-  // Pastikan produk utama (ChatGPT, Gemini, Claude, Apple Music) selalu stay dengan data valid
+  // Pastikan produk utama (ChatGPT, Gemini, Claude, Apple Music, Spotify) selalu stay dengan data valid
   const defaultBaseline = {
-    'ChatGPT': { sold: 109, klaim: 8, ready: 0, omzet: 7509000 },
+    'ChatGPT': { sold: 164, klaim: 8, ready: 0, omzet: 10506000 },
     'Gemini': { sold: 23, klaim: 1, ready: 0, omzet: 612313 },
     'Claude': { sold: 16, klaim: 1, ready: 0, omzet: 345000 },
-    'Apple Music': { sold: 8, klaim: 0, ready: 0, omzet: 85000 }
+    'Apple Music': { sold: 8, klaim: 0, ready: 0, omzet: 85000 },
+    'Spotify': { sold: 2, klaim: 0, ready: 0, omzet: 40000 }
   };
   Object.entries(defaultBaseline).forEach(([name, base]) => {
     const existing = products.get(name);
@@ -437,6 +438,9 @@ function getProductLogo(productName) {
   }
   if (norm.includes('apple') || norm.includes('music')) {
     return { src: '/assets/apple%20music.jpg', alt: 'Apple Music' };
+  }
+  if (norm.includes('spotify')) {
+    return { src: '/assets/spotifylogo.svg', alt: 'Spotify' };
   }
   return null;
 }

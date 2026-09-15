@@ -25,10 +25,29 @@
   }
   window.switchView = switchView;
 
+  function updateGreeting() {
+    const elem = document.getElementById('greetingText');
+    if (!elem) return;
+    const hour = new Date().getHours();
+    let salam = 'Selamat pagi';
+    if (hour >= 11 && hour < 15) {
+      salam = 'Selamat siang';
+    } else if (hour >= 15 && hour < 18) {
+      salam = 'Selamat sore';
+    } else if (hour >= 18 || hour < 4) {
+      salam = 'Selamat malam';
+    }
+    elem.textContent = `${salam} bos aicerubyjane`;
+  }
+
   function updateDate() {
-    document.getElementById('localDate').textContent = new Intl.DateTimeFormat('id-ID', {
-      day: 'numeric', month: 'short', year: 'numeric'
-    }).format(new Date());
+    const dateElem = document.getElementById('localDate');
+    if (dateElem) {
+      dateElem.textContent = new Intl.DateTimeFormat('id-ID', {
+        day: 'numeric', month: 'short', year: 'numeric'
+      }).format(new Date());
+    }
+    updateGreeting();
   }
 
   document.addEventListener('click', event => {
@@ -58,6 +77,8 @@
     }
   });
   updateDate();
+  window.updateGreeting = updateGreeting;
+  setInterval(updateGreeting, 60000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) updateDate(); });
   switchView(location.hash.slice(1), false, false);
 })();

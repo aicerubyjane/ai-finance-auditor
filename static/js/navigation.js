@@ -37,7 +37,7 @@
     } else if (hour >= 18 || hour < 4) {
       salam = 'Selamat malam';
     }
-    elem.textContent = `${salam} bos, aicerubyjane`;
+    elem.textContent = `${salam}, bos aicerubyjane`;
   }
 
   function updateDate() {

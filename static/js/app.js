@@ -363,10 +363,10 @@ function updateUI(data) {
   
   // Pastikan produk utama (ChatGPT, Gemini, Claude, Apple Music, Spotify) selalu stay dengan data valid
   const defaultBaseline = {
-    'ChatGPT': { sold: 164, klaim: 8, ready: 0, omzet: 10506000 },
-    'Gemini': { sold: 23, klaim: 1, ready: 0, omzet: 612313 },
+    'ChatGPT': { sold: 189, klaim: 8, ready: 0, omzet: 11988000 },
+    'Gemini': { sold: 26, klaim: 1, ready: 0, omzet: 636313 },
     'Claude': { sold: 16, klaim: 1, ready: 0, omzet: 345000 },
-    'Apple Music': { sold: 8, klaim: 0, ready: 0, omzet: 85000 },
+    'Apple Music': { sold: 6, klaim: 0, ready: 0, omzet: 50000 },
     'Spotify': { sold: 2, klaim: 0, ready: 0, omzet: 40000 }
   };
   Object.entries(defaultBaseline).forEach(([name, base]) => {

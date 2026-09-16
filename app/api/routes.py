@@ -132,6 +132,7 @@ async def add_row_data(payload: dict):
     transaksi = payload.get("jenis_transaksi", "Penjualan")
     paket = payload.get("paket", "Garansi")
     sumber = payload.get("sumber", "Threads")
+    reseller = payload.get("reseller", "")
     keterangan = payload.get("keterangan", "")
     jenis_akun = payload.get("jenis_akun", "ChatGPT")
 
@@ -147,6 +148,7 @@ async def add_row_data(payload: dict):
         jenis_akun=jenis_akun,
         keterangan=keterangan,
         posisi=posisi,
+        reseller=reseller,
         sheet_name=sheet_name
     )
     if ok:

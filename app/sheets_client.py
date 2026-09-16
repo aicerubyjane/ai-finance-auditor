@@ -137,32 +137,22 @@ class GoogleSheetsClient:
         if settings.ACTIVE_SHEET_NAME:
             return normalize_sheet_name(settings.ACTIVE_SHEET_NAME)
 
-        names = self.list_sheet_names()
-        day_sheets = []
-        for n in names:
-            norm = normalize_sheet_name(n)
-            if norm.lower().startswith("hari "):
-                parts = norm[5:].strip()
-                if parts.isdigit():
-                    day_sheets.append((int(parts), n))
+        # Cek dari Dashboard terlebih dahulu (sangat cepat & akurat tanpa loop per-sheet)
+        try:
+            ws_dash = self.get_worksheet("Dashboard")
+            if ws_dash:
+                vals = ws_dash.get_all_values()
+                for r in reversed(vals[16:110]):
+                    if any(r) and len(r) >= 3 and r[0].strip().isdigit():
+                        day_num = int(r[0].strip())
+                        sold_val = parse_int(r[2])
+                        omzet_val = parse_currency(r[3]) if len(r) > 3 else 0.0
+                        if sold_val > 0 or omzet_val > 0:
+                            return f"Hari {day_num:02d}"
+        except Exception as e:
+            logger.warning(f"Gagal deteksi hari dari Dashboard: {e}")
 
-        if day_sheets:
-            # Urutkan berdasarkan nomor hari tertinggi (misal Hari 60, 59, ... 47)
-            day_sheets.sort(key=lambda x: x[0], reverse=True)
-            for _, sheet_name in day_sheets:
-                try:
-                    summary = self.get_daily_summary(sheet_name)
-                    # Jika ada sold atau modal atau akun ready > 0, berarti ini hari kerja aktif terakhir!
-                    if summary.get("sold_berbayar", 0) > 0 or summary.get("total_omzet", 0) > 0 or summary.get("akun_ready", 0) > 0:
-                        settings.ACTIVE_SHEET_NAME = sheet_name
-                        return sheet_name
-                except Exception:
-                    continue
-
-            settings.ACTIVE_SHEET_NAME = "Hari 47"
-            return "Hari 47"
-
-        return "Hari 47"
+        return "Hari 58"
 
     def get_worksheet(self, sheet_name: str) -> Optional[gspread.Worksheet]:
         if not self.is_connected or not self.spreadsheet:
@@ -245,17 +235,30 @@ class GoogleSheetsClient:
 
             all_vals = ws.get_all_values()
             
-            # Cari baris yang posisinya 'Stanby' (kolom F / index 5)
-            # Prioritaskan yang jenis akunnya cocok (kolom L / index 11)
+            # Cari batas summary_row_idx (baris RINGKASAN HARIAN)
+            summary_row_idx = len(all_vals)
+            for idx, r in enumerate(all_vals):
+                if "RINGKASAN HARIAN" in " ".join(r).upper():
+                    summary_row_idx = idx
+                    break
+
+            headers = [str(c).strip().lower() for c in all_vals[14]] if len(all_vals) > 14 else []
+            has_reseller = any("reseller" in h for h in headers)
+            pos_col = 5
+            jenis_col = 12 if has_reseller else 11
+            for idx, h in enumerate(headers):
+                if "posisi" in h: pos_col = idx
+                elif "jenis akun" in h or "produk" in h: jenis_col = idx
+
             target_row_idx = None
             found_email = ""
             
             # Pass 1: Cocok produk & Stanby
-            for idx in range(15, min(47, len(all_vals))):
+            for idx in range(15, summary_row_idx):
                 row = all_vals[idx]
-                if len(row) > 5:
-                    posisi = row[5].strip().lower()
-                    jenis = row[11].strip().lower() if len(row) > 11 else ""
+                if len(row) > pos_col:
+                    posisi = row[pos_col].strip().lower()
+                    jenis = row[jenis_col].strip().lower() if len(row) > jenis_col else ""
                     if "stanby" in posisi and (product.lower() in jenis or not jenis):
                         target_row_idx = idx + 1
                         found_email = row[1].strip() if len(row) > 1 else "Akun Ready"
@@ -263,9 +266,9 @@ class GoogleSheetsClient:
 
             # Pass 2: Jika tidak ada yang cocok produk, ambil akun Stanby apa saja
             if not target_row_idx:
-                for idx in range(15, min(47, len(all_vals))):
+                for idx in range(15, summary_row_idx):
                     row = all_vals[idx]
-                    if len(row) > 5 and "stanby" in row[5].strip().lower():
+                    if len(row) > pos_col and "stanby" in row[pos_col].strip().lower():
                         target_row_idx = idx + 1
                         found_email = row[1].strip() if len(row) > 1 else "Akun Ready"
                         break
@@ -273,23 +276,35 @@ class GoogleSheetsClient:
             if not target_row_idx:
                 return None # Tidak ada stok Stanby
 
-            # Paket (Col I): 'Garansi' atau 'Non Garansi'
+            # Paket: 'Garansi' atau 'Non Garansi'
             paket_val = "Non Garansi" if "non" in paket.lower() else ("Garansi" if "garansi" in paket.lower() else "")
             sumber_clean = sumber.replace("Dari ", "").strip()
 
-            # Update kolom E sampai L:
-            # Col E: Status Akun, Col F: Posisi, Col G: Harga Jual (angka murni!),
-            # Col H: Jenis Transaksi, Col I: Paket, Col J: Sumber, Col K: Keterangan, Col L: Jenis Akun
-            vals_to_update = [
-                "Signed / Premium",
-                "Sold",
-                harga_jual, # ANGKA MURNI agar rumus Google Sheets mendeteksi!
-                "Penjualan",
-                paket_val,
-                sumber_clean,
-                keterangan or f"via {sumber_clean}",
-                product
-            ]
+            if has_reseller:
+                range_str = f"E{target_row_idx}:M{target_row_idx}"
+                vals_to_update = [
+                    "Signed / Premium",
+                    "Sold",
+                    harga_jual,
+                    "Penjualan",
+                    paket_val,
+                    sumber_clean,
+                    "", # Reseller
+                    keterangan or f"via {sumber_clean}",
+                    product
+                ]
+            else:
+                range_str = f"E{target_row_idx}:L{target_row_idx}"
+                vals_to_update = [
+                    "Signed / Premium",
+                    "Sold",
+                    harga_jual,
+                    "Penjualan",
+                    paket_val,
+                    sumber_clean,
+                    keterangan or f"via {sumber_clean}",
+                    product
+                ]
 
             ws.update(range_name=range_str, values=[vals_to_update], raw=False)
             logger.info(f"Berhasil mengubah stok Stanby baris {target_row_idx} ({found_email}) menjadi Sold!")
@@ -312,6 +327,7 @@ class GoogleSheetsClient:
         jenis_akun: str,
         keterangan: str = "",
         posisi: str = "Sold",
+        reseller: str = "",
         sheet_name: Optional[str] = None
     ) -> bool:
         target_sheet = normalize_sheet_name(sheet_name or settings.ACTIVE_SHEET_NAME)
@@ -327,8 +343,18 @@ class GoogleSheetsClient:
 
             all_vals = ws.get_all_values()
             
+            # Cari batas summary_row_idx
+            summary_row_idx = len(all_vals)
+            for idx, r in enumerate(all_vals):
+                if "RINGKASAN HARIAN" in " ".join(r).upper():
+                    summary_row_idx = idx
+                    break
+
+            headers = [str(c).strip().lower() for c in all_vals[14]] if len(all_vals) > 14 else []
+            has_reseller = any("reseller" in h for h in headers)
+
             target_row_idx = None
-            for idx in range(15, min(47, len(all_vals))):
+            for idx in range(15, summary_row_idx):
                 row = all_vals[idx]
                 col_b = row[1].strip() if len(row) > 1 else ""
                 col_e = row[4].strip() if len(row) > 4 else ""
@@ -353,26 +379,44 @@ class GoogleSheetsClient:
             paket_val = "Non Garansi" if "non" in paket.lower() else ("Garansi" if "garansi" in paket.lower() else "")
             sumber_clean = sumber.replace("Dari ", "").strip()
 
-            row_data = [
-                email,
-                password_email,
-                password_cgpt,
-                status_val,
-                posisi_val,
-                harga_jual if harga_jual > 0 else "", # Simpan harga jual sebagai ANGKA MURNI!
-                transaksi_val,
-                paket_val,
-                sumber_clean,
-                keterangan,
-                jenis_akun
-            ]
+            if has_reseller:
+                row_data = [
+                    email,
+                    password_email,
+                    password_cgpt,
+                    status_val,
+                    posisi_val,
+                    harga_jual if harga_jual > 0 else "",
+                    transaksi_val,
+                    paket_val,
+                    sumber_clean,
+                    reseller,
+                    keterangan,
+                    jenis_akun
+                ]
+                range_str = f"B{target_row_idx}:M{target_row_idx}" if target_row_idx else ""
+            else:
+                row_data = [
+                    email,
+                    password_email,
+                    password_cgpt,
+                    status_val,
+                    posisi_val,
+                    harga_jual if harga_jual > 0 else "",
+                    transaksi_val,
+                    paket_val,
+                    sumber_clean,
+                    keterangan,
+                    jenis_akun
+                ]
+                range_str = f"B{target_row_idx}:L{target_row_idx}" if target_row_idx else ""
 
             if target_row_idx:
-                range_str = f"B{target_row_idx}:L{target_row_idx}"
                 ws.update(range_name=range_str, values=[row_data], raw=False)
                 logger.info(f"Berhasil mengisi baris {target_row_idx} di {target_sheet} ({range_str})")
             else:
-                ws.insert_row(["+"] + row_data, index=47)
+                insert_idx = summary_row_idx + 1 if summary_row_idx > 15 else 47
+                ws.insert_row(["+"] + row_data, index=insert_idx)
                 logger.info(f"Berhasil sisipkan baris di {target_sheet}")
 
             self.invalidate_cache(target_sheet)
@@ -620,33 +664,69 @@ class GoogleSheetsClient:
                 threads_str = find_val_after_label(r_metrics3, "Dari Threads")
                 reseller_str = find_val_after_label(r_metrics3, "Dari Reseller")
 
-                # Agregasi produk dinamis & hitung sumber penjualan langsung dari baris 16-47 (anti bug spasi / formula macet)
+                # Agregasi produk dinamis & hitung sumber penjualan langsung dari baris 16 sampai summary_row_idx
+                head_row = [str(c).strip().lower() for c in vals[14]] if len(vals) > 14 else []
+                pos_col = 5
+                harga_col = 6
+                transaksi_col = 7
+                sumber_col = 9
+                reseller_col = -1
+                keterangan_col = 10
+                jenis_col = 11
+
+                for idx, h in enumerate(head_row):
+                    if "posisi" in h: pos_col = idx
+                    elif "harga" in h: harga_col = idx
+                    elif "transaksi" in h: transaksi_col = idx
+                    elif "sumber" in h: sumber_col = idx
+                    elif "reseller" in h: reseller_col = idx
+                    elif "keterangan" in h: keterangan_col = idx
+                    elif "jenis akun" in h or "produk" in h: jenis_col = idx
+
+                if reseller_col != -1 and jenis_col == 11:
+                    jenis_col = 12
+                    keterangan_col = 11
+
                 daily_produk = {}
                 daily_sold_breakdown = {}
                 threads_from_rows = 0
                 reseller_from_rows = 0
 
-                for row in vals[15:min(47, len(vals))]:
-                    p_name = row[11].strip() if len(row) > 11 else ""
-                    pos = row[5].strip().lower() if len(row) > 5 else ""
-                    transaksi = row[7].strip().lower() if len(row) > 7 else ""
-                    sumber_raw = row[9].strip().lower() if len(row) > 9 else ""
-                    hrg = parse_currency(row[6]) if len(row) > 6 else 0.0
+                for row in vals[15:summary_row_idx]:
+                    if not any(row):
+                        continue
+                    raw_p = row[jenis_col].strip() if len(row) > jenis_col else ""
+                    if not raw_p and len(row) > keterangan_col:
+                        raw_p = row[keterangan_col].strip()
+
+                    n = raw_p.lower()
+                    if "chatgpt" in n or "gpt" in n: p_name = "ChatGPT"
+                    elif "gemini" in n: p_name = "Gemini"
+                    elif "claude" in n: p_name = "Claude"
+                    elif "apple" in n or "music" in n: p_name = "Apple Music"
+                    elif "spotify" in n: p_name = "Spotify"
+                    elif "canva" in n: p_name = "Canva"
+                    else: p_name = raw_p or "Lainnya"
+
+                    pos = row[pos_col].strip().lower() if len(row) > pos_col else ""
+                    transaksi = row[transaksi_col].strip().lower() if len(row) > transaksi_col else ""
+                    sumber_raw = row[sumber_col].strip().lower() if len(row) > sumber_col else ""
+                    reseller_raw = row[reseller_col].strip().lower() if reseller_col != -1 and len(row) > reseller_col else ""
+                    hrg = parse_currency(row[harga_col]) if len(row) > harga_col else 0.0
 
                     is_sold = ("sold" in pos) or ("penjualan" in transaksi and "klaim" not in pos and "stanby" not in pos)
 
                     if is_sold:
                         if "threads" in sumber_raw:
                             threads_from_rows += 1
-                        elif "reseller" in sumber_raw:
+                        elif "reseller" in sumber_raw or reseller_raw:
                             reseller_from_rows += 1
 
-                        if p_name:
-                            daily_sold_breakdown[p_name] = daily_sold_breakdown.get(p_name, 0) + 1
+                        daily_sold_breakdown[p_name] = daily_sold_breakdown.get(p_name, 0) + 1
 
                     if p_name:
                         if p_name not in daily_produk:
-                            daily_produk[p_name] = {"sold": 0, "klaim": 0, "ready": 0, "omzet": 0}
+                            daily_produk[p_name] = {"sold": 0, "klaim": 0, "ready": 0, "omzet": 0.0}
 
                         if is_sold:
                             daily_produk[p_name]["sold"] += 1
@@ -656,17 +736,17 @@ class GoogleSheetsClient:
                         elif "klaim" in pos:
                             daily_produk[p_name]["klaim"] += 1
 
-                # Sumber penjualan: ambil nilai maksimal antara formula ringkasan harian dan hitungan langsung baris transaksi (anti-bug spasi/formula tidak terupdate)
+                # Sumber penjualan: ambil nilai maksimal antara formula ringkasan harian dan hitungan langsung baris transaksi
                 threads_val = max(parse_int(threads_str), threads_from_rows)
                 reseller_val = max(parse_int(reseller_str), reseller_from_rows)
 
                 result = {
                     "sheet_name": target_sheet,
                     "tanggal": sheet_tanggal,
-                    "sold_berbayar": parse_int(sold_str),
+                    "sold_berbayar": parse_int(sold_str) or sum(p["sold"] for p in daily_produk.values()),
                     "klaim_garansi": parse_int(klaim_str),
-                    "akun_ready": parse_int(ready_str),
-                    "total_omzet": parse_currency(omzet_str),
+                    "akun_ready": parse_int(ready_str) or sum(p["ready"] for p in daily_produk.values()),
+                    "total_omzet": parse_currency(omzet_str) or sum(p["omzet"] for p in daily_produk.values()),
                     "total_modal": parse_currency(modal_str),
                     "surplus_kas": parse_currency(surplus_str),
                     "margin_kas": margin_str if margin_str else "0%",
@@ -742,35 +822,78 @@ class GoogleSheetsClient:
                 if len(all_vals) > 11 and len(all_vals[11]) > 6:
                     total_modal = all_vals[11][6].strip() or all_vals[11][5].strip() or "Rp 0"
 
-            # Akun rows (Row 15 is header, Rows 16 - 47 are data rows)
-            headers = ["No", "Email", "Password Email", "Password CGPT", "Status Akun", "Posisi", "Harga Jual", "Jenis Transaksi", "Paket", "Sumber", "Keterangan", "Jenis Akun"]
+            # Cari batas summary_row_idx
+            summary_row_idx = len(all_vals)
+            for idx, r in enumerate(all_vals):
+                if "RINGKASAN HARIAN" in " ".join(r).upper():
+                    summary_row_idx = idx
+                    break
+
+            # Akun rows & dynamic headers from Row 15 (index 14)
+            headers = []
             if len(all_vals) >= 15:
-                raw_head = all_vals[14][:12]
-                if any(h.strip() for h in raw_head):
-                    headers = [h.strip() or headers[i] for i, h in enumerate(raw_head)]
+                raw_head = all_vals[14]
+                last_idx = 0
+                for i, h in enumerate(raw_head):
+                    if h.strip():
+                        last_idx = i
+                headers = [h.strip() or f"Kolom {i+1}" for i, h in enumerate(raw_head[:last_idx + 1])]
+
+            if not headers:
+                headers = ["No", "Email", "Password Email", "Password CGPT", "Status Akun", "Posisi", "Harga Jual", "Jenis Transaksi", "Paket", "Sumber", "Keterangan", "Jenis Akun"]
+
+            head_lower = [h.lower() for h in headers]
+            has_reseller = any("reseller" in h for h in head_lower)
+
+            def get_col_idx(kws, default_val):
+                for kw in kws:
+                    for i, h in enumerate(head_lower):
+                        if kw in h:
+                            return i
+                return default_val
+
+            col_map = {
+                "no": get_col_idx(["no"], 0),
+                "email": get_col_idx(["email"], 1),
+                "password_email": get_col_idx(["password email"], 2),
+                "password_cgpt": get_col_idx(["password cgpt", "password akun"], 3),
+                "status_akun": get_col_idx(["status"], 4),
+                "posisi": get_col_idx(["posisi"], 5),
+                "harga_jual": get_col_idx(["harga"], 6),
+                "jenis_transaksi": get_col_idx(["transaksi"], 7),
+                "paket": get_col_idx(["paket"], 8),
+                "sumber": get_col_idx(["sumber"], 9),
+                "reseller": get_col_idx(["reseller"], 10 if has_reseller else -1),
+                "keterangan": get_col_idx(["keterangan"], 11 if has_reseller else 10),
+                "jenis_akun": get_col_idx(["jenis akun", "produk"], 12 if has_reseller else 11)
+            }
 
             account_rows = []
-            for r_idx in range(15, min(47, len(all_vals))):
+            for r_idx in range(15, summary_row_idx):
                 row = all_vals[r_idx]
+                if not any(row):
+                    continue
                 account_rows.append({
                     "row_idx": r_idx + 1,
-                    "no": row[0] if len(row) > 0 else str(r_idx - 14),
-                    "email": row[1] if len(row) > 1 else "",
-                    "password_email": row[2] if len(row) > 2 else "",
-                    "password_cgpt": row[3] if len(row) > 3 else "",
-                    "status_akun": row[4] if len(row) > 4 else "",
-                    "posisi": row[5] if len(row) > 5 else "",
-                    "harga_jual": row[6] if len(row) > 6 else "",
-                    "jenis_transaksi": row[7] if len(row) > 7 else "",
-                    "paket": row[8] if len(row) > 8 else "",
-                    "sumber": row[9] if len(row) > 9 else "",
-                    "keterangan": row[10] if len(row) > 10 else "",
-                    "jenis_akun": row[11] if len(row) > 11 else ""
+                    "no": row[col_map["no"]] if len(row) > col_map["no"] and col_map["no"] >= 0 else str(r_idx - 14),
+                    "email": row[col_map["email"]] if len(row) > col_map["email"] and col_map["email"] >= 0 else "",
+                    "password_email": row[col_map["password_email"]] if len(row) > col_map["password_email"] and col_map["password_email"] >= 0 else "",
+                    "password_cgpt": row[col_map["password_cgpt"]] if len(row) > col_map["password_cgpt"] and col_map["password_cgpt"] >= 0 else "",
+                    "status_akun": row[col_map["status_akun"]] if len(row) > col_map["status_akun"] and col_map["status_akun"] >= 0 else "",
+                    "posisi": row[col_map["posisi"]] if len(row) > col_map["posisi"] and col_map["posisi"] >= 0 else "",
+                    "harga_jual": row[col_map["harga_jual"]] if len(row) > col_map["harga_jual"] and col_map["harga_jual"] >= 0 else "",
+                    "jenis_transaksi": row[col_map["jenis_transaksi"]] if len(row) > col_map["jenis_transaksi"] and col_map["jenis_transaksi"] >= 0 else "",
+                    "paket": row[col_map["paket"]] if len(row) > col_map["paket"] and col_map["paket"] >= 0 else "",
+                    "sumber": row[col_map["sumber"]] if len(row) > col_map["sumber"] and col_map["sumber"] >= 0 else "",
+                    "reseller": row[col_map["reseller"]] if col_map["reseller"] >= 0 and len(row) > col_map["reseller"] else "",
+                    "keterangan": row[col_map["keterangan"]] if len(row) > col_map["keterangan"] and col_map["keterangan"] >= 0 else "",
+                    "jenis_akun": row[col_map["jenis_akun"]] if len(row) > col_map["jenis_akun"] and col_map["jenis_akun"] >= 0 else ""
                 })
 
             result = {
                 "sheet_name": target_sheet,
                 "headers": headers,
+                "has_reseller": has_reseller,
                 "rows": account_rows,
                 "modal_rows": modal_rows,
                 "total_modal": total_modal
@@ -781,7 +904,7 @@ class GoogleSheetsClient:
             return result
         except Exception as e:
             logger.error(f"Error get_sheet_raw_table: {e}")
-            return {"sheet_name": target_sheet, "headers": [], "rows": [], "modal_rows": [], "total_modal": "Rp 0"}
+            return {"sheet_name": target_sheet, "headers": [], "has_reseller": False, "rows": [], "modal_rows": [], "total_modal": "Rp 0"}
 
     def update_raw_cell(self, sheet_name: str, row: int, col: str, value: Any) -> bool:
         target_sheet = normalize_sheet_name(sheet_name)

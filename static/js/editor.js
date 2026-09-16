@@ -258,7 +258,7 @@
       if (!response.ok || !result.success) throw new Error(result.error || 'Sheet belum dapat dimuat. Coba lagi.');
       const data = result.data || {};
       byId('sheetTotalModalVal').textContent = String(data.total_modal || 'Rp 0');
-      renderRawTable(Array.isArray(data.rows) ? data.rows : [], targetSheet);
+      renderRawTable(Array.isArray(data.rows) ? data.rows : [], targetSheet, Boolean(data.has_reseller));
       loadedSheet = targetSheet;
       saveStatus('Edit sel, lalu tekan Enter atau pindah sel untuk menyimpan.', 'idle');
       if ([...cellStates.values()].some(state => state.error)) updateSaveStatus();
@@ -279,18 +279,38 @@
   }
   refreshBtn?.addEventListener('click', () => loadSheetTableData());
 
-  const columns = [
-    ['A', 'no', 'Nomor'], ['B', 'email', 'Email'], ['C', 'password_email', 'Password email'],
-    ['D', 'password_cgpt', 'Password akun'], ['E', 'status_akun', 'Status akun'], ['F', 'posisi', 'Posisi'],
-    ['G', 'harga_jual', 'Harga jual'], ['H', 'jenis_transaksi', 'Jenis transaksi'], ['I', 'paket', 'Paket'],
-    ['J', 'sumber', 'Sumber'], ['K', 'keterangan', 'Keterangan'], ['L', 'jenis_akun', 'Jenis akun']
-  ];
+  function getColumns(hasReseller) {
+    if (hasReseller) {
+      return [
+        ['A', 'no', 'Nomor'], ['B', 'email', 'Email'], ['C', 'password_email', 'Password email'],
+        ['D', 'password_cgpt', 'Password akun'], ['E', 'status_akun', 'Status akun'], ['F', 'posisi', 'Posisi'],
+        ['G', 'harga_jual', 'Harga jual'], ['H', 'jenis_transaksi', 'Jenis transaksi'], ['I', 'paket', 'Paket'],
+        ['J', 'sumber', 'Sumber'], ['K', 'reseller', 'Reseller'], ['L', 'keterangan', 'Keterangan'], ['M', 'jenis_akun', 'Jenis akun']
+      ];
+    }
+    return [
+      ['A', 'no', 'Nomor'], ['B', 'email', 'Email'], ['C', 'password_email', 'Password email'],
+      ['D', 'password_cgpt', 'Password akun'], ['E', 'status_akun', 'Status akun'], ['F', 'posisi', 'Posisi'],
+      ['G', 'harga_jual', 'Harga jual'], ['H', 'jenis_transaksi', 'Jenis transaksi'], ['I', 'paket', 'Paket'],
+      ['J', 'sumber', 'Sumber'], ['K', 'keterangan', 'Keterangan'], ['L', 'jenis_akun', 'Jenis akun']
+    ];
+  }
+
   function positionClass(value) {
     return ({ sold: 'cell-sold', stanby: 'cell-stanby', ready: 'cell-stanby', klaim: 'cell-klaim', proses: 'cell-proses' })[String(value ?? '').trim().toLowerCase()] || '';
   }
-  function renderRawTable(rows, sheet) {
+
+  function updateTableHeaders(cols) {
+    const theadTr = byId('rawSheetsTable')?.querySelector('thead tr');
+    if (!theadTr) return;
+    theadTr.innerHTML = '<th scope="col">Baris</th>' + cols.map(([column, key, label]) => `<th scope="col">${label}</th>`).join('');
+  }
+
+  function renderRawTable(rows, sheet, hasReseller = false) {
     cellStates.clear();
     tbody.replaceChildren();
+    const columns = getColumns(hasReseller);
+    updateTableHeaders(columns);
     if (!rows.length) return tableMessage('Belum ada transaksi di sheet ini. Pilih Tambah transaksi untuk mulai mencatat.');
     const fragment = document.createDocumentFragment();
     rows.forEach(row => {
@@ -449,6 +469,7 @@
       posisi: position, harga_jual: price,
       jenis_transaksi: position === 'Sold' ? 'Penjualan' : position === 'Klaim' ? 'Klaim' : '',
       paket: byId('newRowPaket').value, sumber: byId('newRowSumber').value,
+      reseller: byId('newRowReseller')?.value?.trim() || '',
       jenis_akun: byId('newRowJenisAkun').value, keterangan: byId('newRowKeterangan').value.trim()
     };
     addingRow = true;
@@ -465,7 +486,7 @@
       });
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.error || 'Transaksi belum tersimpan. Data tetap tersedia, silakan coba lagi.');
-      ['newRowEmail', 'newRowPassEmail', 'newRowPassCgpt', 'newRowHarga', 'newRowKeterangan'].forEach(id => { byId(id).value = ''; });
+      ['newRowEmail', 'newRowPassEmail', 'newRowPassCgpt', 'newRowHarga', 'newRowReseller', 'newRowKeterangan'].forEach(id => { if (byId(id)) byId(id).value = ''; });
       if (window.triggerHaptic) window.triggerHaptic('success');
       notify(`Transaksi berhasil ditambahkan ke ${targetSheet || 'sheet aktif'}.`, 'success');
       await loadSheetTableData();

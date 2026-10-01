@@ -512,7 +512,7 @@ function getAvailableMonths() {
     item.rows.push(row);
   });
 
-  const order = ['sep', 'aug', 'jul', 'oct', 'nov', 'dec', 'jun', 'may', 'apr', 'mar', 'feb', 'jan'];
+  const order = ['dec', 'nov', 'oct', 'sep', 'aug', 'jul', 'jun', 'may', 'apr', 'mar', 'feb', 'jan'];
   return Array.from(foundMap.values()).sort((a, b) => {
     const idxA = order.indexOf(a.key);
     const idxB = order.indexOf(b.key);

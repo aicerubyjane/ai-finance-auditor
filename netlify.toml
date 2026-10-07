@@ -1,0 +1,11 @@
+# Netlify only serves the dashboard frontend. The FastAPI backend + Telegram bot
+# run elsewhere (Railway/Render, see DEPLOYMENT.md); /api/* is proxied there by
+# netlify/edge-functions/api-proxy.ts using the BACKEND_URL environment variable.
+[build]
+  publish = "static"
+  command = "cp -r assets/. static/assets/"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
